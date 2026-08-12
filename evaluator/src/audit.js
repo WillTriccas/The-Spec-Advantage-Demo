@@ -236,13 +236,13 @@ function evaluateAuditResults(commands, exported) {
   require(essential, command(commands, 'initialize')?.passed, 'initialize failed');
   require(essential, command(commands, 'propose-main')?.passed, 'valid proposal failed');
   require(makerChecker, proposerFor(entries, 'REQ-A') === AUDIT_SYNTHETIC_VALUES.proposer, 'export did not prove the proposer identity for REQ-A');
-  require(makerChecker, finalDecisions(entries, 'REQ-A').every((decision) => decision.actor !== AUDIT_SYNTHETIC_VALUES.proposer), 'export showed proposer as durable approver for REQ-A');
-  require(makerChecker, hasFinalDecision(entries, 'REQ-A', 'approved', AUDIT_SYNTHETIC_VALUES.approver), 'export did not prove different approver approved REQ-A');
-  require(makerChecker, hasFinalDecision(entries, 'REQ-B', 'rejected', AUDIT_SYNTHETIC_VALUES.otherApprover), 'export did not prove different approver rejected REQ-B');
+  requireSingleFinalDecision(makerChecker, entries, 'REQ-A', 'approved', AUDIT_SYNTHETIC_VALUES.approver, AUDIT_SYNTHETIC_VALUES.proposer);
+  requireSingleFinalDecision(makerChecker, entries, 'REQ-B', 'rejected', AUDIT_SYNTHETIC_VALUES.otherApprover, AUDIT_SYNTHETIC_VALUES.proposer);
   require(essential, command(commands, 'propose-missing-reason')?.exitCode !== null && !command(commands, 'propose-missing-reason')?.timedOut && !exportHasHistory(exported, 'REQ-MISSING'), 'missing reason/evidence proposal was durably accepted');
   require(essential, command(commands, 'checker-approve-idempotent')?.passed, 'duplicate decision was not idempotently handled');
   require(integrity, conflictCommandsCompleted(command(commands, 'conflict-approve'), command(commands, 'conflict-reject')), 'concurrent conflict commands did not complete through declared adapter outcomes');
-  require(integrity, finalDecisions(entries, 'REQ-C').length === 1, 'export did not prove exactly one durable final decision for concurrent conflict');
+  require(integrity, finalDecisions(entries, 'REQ-C').length === 1, 'export did not prove exactly one durable final decision for REQ-C concurrent conflict');
+  require(integrity, finalDecisions(entries, 'REQ-C').every((decision) => decision.actor), 'export contained a final decision for REQ-C without a recognized actor identity');
   require(integrity, Array.isArray(exported) || (exported && Array.isArray(exported.entries)), 'date-range export did not produce JSON history');
   require(integrity, exportHasHistory(exported, 'REQ-A') && exportHasHistory(exported, 'REQ-B'), 'export missing approved/rejected request history');
   require(integrity, !`${allOutput}\n${exportedText}`.includes(AUDIT_SYNTHETIC_VALUES.accountSentinel) && !`${allOutput}\n${exportedText}`.includes(AUDIT_SYNTHETIC_VALUES.amountSentinel), 'logs, command output, or export exposed synthetic sentinel account/amount');
@@ -293,8 +293,18 @@ function finalDecisions(entries, requestId) {
     .filter((decision) => decision.action);
 }
 
-function hasFinalDecision(entries, requestId, action, actor) {
-  return finalDecisions(entries, requestId).some((decision) => decision.action === action && decision.actor === actor);
+function requireSingleFinalDecision(collection, entries, requestId, action, expectedActor, prohibitedActor) {
+  const decisions = finalDecisions(entries, requestId);
+  require(collection, decisions.length === 1, `export did not prove exactly one durable final decision for ${requestId}`);
+  if (decisions.length !== 1) {
+    return;
+  }
+
+  const [decision] = decisions;
+  require(collection, Boolean(decision.actor), `export contained a final decision for ${requestId} without a recognized actor identity`);
+  require(collection, decision.action === action, `export final decision for ${requestId} was ${decision.action || 'unrecognized'} instead of ${action}`);
+  require(collection, decision.actor === expectedActor, `export final actor for ${requestId} was not the expected checker`);
+  require(collection, decision.actor !== prohibitedActor, `export showed proposer as durable approver for ${requestId}`);
 }
 
 function requestIdFor(entry) {

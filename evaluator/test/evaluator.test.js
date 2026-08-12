@@ -179,6 +179,17 @@ test('audit evaluator fails when export shows proposer became durable approver d
   assert.match(evidence.gates['maker-checker-separation'].findings.join('\n'), /proposer as durable approver/);
 });
 
+test('audit evaluator fails when a durable final decision uses an unrecognized actor field', async () => {
+  const candidate = await makeCandidate('audit-unrecognized-actor-final');
+  await writeAuditAdapter(candidate);
+  await writeAuditRunner(candidate, { unrecognizedSelfApprovalFinal: true });
+
+  const evidence = await evaluateAuditFeature(candidate, {});
+  assert.equal(evidence.outcome, 'failed');
+  assert.equal(evidence.gates['maker-checker-separation'].passed, false);
+  assert.match(evidence.gates['maker-checker-separation'].findings.join('\n'), /exactly one durable final decision for REQ-A/);
+});
+
 test('audit evaluator fails when concurrent conflict leaves two durable final decisions', async () => {
   const candidate = await makeCandidate('audit-two-finals');
   await writeAuditAdapter(candidate);
@@ -385,6 +396,11 @@ async function writeAuditRunner(candidate, options = {}) {
       const entries = read();
       const proposed = entries.find(entry => entry.requestId === requestId && entry.action === 'proposed');
       if (!proposed) { emit({ requestId, status: 'invalid' }); process.exit(2); }
+      if (requestId === 'REQ-A' && actor === proposed.proposer && options.unrecognizedSelfApprovalFinal) {
+        fs.writeFileSync(path.join(stateDir, 'extra-unrecognized-self.json'), JSON.stringify({ sequence: 50, previousHash: 'hash-unrecognized', requestId, action: 'approved', who: actor }));
+        emit({ requestId, status: 'forbidden' });
+        process.exit(2);
+      }
       if (actor === proposed.proposer && !options.durableSelfApproval) { emit({ requestId, status: 'forbidden' }); process.exit(2); }
       if (requestId === 'REQ-C' && arg4 === 'reject' && options.crashConflictLoser) { process.exit(1); }
       if (requestId === 'REQ-C' && arg4 === 'reject' && !options.allowTwoConflictFinals) { emit({ requestId, status: 'conflict' }); process.exit(2); }
@@ -404,7 +420,7 @@ async function writeAuditRunner(candidate, options = {}) {
     if (mode === 'export') {
       const exportPath = process.argv[6];
       const extras = fs.readdirSync(stateDir)
-        .filter(name => name.startsWith('conflict-') && name.endsWith('.json'))
+        .filter(name => (name.startsWith('conflict-') || name.startsWith('extra-')) && name.endsWith('.json'))
         .map(name => JSON.parse(fs.readFileSync(path.join(stateDir, name), 'utf8')));
       fs.writeFileSync(exportPath, JSON.stringify({ entries: [...read(), ...extras] }, null, 2));
       emit({ status: 'exported' });
