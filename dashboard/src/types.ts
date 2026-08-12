@@ -1,19 +1,20 @@
-export type Report = {
-  schemaVersion: "1.0.0";
-  metadata: {
-    benchmarkVersion: string;
-    generatedAt: string;
-    dataKind: "illustrative" | "measured";
-    repetitionsPerLane: number;
-    pricingAsOf?: string | null;
-  };
-  claim: {
-    status: "supported" | "inconclusive" | "not-supported" | "not-evaluated";
-    qualityDelta: number | null;
-    costSavingPercent?: number | null;
-    message: string;
-  };
-  episodes: Episode[];
+export type Verdict = "better" | "equivalent" | "worse" | "indeterminate";
+export type EfficiencyVerdict = "better" | "equivalent" | "worse" | "unavailable";
+export type DrivingMetric = "cost" | "tokens" | "elapsed" | "unavailable";
+export type HeadlineStatus = "supported" | "inconclusive" | "not-supported" | "not-evaluated";
+
+export type ClaimDetail = {
+  headline: HeadlineStatus;
+  qualityVerdict: Verdict;
+  efficiencyVerdict: EfficiencyVerdict;
+  drivingMetric: DrivingMetric;
+  qualityDeltaMin?: number | null;
+  qualityDeltaMax?: number | null;
+  qualityDeltaMedian?: number | null;
+  costSavingPercentMin?: number | null;
+  costSavingPercentMax?: number | null;
+  costSavingPercentMedian?: number | null;
+  message: string;
 };
 
 export type ScoreBreakdown = {
@@ -25,6 +26,13 @@ export type ScoreBreakdown = {
   scopeTraceability: number;
 };
 
+export type HardGate = {
+  id: string;
+  applicable: boolean;
+  status: "passed" | "failed" | "not-applicable";
+  reason?: string;
+};
+
 export type Run = {
   runId: string;
   laneId: string;
@@ -33,7 +41,8 @@ export type Run = {
   repetition: number;
   status: "completed" | "failed" | "timed-out" | "cancelled";
   qualityScore: number;
-  hardGatesPassed: boolean;
+  dataKind: "illustrative" | "measured";
+  hardGates: HardGate[];
   scores: ScoreBreakdown;
   elapsedSeconds: number;
   toolCalls: number;
@@ -51,14 +60,36 @@ export type LaneSummary = {
   qualityMin: number;
   qualityMax: number;
   hardGatePassCount: number;
+  hardGateFailCount: number;
   runCount: number;
+  elapsedMinSeconds?: number;
   elapsedMedianSeconds: number;
+  elapsedMaxSeconds?: number;
+  costMinUsd?: number | null;
   costMedianUsd: number | null;
+  costMaxUsd?: number | null;
+  specAuthoringEffortHours?: number | null;
+  amortizedSpecCostUsd?: number | null;
 };
 
 export type Episode = {
-  id: "modernization" | "audit-feature";
+  id: string;
   name: string;
+  claim: ClaimDetail;
   laneSummaries: LaneSummary[];
   runs: Run[];
+};
+
+export type Report = {
+  schemaVersion: string;
+  metadata: {
+    benchmarkVersion: string;
+    generatedAt: string;
+    dataKind: "illustrative" | "measured";
+    repetitionsPerLane: number;
+    pricingAsOf?: string | null;
+    frozenHash?: string;
+  };
+  overallClaim: ClaimDetail;
+  episodes: Episode[];
 };

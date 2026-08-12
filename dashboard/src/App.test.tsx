@@ -8,10 +8,16 @@ describe('App', () => {
     expect(screen.getByText('ILLUSTRATIVE DATA ONLY - NOT FOR MEASUREMENT')).toBeTruthy();
   });
 
-  it('renders hypothesis claim status correctly', () => {
+  it('renders overall claim status correctly', () => {
     render(<App />);
-    expect(screen.getByText('Hypothesis: NOT-EVALUATED')).toBeTruthy();
-    expect(screen.getByText('Dashboard sample data.')).toBeTruthy();
+    expect(screen.getByText('Overall Roll-up: INCONCLUSIVE')).toBeTruthy();
+    expect(screen.getByText('Overall results are inconclusive due to a weaker episode.')).toBeTruthy();
+  });
+
+  it('renders episode claims correctly', () => {
+    render(<App />);
+    expect(screen.getByText('Modernization Claim: SUPPORTED')).toBeTruthy();
+    expect(screen.getByText('Audit Feature Claim: INCONCLUSIVE')).toBeTruthy();
   });
 
   it('filters lanes when view mode changes or filters applied', () => {
@@ -22,13 +28,13 @@ describe('App', () => {
     fireEvent.click(engViewButton);
     
     // Should show run details in engineering view
-    expect(screen.getByText('Run Details')).toBeTruthy();
+    expect(screen.getAllByText('Run Details').length).toBeGreaterThan(0);
     
     // Test filter select
     const laneSelect = screen.getByLabelText('Lane');
     fireEvent.change(laneSelect, { target: { value: 'spec' } });
     
-    // The "generate" lane shouldn't be visible anymore (case insensitive / partial match check depending on exact DOM)
+    // The "generate" lane shouldn't be visible anymore
     expect(screen.queryByText('GENERATE')).toBeNull();
   });
 });

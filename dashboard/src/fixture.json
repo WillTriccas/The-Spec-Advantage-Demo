@@ -1,20 +1,36 @@
 {
-  "schemaVersion": "1.0.0",
+  "schemaVersion": "1.1.0",
   "metadata": {
     "benchmarkVersion": "1.0",
     "generatedAt": "2026-08-12T17:00:00Z",
     "dataKind": "illustrative",
-    "repetitionsPerLane": 3
+    "repetitionsPerLane": 3,
+    "frozenHash": "abc123def456xyz"
   },
-  "claim": {
-    "status": "not-evaluated",
-    "qualityDelta": null,
-    "message": "Dashboard sample data."
+  "overallClaim": {
+    "headline": "inconclusive",
+    "qualityVerdict": "indeterminate",
+    "efficiencyVerdict": "unavailable",
+    "drivingMetric": "unavailable",
+    "message": "Overall results are inconclusive due to a weaker episode."
   },
   "episodes": [
     {
       "id": "modernization",
       "name": "Modernization",
+      "claim": {
+        "headline": "supported",
+        "qualityVerdict": "better",
+        "efficiencyVerdict": "better",
+        "drivingMetric": "cost",
+        "qualityDeltaMin": 15.0,
+        "qualityDeltaMedian": 25.5,
+        "qualityDeltaMax": 30.0,
+        "costSavingPercentMin": 10.0,
+        "costSavingPercentMedian": 40.0,
+        "costSavingPercentMax": 60.0,
+        "message": "Significant quality and cost improvements in Modernization."
+      },
       "laneSummaries": [
         {
           "laneId": "spec",
@@ -24,9 +40,16 @@
           "qualityMin": 80.0,
           "qualityMax": 90.0,
           "hardGatePassCount": 3,
+          "hardGateFailCount": 0,
           "runCount": 3,
+          "elapsedMinSeconds": 10.0,
           "elapsedMedianSeconds": 12.5,
-          "costMedianUsd": 0.05
+          "elapsedMaxSeconds": 15.0,
+          "costMinUsd": 0.04,
+          "costMedianUsd": 0.05,
+          "costMaxUsd": 0.06,
+          "specAuthoringEffortHours": 2.5,
+          "amortizedSpecCostUsd": 150.0
         },
         {
           "laneId": "generate",
@@ -36,9 +59,14 @@
           "qualityMin": 50.0,
           "qualityMax": 70.0,
           "hardGatePassCount": 1,
+          "hardGateFailCount": 2,
           "runCount": 3,
+          "elapsedMinSeconds": 15.0,
           "elapsedMedianSeconds": 18.0,
-          "costMedianUsd": null
+          "elapsedMaxSeconds": 25.0,
+          "costMinUsd": null,
+          "costMedianUsd": null,
+          "costMaxUsd": null
         }
       ],
       "runs": [
@@ -49,8 +77,12 @@
           "inputMode": "spec",
           "repetition": 1,
           "status": "completed",
+          "dataKind": "illustrative",
           "qualityScore": 85.5,
-          "hardGatesPassed": true,
+          "hardGates": [
+            { "id": "compile", "applicable": true, "status": "passed" },
+            { "id": "test", "applicable": true, "status": "passed" }
+          ],
           "scores": {
             "functionalCorrectness": 90,
             "behaviorPreservation": 85,
@@ -70,20 +102,82 @@
           "modelDisplayName": "GPT-4",
           "inputMode": "raw",
           "repetition": 1,
-          "status": "completed",
-          "qualityScore": 60.0,
-          "hardGatesPassed": false,
+          "status": "failed",
+          "dataKind": "illustrative",
+          "qualityScore": 0.0,
+          "hardGates": [
+            { "id": "compile", "applicable": true, "status": "failed", "reason": "Syntax error" }
+          ],
           "scores": {
-            "functionalCorrectness": 60,
-            "behaviorPreservation": 60,
-            "securityControls": 50,
-            "maintainability": 50,
-            "operability": 50,
-            "scopeTraceability": 60
+            "functionalCorrectness": 0,
+            "behaviorPreservation": 0,
+            "securityControls": 0,
+            "maintainability": 0,
+            "operability": 0,
+            "scopeTraceability": 0
           },
           "elapsedSeconds": 18.0,
           "toolCalls": 0,
           "evidencePath": "/evidence/run-2.json"
+        }
+      ]
+    },
+    {
+      "id": "audit-feature",
+      "name": "Audit Feature",
+      "claim": {
+        "headline": "inconclusive",
+        "qualityVerdict": "indeterminate",
+        "efficiencyVerdict": "unavailable",
+        "drivingMetric": "unavailable",
+        "message": "Fails to meet baseline due to inconsistent generation."
+      },
+      "laneSummaries": [
+        {
+          "laneId": "spec",
+          "modelDisplayName": "GPT-4",
+          "inputMode": "spec",
+          "qualityMedian": 40.0,
+          "qualityMin": 10.0,
+          "qualityMax": 50.0,
+          "hardGatePassCount": 0,
+          "hardGateFailCount": 3,
+          "runCount": 3,
+          "elapsedMinSeconds": 5.0,
+          "elapsedMedianSeconds": 10.0,
+          "elapsedMaxSeconds": 15.0,
+          "costMinUsd": 0.01,
+          "costMedianUsd": 0.02,
+          "costMaxUsd": 0.03,
+          "specAuthoringEffortHours": 1.0,
+          "amortizedSpecCostUsd": 60.0
+        }
+      ],
+      "runs": [
+        {
+          "runId": "run-3",
+          "laneId": "spec",
+          "modelDisplayName": "GPT-4",
+          "inputMode": "spec",
+          "repetition": 1,
+          "status": "completed",
+          "dataKind": "illustrative",
+          "qualityScore": 40.0,
+          "hardGates": [
+            { "id": "compile", "applicable": true, "status": "failed", "reason": "Syntax error" }
+          ],
+          "scores": {
+            "functionalCorrectness": 40,
+            "behaviorPreservation": 40,
+            "securityControls": 40,
+            "maintainability": 40,
+            "operability": 40,
+            "scopeTraceability": 40
+          },
+          "elapsedSeconds": 10.0,
+          "toolCalls": 2,
+          "evidencePath": "/evidence/run-3.json",
+          "estimatedCostUsd": 0.02
         }
       ]
     }

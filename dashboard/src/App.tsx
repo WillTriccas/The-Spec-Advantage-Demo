@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { Report, Run } from './types';
+import type { Report, Run, ClaimDetail, HardGate } from './types';
 import fixtureData from './fixture.json';
 import { AlertCircle, CheckCircle, HelpCircle, Info, ChevronDown, ChevronRight } from 'lucide-react';
 
@@ -8,7 +8,7 @@ const formatCost = (cost: number | null | undefined) => {
   return `$${cost.toFixed(4)}`;
 };
 
-const formatTime = (secs: number) => `${secs.toFixed(1)}s`;
+const formatTime = (secs: number | undefined) => secs !== undefined ? `${secs.toFixed(1)}s` : 'N/A';
 const formatScore = (score: number) => `${score.toFixed(1)}%`;
 
 const StatusIcon = ({ status }: { status: string }) => {
@@ -20,11 +20,70 @@ const StatusIcon = ({ status }: { status: string }) => {
   }
 };
 
+const ClaimCard = ({ claim, title, isOverall }: { claim: ClaimDetail; title: string, isOverall?: boolean }) => {
+  return (
+    <section className="claim-card" style={isOverall ? { borderLeftWidth: '10px' } : {}}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+        <StatusIcon status={claim.headline} />
+        <h2>{title}: {claim.headline.toUpperCase()}</h2>
+      </div>
+      <p style={{ fontSize: '16px', margin: '0 0 12px 0' }}>{claim.message}</p>
+      
+      <div className="claim-metrics" style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', marginTop: '12px' }}>
+        <div><strong>Quality Verdict:</strong> {claim.qualityVerdict}</div>
+        <div><strong>Efficiency Verdict:</strong> {claim.efficiencyVerdict}</div>
+        <div><strong>Driving Metric:</strong> {claim.drivingMetric}</div>
+        
+        {claim.qualityDeltaMedian !== undefined && claim.qualityDeltaMedian !== null && (
+          <div>
+            <strong>Quality Delta:</strong> {claim.qualityDeltaMedian > 0 ? '+' : ''}{claim.qualityDeltaMedian}%
+            {claim.qualityDeltaMin !== undefined && claim.qualityDeltaMax !== undefined && (
+              <span style={{ fontSize: '12px', color: 'var(--muted-color)', marginLeft: '4px' }}>
+                [{claim.qualityDeltaMin}% to {claim.qualityDeltaMax}%]
+              </span>
+            )}
+          </div>
+        )}
+        
+        {claim.costSavingPercentMedian !== undefined && claim.costSavingPercentMedian !== null && (
+          <div>
+            <strong>Cost Saving:</strong> {claim.costSavingPercentMedian}%
+            {claim.costSavingPercentMin !== undefined && claim.costSavingPercentMax !== undefined && (
+              <span style={{ fontSize: '12px', color: 'var(--muted-color)', marginLeft: '4px' }}>
+                [{claim.costSavingPercentMin}% to {claim.costSavingPercentMax}%]
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+};
+
+const HardGatesDisplay = ({ gates }: { gates: HardGate[] }) => {
+  if (!gates || gates.length === 0) return <span>None</span>;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+      {gates.map((g, i) => (
+        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <span className={g.status === 'passed' ? 'hard-gate-pass' : g.status === 'failed' ? 'hard-gate-fail' : ''}>
+            {g.id}: {g.status}
+          </span>
+          {g.reason && <span style={{ fontSize: '12px', color: 'var(--muted-color)' }}>({g.reason})</span>}
+        </div>
+      ))}
+    </div>
+  );
+};
+
 const RunRow = ({ run }: { run: Run }) => {
   const [expanded, setExpanded] = useState(false);
+  // Failed/timed-out/cancelled runs should score 0 - handled in data but visually good to note
+  const isFailed = run.status !== 'completed';
+  
   return (
     <React.Fragment>
-      <tr onClick={() => setExpanded(!expanded)} style={{ cursor: 'pointer' }}>
+      <tr onClick={() => setExpanded(!expanded)} style={{ cursor: 'pointer', opacity: isFailed ? 0.7 : 1 }}>
         <td>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             {expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
@@ -34,8 +93,8 @@ const RunRow = ({ run }: { run: Run }) => {
         <td>{run.laneId}</td>
         <td>{run.modelDisplayName}</td>
         <td>{formatScore(run.qualityScore)}</td>
-        <td className={run.hardGatesPassed ? 'hard-gate-pass' : 'hard-gate-fail'}>
-          {run.hardGatesPassed ? 'Pass' : 'Fail'}
+        <td>
+          {run.status}
         </td>
         <td>{formatTime(run.elapsedSeconds)}</td>
         <td>{formatCost(run.estimatedCostUsd)}</td>
@@ -45,7 +104,14 @@ const RunRow = ({ run }: { run: Run }) => {
           <td colSpan={7} style={{ padding: 0 }}>
             <div className="run-details">
               <strong>Evidence Path:</strong> {run.evidencePath} <br />
-              <strong>Status:</strong> {run.status} | <strong>Tool Calls:</strong> {run.toolCalls}
+              <strong>Run Data Kind:</strong> {run.dataKind} <br />
+              <strong>Tool Calls:</strong> {run.toolCalls}
+              
+              <div style={{ marginTop: '12px' }}>
+                <strong>Hard Gates:</strong>
+                <HardGatesDisplay gates={run.hardGates} />
+              </div>
+
               <div className="run-scores">
                 <div>Functional Correctness: {formatScore(run.scores.functionalCorrectness)}</div>
                 <div>Behavior Preservation: {formatScore(run.scores.behaviorPreservation)}</div>
@@ -70,7 +136,7 @@ export default function App() {
   const [selectedLane, setSelectedLane] = useState<string>('all');
   const [selectedModel, setSelectedModel] = useState<string>('all');
 
-  const { metadata, claim, episodes } = data;
+  const { metadata, overallClaim, episodes } = data;
   const isIllustrative = metadata.dataKind === 'illustrative';
 
   const filteredEpisodes = episodes.filter(e => selectedEpisode === 'all' || e.id === selectedEpisode);
@@ -97,6 +163,11 @@ export default function App() {
               <span style={{ fontSize: '12px', color: 'var(--muted-color)' }}>
                 Generated: {new Date(metadata.generatedAt).toLocaleString()}
               </span>
+              {metadata.frozenHash && (
+                <span style={{ fontSize: '12px', color: 'var(--muted-color)' }}>
+                  Hash: {metadata.frozenHash.substring(0,8)}...
+                </span>
+              )}
             </div>
           </div>
           
@@ -116,19 +187,9 @@ export default function App() {
           </div>
         </header>
 
-        <section className="claim-card">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-            <StatusIcon status={claim.status} />
-            <h2>Hypothesis: {claim.status.toUpperCase()}</h2>
-          </div>
-          <p style={{ fontSize: '16px', margin: '0 0 12px 0' }}>{claim.message}</p>
-          {(claim.qualityDelta !== null || claim.costSavingPercent !== null) && (
-            <div style={{ display: 'flex', gap: '24px' }}>
-              {claim.qualityDelta !== null && <div><strong>Quality Delta:</strong> {claim.qualityDelta > 0 ? '+' : ''}{claim.qualityDelta}%</div>}
-              {claim.costSavingPercent !== null && <div><strong>Cost Saving:</strong> {claim.costSavingPercent}%</div>}
-            </div>
-          )}
-        </section>
+        {selectedEpisode === 'all' && (
+          <ClaimCard claim={overallClaim} title="Overall Roll-up" isOverall={true} />
+        )}
 
         <div className="filters card">
           <div className="filter-group">
@@ -173,6 +234,8 @@ export default function App() {
                 Episode: {episode.name}
               </h2>
               
+              <ClaimCard claim={episode.claim} title={`${episode.name} Claim`} />
+              
               <h3 style={{ marginTop: '24px' }}>Lane Scorecards</h3>
               <div className="lanes-grid">
                 {epLanes.map(lane => (
@@ -187,17 +250,38 @@ export default function App() {
                       <span>{formatScore(lane.qualityMin)} - {formatScore(lane.qualityMax)}</span>
                     </div>
                     <div className="stat-row" style={{ marginTop: '12px' }}>
-                      <span>Hard Gates</span>
-                      <span className="stat-value">{lane.hardGatePassCount} / {lane.runCount}</span>
+                      <span>Hard Gates (Pass/Fail)</span>
+                      <span className="stat-value">{lane.hardGatePassCount} / {lane.hardGateFailCount}</span>
                     </div>
                     <div className="stat-row" style={{ marginTop: '12px' }}>
                       <span>Elapsed (Median)</span>
                       <span className="stat-value">{formatTime(lane.elapsedMedianSeconds)}</span>
                     </div>
-                    <div className="stat-row">
+                    <div className="stat-row" style={{ color: 'var(--muted-color)', fontSize: '12px' }}>
+                      <span>Range</span>
+                      <span>{formatTime(lane.elapsedMinSeconds)} - {formatTime(lane.elapsedMaxSeconds)}</span>
+                    </div>
+                    <div className="stat-row" style={{ marginTop: '12px' }}>
                       <span>Cost (Median)</span>
                       <span className="stat-value">{formatCost(lane.costMedianUsd)}</span>
                     </div>
+                    <div className="stat-row" style={{ color: 'var(--muted-color)', fontSize: '12px' }}>
+                      <span>Range</span>
+                      <span>{formatCost(lane.costMinUsd)} - {formatCost(lane.costMaxUsd)}</span>
+                    </div>
+                    
+                    {lane.specAuthoringEffortHours !== undefined && lane.specAuthoringEffortHours !== null && (
+                      <div className="stat-row" style={{ marginTop: '12px', borderTop: '1px solid var(--border-color)', paddingTop: '8px' }}>
+                        <span>Authoring Effort</span>
+                        <span className="stat-value">{lane.specAuthoringEffortHours}h</span>
+                      </div>
+                    )}
+                    {lane.amortizedSpecCostUsd !== undefined && lane.amortizedSpecCostUsd !== null && (
+                      <div className="stat-row">
+                        <span>Amortized Cost</span>
+                        <span className="stat-value">{formatCost(lane.amortizedSpecCostUsd)}</span>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -212,7 +296,7 @@ export default function App() {
                         <th>Lane</th>
                         <th>Model</th>
                         <th>Quality</th>
-                        <th>Hard Gate</th>
+                        <th>Status</th>
                         <th>Elapsed</th>
                         <th>Cost</th>
                       </tr>
