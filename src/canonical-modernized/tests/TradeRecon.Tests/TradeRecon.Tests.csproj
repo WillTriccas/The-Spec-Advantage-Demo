@@ -11,6 +11,7 @@
     <ProjectReference Include="..\..\src\TradeRecon.Domain\TradeRecon.Domain.csproj" />
     <ProjectReference Include="..\..\src\TradeRecon.Application\TradeRecon.Application.csproj" />
     <ProjectReference Include="..\..\src\TradeRecon.Infrastructure\TradeRecon.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\TradeRecon.Console\TradeRecon.Console.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="..\..\fixtures\*.csv" Link="fixtures\%(Filename)%(Extension)">

@@ -37,13 +37,14 @@
       "--fixtures",
       "{inputDirectory}",
       "--out",
-      "{outputDirectory}"
+      "{outputDirectory}",
+      "--json"
     ],
     "allowedExitCodes": [0, 2]
   },
   "outputs": [
     "{businessDate}/eod-summary.txt",
-    "{businessDate}/eod-break-register.csv"
+    "{businessDate}/eod-break-register.csv",
+    "{businessDate}/eod-result.json"
   ]
 }
-

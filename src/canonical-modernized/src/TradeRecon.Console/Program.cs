@@ -44,7 +44,16 @@ public static class Program
             return ExitClean;
         }
 
-        var options = CliOptions.Parse(args);
+        CliOptions options;
+        try
+        {
+            options = CliOptions.Parse(args);
+        }
+        catch (Exception ex) when (ex is FormatException or ArgumentException or PathTooLongException or NotSupportedException)
+        {
+            System.Console.Error.WriteLine($"Invalid arguments: {ex.Message}");
+            return ExitError;
+        }
 
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
@@ -131,22 +140,34 @@ public static class Program
             {
                 switch (args[i])
                 {
-                    case "--date" when i + 1 < args.Length:
-                        date = DateOnly.ParseExact(args[++i], "yyyy-MM-dd", CultureInfo.InvariantCulture);
+                    case "--date":
+                        date = DateOnly.ParseExact(NextValue(args, ref i, "--date"), "yyyy-MM-dd", CultureInfo.InvariantCulture);
                         break;
-                    case "--fixtures" when i + 1 < args.Length:
-                        fixtures = Path.GetFullPath(args[++i]);
+                    case "--fixtures":
+                        fixtures = Path.GetFullPath(NextValue(args, ref i, "--fixtures"));
                         break;
-                    case "--out" when i + 1 < args.Length:
-                        output = Path.GetFullPath(args[++i]);
+                    case "--out":
+                        output = Path.GetFullPath(NextValue(args, ref i, "--out"));
                         break;
                     case "--json":
                         json = true;
                         break;
+                    default:
+                        throw new ArgumentException($"Unknown argument '{args[i]}'.");
                 }
             }
 
             return new CliOptions(date, fixtures, output, json);
+        }
+
+        private static string NextValue(string[] args, ref int index, string option)
+        {
+            if (index + 1 >= args.Length || args[index + 1].StartsWith("--", StringComparison.Ordinal))
+            {
+                throw new ArgumentException($"Option {option} requires a value.");
+            }
+
+            return args[++index];
         }
     }
 }
