@@ -9,6 +9,7 @@ This subtree contains a synthetic .NET Framework 4.6.2-style batch reconciliatio
 | `LegacyTradeReconciliation\` | Batch application and sample data |
 | `tests\LegacyTradeReconciliation.CharacterizationTests\` | Public golden-master characterization tests and deterministic fixtures |
 | `LegacyTradeReconciliation.sln` | Visual Studio solution for the subtree |
+| `benchmark-adapter.json` | Stable, data-only build/test/run contract for the external evaluator |
 
 ## Build
 
@@ -68,3 +69,5 @@ The workload codifies several domain rules that a modernization effort would nee
 9. If more than one manual override targets a trade, only the first is applied and every later instruction is surfaced as a stale override rather than discarded.
 
 All fixture data is synthetic and intentionally unrealistic enough to avoid any production or customer sensitivity.
+
+Modernization agents may change the commands in `benchmark-adapter.json` as the toolchain changes, but must preserve its schema and the observable CLI/output contract.

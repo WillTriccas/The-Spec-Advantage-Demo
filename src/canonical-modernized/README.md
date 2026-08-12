@@ -96,6 +96,8 @@ demonstrates every break type alongside clean matches:
 
 Expected outcome with the console's default tolerances: **2 clean matches, 7 open breaks.**
 
+`benchmark-adapter.json` is the external evaluator's data-only build/test/run contract. Feature agents may update command details if needed but must preserve its schema and observable output contract.
+
 ## Build, run and test
 
 Requires the **.NET 8 SDK** (pinned via the repository `global.json`).
