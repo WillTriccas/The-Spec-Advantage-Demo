@@ -59,6 +59,7 @@ public sealed class ReconciliationRunner
 
         var summary = _reportBuilder.BuildSummary(result);
         var register = _reportBuilder.BuildBreakRegister(result);
+        var json = _reportBuilder.BuildJson(result);
 
         var summaryLocation = await _reportWriter
             .WriteAsync(businessDate, EndOfDayReportBuilder.SummaryReportName, summary, cancellationToken)
@@ -66,12 +67,16 @@ public sealed class ReconciliationRunner
         var registerLocation = await _reportWriter
             .WriteAsync(businessDate, EndOfDayReportBuilder.BreakRegisterReportName, register, cancellationToken)
             .ConfigureAwait(false);
+        var jsonLocation = await _reportWriter
+            .WriteAsync(businessDate, EndOfDayReportBuilder.JsonResultReportName, json, cancellationToken)
+            .ConfigureAwait(false);
 
         _logger.LogInformation(
-            "Completed reconciliation run for {BusinessDate}. Reports: {Summary}, {Register}.",
+            "Completed reconciliation run for {BusinessDate}. Reports: {Summary}, {Register}, {Json}.",
             businessDate,
             summaryLocation,
-            registerLocation);
+            registerLocation,
+            jsonLocation);
 
         return result;
     }

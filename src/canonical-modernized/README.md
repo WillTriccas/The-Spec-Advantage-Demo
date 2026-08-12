@@ -41,7 +41,7 @@ Key types:
 | Domain | `ReconciliationResult` | Deterministic per-date outcome (matches + breaks) |
 | Application | `IReconciliationEngine` / `ReconciliationEngine` | Pure matching + tolerance logic |
 | Application | `ReconciliationRunner` | Orchestrates load → override → reconcile → persist → report |
-| Application | `EndOfDayReportBuilder` | Renders the EOD summary and CSV break register |
+| Application | `EndOfDayReportBuilder` | Renders the EOD summary, CSV break register and JSON result |
 | Infrastructure | `CsvReconciliationBatchSource` | Loads inputs from CSV fixtures (async I/O) |
 | Infrastructure | `InMemory*` stores, `FileReportWriter` | Idempotent persistence + report output |
 
@@ -119,11 +119,91 @@ Optional arguments:
 --date <yyyy-MM-dd>   Business date to reconcile (default 2024-06-03)
 --fixtures <dir>      Directory containing trades.csv / settlements.csv / positions.csv
 --out <dir>           Output directory for EOD reports
+--json                Emit the deterministic JSON result to stdout (logs go to stderr)
+--help, -h            Print usage and exit 0
 ```
 
 The process exit code is `0` when the run is clean, `2` when breaks are outstanding, and
 `1` on a missing-fixture error. Reports are written to
 `<out>/<yyyy-MM-dd>/eod-summary.txt` and `eod-break-register.csv`.
+
+## CLI contract (for black-box evaluation)
+
+The console host is a stable, deterministic command-line contract so external harnesses can
+evaluate it purely through inputs, outputs and exit codes — no knowledge of the internal
+architecture is required.
+
+**Inputs** — a fixture directory (`--fixtures`, default `./fixtures` beside the binary)
+containing `trades.csv`, `settlements.csv` and `positions.csv`. Rows are filtered to the
+requested `--date` (default `2024-06-03`).
+
+**Outputs** — for each run, three artefacts are written to `--out/<yyyy-MM-dd>/`:
+
+| File | Format | Purpose |
+|------|--------|---------|
+| `eod-summary.txt` | text | Human-readable summary |
+| `eod-break-register.csv` | CSV | One row per break |
+| `eod-result.json` | JSON | Machine-readable result for evaluation |
+
+With `--json`, the same JSON document is also written to **stdout** and all diagnostic logs
+are routed to **stderr**, so stdout contains nothing but the JSON. Output is deterministic:
+identical inputs produce byte-identical `eod-result.json` and stdout across reruns.
+
+**Exit codes** (stable):
+
+| Code | Meaning |
+|------|---------|
+| `0` | Reconciliation clean — no open breaks |
+| `2` | Reconciliation completed, open breaks remain |
+| `1` | Input/processing error (missing directory, missing or malformed fixtures) |
+
+**Example (black-box):**
+
+```powershell
+dotnet run --project src/TradeRecon.Console -c Release -- --fixtures ./fixtures --out ./out --date 2024-06-03 --json > result.json
+echo $LASTEXITCODE   # 0 clean, 2 breaks, 1 error
+```
+
+### JSON result schema (`schemaVersion` `1.0`)
+
+Property names are camelCase; enum values serialise as their string names; numbers use
+invariant formatting.
+
+```jsonc
+{
+  "schemaVersion": "1.0",
+  "businessDate": "2024-06-03",
+  "status": "Clean" | "BreaksOutstanding",
+  "tradeCount": 7,
+  "settlementCount": 7,
+  "positionCount": 7,
+  "matchCount": 2,
+  "openBreakCount": 7,
+  "overriddenBreakCount": 0,
+  "openBreakCountsByType": { "MissingSettlement": 1, "QuantityMismatch": 1, "...": 1 },
+  "breaks": [
+    {
+      "breakKey": "20240603|QuantityMismatch|ACC002|DE0005140008|EUR|T003|S003",
+      "type": "QuantityMismatch",
+      "status": "Open" | "Overridden",
+      "account": "ACC002",
+      "instrument": "DE0005140008",
+      "currency": "EUR",
+      "tradeId": "T003",
+      "settlementId": "S003",
+      "difference": 100,
+      "detail": "Quantity differs by 100 (trade 2000, settlement 1900)."
+    }
+  ],
+  "matches": [
+    { "account": "ACC001", "instrument": "GB00B03MLX29", "currency": "GBP", "tradeId": "T001", "settlementId": "S001" }
+  ]
+}
+```
+
+`breakKey` is the stable identity of a break (see invariant 6) and is what an evaluator uses
+to assert on specific breaks or to feed a manual override. `difference`, `tradeId` and
+`settlementId` are nullable depending on break type.
 
 ## Input format
 
