@@ -16,8 +16,9 @@ namespace LegacyTradeReconciliation
             var matchedTrades = new List<MatchedTradeRecord>();
             var breakQueue = new List<BreakRecord>();
             var staleOverrides = new List<ManualOverrideRecord>();
-            var overrideMap = overrides.GroupBy(record => Normalize(record.TradeId), StringComparer.Ordinal)
-                .ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
+            var overrideGroups = overrides.GroupBy(record => Normalize(record.TradeId), StringComparer.Ordinal).ToList();
+            var overrideMap = overrideGroups.ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
+            staleOverrides.AddRange(overrideGroups.SelectMany(group => group.Skip(1)));
 
             var positionsByPair = positions
                 .GroupBy(position => BuildPairKey(position.Account, position.Instrument), StringComparer.Ordinal)

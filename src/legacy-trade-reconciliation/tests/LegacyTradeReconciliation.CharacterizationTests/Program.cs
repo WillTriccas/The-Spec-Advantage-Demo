@@ -10,6 +10,7 @@ namespace LegacyTradeReconciliation.CharacterizationTests
         {
             RunTest("baseline-golden-master", RunBaselineGoldenMaster);
             RunTest("override-and-rerun", RunOverrideAndRerun);
+            RunTest("duplicate-overrides-are-audited", RunDuplicateOverridesAreAudited);
             Console.WriteLine("All characterization tests passed.");
             return 0;
         }
@@ -55,6 +56,30 @@ namespace LegacyTradeReconciliation.CharacterizationTests
             AssertEqual("ledger rerun should stay identical", firstLedger, File.ReadAllText(Path.Combine(outputDirectory, "run-ledger.csv")));
         }
 
+        private static void RunDuplicateOverridesAreAudited()
+        {
+            string fixtureRoot = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Fixtures", "override-rerun");
+            string workingRoot = PrepareOutputDirectory("duplicate-overrides-input");
+            string inputDirectory = Path.Combine(workingRoot, "input");
+            string outputDirectory = PrepareOutputDirectory("duplicate-overrides-output");
+            Directory.CreateDirectory(inputDirectory);
+
+            foreach (string fileName in new[] { "trades.csv", "positions.csv", "settlements.csv", "overrides.csv" })
+            {
+                File.Copy(Path.Combine(fixtureRoot, "input", fileName), Path.Combine(inputDirectory, fileName));
+            }
+
+            File.AppendAllText(
+                Path.Combine(inputDirectory, "overrides.csv"),
+                "T-1003,ForceMatch,Superseded duplicate instruction,ops-manager" + Environment.NewLine);
+
+            ExecuteBatch(workingRoot, outputDirectory);
+
+            string report = File.ReadAllText(Path.Combine(outputDirectory, "end-of-day-report.txt"));
+            AssertContains("duplicate override count", report, "Stale Overrides: 1");
+            AssertContains("duplicate override audit detail", report, "T-1003: ForceMatch (ops-manager)");
+        }
+
         private static void ExecuteBatch(string fixtureRoot, string outputDirectory)
         {
             int exitCode = new ReconciliationBatch().Run(new[]
@@ -96,6 +121,14 @@ namespace LegacyTradeReconciliation.CharacterizationTests
                     expected + Environment.NewLine +
                     "Actual:" + Environment.NewLine +
                     actual);
+            }
+        }
+
+        private static void AssertContains(string label, string actual, string expectedFragment)
+        {
+            if (actual.IndexOf(expectedFragment, StringComparison.Ordinal) < 0)
+            {
+                throw new InvalidOperationException(label + " missing expected text: " + expectedFragment);
             }
         }
 

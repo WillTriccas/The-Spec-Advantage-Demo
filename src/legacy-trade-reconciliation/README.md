@@ -65,5 +65,6 @@ The workload codifies several domain rules that a modernization effort would nee
 6. Manual overrides may only resolve breaks that already have concrete counterpart candidates; they cannot manufacture missing records.
 7. Suppressed breaks leave an audit trail in `matched-trades.csv` instead of disappearing silently.
 8. Exact-input reruns for the same business date are idempotent: outputs are not duplicated and the ledger does not gain duplicate entries.
+9. If more than one manual override targets a trade, only the first is applied and every later instruction is surfaced as a stale override rather than discarded.
 
 All fixture data is synthetic and intentionally unrealistic enough to avoid any production or customer sensitivity.
