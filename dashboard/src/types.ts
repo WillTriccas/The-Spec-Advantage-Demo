@@ -4,16 +4,12 @@ export type DrivingMetric = "cost" | "tokens" | "elapsed" | "unavailable";
 export type HeadlineStatus = "supported" | "inconclusive" | "not-supported" | "not-evaluated";
 
 export type ClaimDetail = {
-  headline: HeadlineStatus;
+  status: HeadlineStatus;
   qualityVerdict: Verdict;
   efficiencyVerdict: EfficiencyVerdict;
   drivingMetric: DrivingMetric;
-  qualityDeltaMin?: number | null;
-  qualityDeltaMax?: number | null;
-  qualityDeltaMedian?: number | null;
-  costSavingPercentMin?: number | null;
-  costSavingPercentMax?: number | null;
-  costSavingPercentMedian?: number | null;
+  qualityDelta?: number | null;
+  costSavingPercent?: number | null;
   message: string;
 };
 
@@ -30,25 +26,31 @@ export type HardGate = {
   id: string;
   applicable: boolean;
   status: "passed" | "failed" | "not-applicable";
-  reason?: string;
+  reason?: string | null;
 };
 
 export type Run = {
   runId: string;
+  dataKind: "illustrative" | "measured";
   laneId: string;
   modelDisplayName: string;
   inputMode: "raw" | "spec";
   repetition: number;
   status: "completed" | "failed" | "timed-out" | "cancelled";
   qualityScore: number;
-  dataKind: "illustrative" | "measured";
   hardGates: HardGate[];
+  hardGatesPassed: boolean;
   scores: ScoreBreakdown;
   elapsedSeconds: number;
+  productiveSeconds?: number | null;
+  queueSeconds?: number | null;
   toolCalls: number;
   inputTokens?: number | null;
+  cachedInputTokens?: number | null;
   outputTokens?: number | null;
+  reasoningTokens?: number | null;
   estimatedCostUsd?: number | null;
+  specAuthoringAmortizedCostUsd?: number | null;
   evidencePath: string;
 };
 
@@ -62,14 +64,10 @@ export type LaneSummary = {
   hardGatePassCount: number;
   hardGateFailCount: number;
   runCount: number;
-  elapsedMinSeconds?: number;
   elapsedMedianSeconds: number;
-  elapsedMaxSeconds?: number;
-  costMinUsd?: number | null;
-  costMedianUsd: number | null;
-  costMaxUsd?: number | null;
-  specAuthoringEffortHours?: number | null;
-  amortizedSpecCostUsd?: number | null;
+  productiveMedianSeconds?: number | null;
+  tokenMedian?: number | null;
+  costMedianUsd?: number | null;
 };
 
 export type Episode = {
@@ -88,7 +86,14 @@ export type Report = {
     dataKind: "illustrative" | "measured";
     repetitionsPerLane: number;
     pricingAsOf?: string | null;
-    frozenHash?: string;
+    rateType: "list" | "negotiated" | "internal-chargeback" | "unavailable";
+    frozenInputs: {
+      freezeRecordSha256?: string | null;
+      evaluatorSha256: string;
+      scoringConfigSha256: string;
+      claimRule: any;
+    };
+    frozenVersions: string[];
   };
   overallClaim: ClaimDetail;
   episodes: Episode[];

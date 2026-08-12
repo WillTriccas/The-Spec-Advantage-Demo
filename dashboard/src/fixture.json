@@ -5,30 +5,34 @@
     "generatedAt": "2026-08-12T17:00:00Z",
     "dataKind": "illustrative",
     "repetitionsPerLane": 3,
-    "frozenHash": "abc123def456xyz"
+    "rateType": "list",
+    "frozenInputs": {
+      "evaluatorSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "scoringConfigSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "claimRule": {}
+    },
+    "frozenVersions": ["v1", "v2"]
   },
   "overallClaim": {
-    "headline": "inconclusive",
+    "status": "inconclusive",
     "qualityVerdict": "indeterminate",
     "efficiencyVerdict": "unavailable",
     "drivingMetric": "unavailable",
-    "message": "Overall results are inconclusive due to a weaker episode."
+    "message": "Overall results are inconclusive due to a weaker episode.",
+    "qualityDelta": null,
+    "costSavingPercent": null
   },
   "episodes": [
     {
       "id": "modernization",
       "name": "Modernization",
       "claim": {
-        "headline": "supported",
+        "status": "supported",
         "qualityVerdict": "better",
         "efficiencyVerdict": "better",
         "drivingMetric": "cost",
-        "qualityDeltaMin": 15.0,
-        "qualityDeltaMedian": 25.5,
-        "qualityDeltaMax": 30.0,
-        "costSavingPercentMin": 10.0,
-        "costSavingPercentMedian": 40.0,
-        "costSavingPercentMax": 60.0,
+        "qualityDelta": 25.5,
+        "costSavingPercent": 40.0,
         "message": "Significant quality and cost improvements in Modernization."
       },
       "laneSummaries": [
@@ -42,14 +46,10 @@
           "hardGatePassCount": 3,
           "hardGateFailCount": 0,
           "runCount": 3,
-          "elapsedMinSeconds": 10.0,
           "elapsedMedianSeconds": 12.5,
-          "elapsedMaxSeconds": 15.0,
-          "costMinUsd": 0.04,
           "costMedianUsd": 0.05,
-          "costMaxUsd": 0.06,
-          "specAuthoringEffortHours": 2.5,
-          "amortizedSpecCostUsd": 150.0
+          "productiveMedianSeconds": 10.0,
+          "tokenMedian": 500
         },
         {
           "laneId": "generate",
@@ -61,12 +61,10 @@
           "hardGatePassCount": 1,
           "hardGateFailCount": 2,
           "runCount": 3,
-          "elapsedMinSeconds": 15.0,
           "elapsedMedianSeconds": 18.0,
-          "elapsedMaxSeconds": 25.0,
-          "costMinUsd": null,
           "costMedianUsd": null,
-          "costMaxUsd": null
+          "productiveMedianSeconds": null,
+          "tokenMedian": null
         }
       ],
       "runs": [
@@ -80,9 +78,10 @@
           "dataKind": "illustrative",
           "qualityScore": 85.5,
           "hardGates": [
-            { "id": "compile", "applicable": true, "status": "passed" },
-            { "id": "test", "applicable": true, "status": "passed" }
+            { "id": "compile", "applicable": true, "status": "passed", "reason": null },
+            { "id": "test", "applicable": true, "status": "passed", "reason": null }
           ],
+          "hardGatesPassed": true,
           "scores": {
             "functionalCorrectness": 90,
             "behaviorPreservation": 85,
@@ -92,9 +91,16 @@
             "scopeTraceability": 90
           },
           "elapsedSeconds": 12.5,
+          "productiveSeconds": 10.0,
+          "queueSeconds": 2.5,
           "toolCalls": 5,
+          "inputTokens": 100,
+          "cachedInputTokens": 0,
+          "outputTokens": 400,
+          "reasoningTokens": 0,
           "evidencePath": "/evidence/run-1.json",
-          "estimatedCostUsd": 0.05
+          "estimatedCostUsd": 0.05,
+          "specAuthoringAmortizedCostUsd": 150.0
         },
         {
           "runId": "run-2",
@@ -108,6 +114,7 @@
           "hardGates": [
             { "id": "compile", "applicable": true, "status": "failed", "reason": "Syntax error" }
           ],
+          "hardGatesPassed": false,
           "scores": {
             "functionalCorrectness": 0,
             "behaviorPreservation": 0,
@@ -117,8 +124,16 @@
             "scopeTraceability": 0
           },
           "elapsedSeconds": 18.0,
+          "productiveSeconds": null,
+          "queueSeconds": null,
           "toolCalls": 0,
-          "evidencePath": "/evidence/run-2.json"
+          "inputTokens": null,
+          "cachedInputTokens": null,
+          "outputTokens": null,
+          "reasoningTokens": null,
+          "evidencePath": "/evidence/run-2.json",
+          "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null
         }
       ]
     },
@@ -126,10 +141,12 @@
       "id": "audit-feature",
       "name": "Audit Feature",
       "claim": {
-        "headline": "inconclusive",
+        "status": "inconclusive",
         "qualityVerdict": "indeterminate",
         "efficiencyVerdict": "unavailable",
         "drivingMetric": "unavailable",
+        "qualityDelta": null,
+        "costSavingPercent": null,
         "message": "Fails to meet baseline due to inconsistent generation."
       },
       "laneSummaries": [
@@ -143,14 +160,10 @@
           "hardGatePassCount": 0,
           "hardGateFailCount": 3,
           "runCount": 3,
-          "elapsedMinSeconds": 5.0,
           "elapsedMedianSeconds": 10.0,
-          "elapsedMaxSeconds": 15.0,
-          "costMinUsd": 0.01,
           "costMedianUsd": 0.02,
-          "costMaxUsd": 0.03,
-          "specAuthoringEffortHours": 1.0,
-          "amortizedSpecCostUsd": 60.0
+          "productiveMedianSeconds": 8.0,
+          "tokenMedian": 200
         }
       ],
       "runs": [
@@ -166,6 +179,7 @@
           "hardGates": [
             { "id": "compile", "applicable": true, "status": "failed", "reason": "Syntax error" }
           ],
+          "hardGatesPassed": false,
           "scores": {
             "functionalCorrectness": 40,
             "behaviorPreservation": 40,
@@ -175,9 +189,16 @@
             "scopeTraceability": 40
           },
           "elapsedSeconds": 10.0,
+          "productiveSeconds": 8.0,
+          "queueSeconds": 2.0,
           "toolCalls": 2,
+          "inputTokens": 50,
+          "cachedInputTokens": 0,
+          "outputTokens": 150,
+          "reasoningTokens": 0,
           "evidencePath": "/evidence/run-3.json",
-          "estimatedCostUsd": 0.02
+          "estimatedCostUsd": 0.02,
+          "specAuthoringAmortizedCostUsd": 60.0
         }
       ]
     }

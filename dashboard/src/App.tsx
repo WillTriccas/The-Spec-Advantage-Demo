@@ -8,7 +8,7 @@ const formatCost = (cost: number | null | undefined) => {
   return `$${cost.toFixed(4)}`;
 };
 
-const formatTime = (secs: number | undefined) => secs !== undefined ? `${secs.toFixed(1)}s` : 'N/A';
+const formatTime = (secs: number | undefined | null) => secs !== undefined && secs !== null ? `${secs.toFixed(1)}s` : 'N/A';
 const formatScore = (score: number) => `${score.toFixed(1)}%`;
 
 const StatusIcon = ({ status }: { status: string }) => {
@@ -24,8 +24,8 @@ const ClaimCard = ({ claim, title, isOverall }: { claim: ClaimDetail; title: str
   return (
     <section className="claim-card" style={isOverall ? { borderLeftWidth: '10px' } : {}}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-        <StatusIcon status={claim.headline} />
-        <h2>{title}: {claim.headline.toUpperCase()}</h2>
+        <StatusIcon status={claim.status} />
+        <h2>{title}: {claim.status.toUpperCase()}</h2>
       </div>
       <p style={{ fontSize: '16px', margin: '0 0 12px 0' }}>{claim.message}</p>
       
@@ -34,25 +34,15 @@ const ClaimCard = ({ claim, title, isOverall }: { claim: ClaimDetail; title: str
         <div><strong>Efficiency Verdict:</strong> {claim.efficiencyVerdict}</div>
         <div><strong>Driving Metric:</strong> {claim.drivingMetric}</div>
         
-        {claim.qualityDeltaMedian !== undefined && claim.qualityDeltaMedian !== null && (
+        {claim.qualityDelta !== undefined && claim.qualityDelta !== null && (
           <div>
-            <strong>Quality Delta:</strong> {claim.qualityDeltaMedian > 0 ? '+' : ''}{claim.qualityDeltaMedian}%
-            {claim.qualityDeltaMin !== undefined && claim.qualityDeltaMax !== undefined && (
-              <span style={{ fontSize: '12px', color: 'var(--muted-color)', marginLeft: '4px' }}>
-                [{claim.qualityDeltaMin}% to {claim.qualityDeltaMax}%]
-              </span>
-            )}
+            <strong>Quality Delta:</strong> {claim.qualityDelta > 0 ? '+' : ''}{claim.qualityDelta}%
           </div>
         )}
         
-        {claim.costSavingPercentMedian !== undefined && claim.costSavingPercentMedian !== null && (
+        {claim.costSavingPercent !== undefined && claim.costSavingPercent !== null && (
           <div>
-            <strong>Cost Saving:</strong> {claim.costSavingPercentMedian}%
-            {claim.costSavingPercentMin !== undefined && claim.costSavingPercentMax !== undefined && (
-              <span style={{ fontSize: '12px', color: 'var(--muted-color)', marginLeft: '4px' }}>
-                [{claim.costSavingPercentMin}% to {claim.costSavingPercentMax}%]
-              </span>
-            )}
+            <strong>Cost Saving:</strong> {claim.costSavingPercent}%
           </div>
         )}
       </div>
@@ -78,7 +68,6 @@ const HardGatesDisplay = ({ gates }: { gates: HardGate[] }) => {
 
 const RunRow = ({ run }: { run: Run }) => {
   const [expanded, setExpanded] = useState(false);
-  // Failed/timed-out/cancelled runs should score 0 - handled in data but visually good to note
   const isFailed = run.status !== 'completed';
   
   return (
@@ -93,9 +82,7 @@ const RunRow = ({ run }: { run: Run }) => {
         <td>{run.laneId}</td>
         <td>{run.modelDisplayName}</td>
         <td>{formatScore(run.qualityScore)}</td>
-        <td>
-          {run.status}
-        </td>
+        <td>{run.status}</td>
         <td>{formatTime(run.elapsedSeconds)}</td>
         <td>{formatCost(run.estimatedCostUsd)}</td>
       </tr>
@@ -163,9 +150,9 @@ export default function App() {
               <span style={{ fontSize: '12px', color: 'var(--muted-color)' }}>
                 Generated: {new Date(metadata.generatedAt).toLocaleString()}
               </span>
-              {metadata.frozenHash && (
+              {metadata.frozenInputs?.evaluatorSha256 && (
                 <span style={{ fontSize: '12px', color: 'var(--muted-color)' }}>
-                  Hash: {metadata.frozenHash.substring(0,8)}...
+                  Evaluator Hash: {metadata.frozenInputs.evaluatorSha256.substring(0,8)}...
                 </span>
               )}
             </div>
@@ -257,31 +244,10 @@ export default function App() {
                       <span>Elapsed (Median)</span>
                       <span className="stat-value">{formatTime(lane.elapsedMedianSeconds)}</span>
                     </div>
-                    <div className="stat-row" style={{ color: 'var(--muted-color)', fontSize: '12px' }}>
-                      <span>Range</span>
-                      <span>{formatTime(lane.elapsedMinSeconds)} - {formatTime(lane.elapsedMaxSeconds)}</span>
-                    </div>
                     <div className="stat-row" style={{ marginTop: '12px' }}>
                       <span>Cost (Median)</span>
                       <span className="stat-value">{formatCost(lane.costMedianUsd)}</span>
                     </div>
-                    <div className="stat-row" style={{ color: 'var(--muted-color)', fontSize: '12px' }}>
-                      <span>Range</span>
-                      <span>{formatCost(lane.costMinUsd)} - {formatCost(lane.costMaxUsd)}</span>
-                    </div>
-                    
-                    {lane.specAuthoringEffortHours !== undefined && lane.specAuthoringEffortHours !== null && (
-                      <div className="stat-row" style={{ marginTop: '12px', borderTop: '1px solid var(--border-color)', paddingTop: '8px' }}>
-                        <span>Authoring Effort</span>
-                        <span className="stat-value">{lane.specAuthoringEffortHours}h</span>
-                      </div>
-                    )}
-                    {lane.amortizedSpecCostUsd !== undefined && lane.amortizedSpecCostUsd !== null && (
-                      <div className="stat-row">
-                        <span>Amortized Cost</span>
-                        <span className="stat-value">{formatCost(lane.amortizedSpecCostUsd)}</span>
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>
