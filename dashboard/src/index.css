@@ -1,53 +1,62 @@
 :root {
-  /* Clawpilot theme vars */
-  --cp-bg-light: #fcfbf9;
-  --cp-bg-dark: #222222;
-  --cp-text-light: #222222;
-  --cp-text-dark: #fcfbf9;
-  --cp-accent: #c42f4c;
-  --cp-muted-light: #e5e3de;
-  --cp-muted-dark: #3a3a3a;
-  --cp-border-light: #d1cfc9;
-  --cp-border-dark: #4a4a4a;
-  --cp-radius-sm: 10px;
-  --cp-radius-lg: 16px;
-  --cp-shadow-light: 0 4px 12px rgba(0, 0, 0, 0.05);
-  --cp-shadow-dark: 0 4px 12px rgba(0, 0, 0, 0.2);
-  --cp-font: 'Segoe UI', Aptos, Calibri, sans-serif;
-  --cp-lane-bg-light: #f4f2ec;
-  --cp-lane-bg-dark: #2b2b2b;
-  --cp-danger: #d93025;
-  --cp-success: #1e8e3e;
-  --cp-warning: #f29900;
-  --cp-bg-illustrative-light: #fff9e6;
-  --cp-bg-illustrative-dark: #362f1c;
+  color-scheme: light;
+  --cp-bg: #f7f4ef;
+  --cp-bg-elevated: #fcfbf8;
+  --cp-surface: #ffffff;
+  --cp-surface-soft: #f5f5f5;
+  --cp-border: #dedede;
+  --cp-border-strong: #919191;
+  --cp-text: #242424;
+  --cp-text-muted: #5c5c5c;
+  --cp-text-soft: #6f6f6f;
+  --cp-accent: #b11f4b;
+  --cp-accent-hover: #9a1a41;
+  --cp-accent-soft: rgba(177, 31, 75, 0.08);
+  --cp-accent-fg: #ffffff;
+  --cp-success: #16a34a;
+  --cp-danger: #dc2626;
+  --cp-warning: #f59e0b;
+  --cp-link: #0078d4;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+  --cp-overlay: rgba(255, 255, 255, 0.8);
+  --cp-panel: rgba(255, 255, 255, 0.86);
+  --cp-panel-strong: rgba(255, 255, 255, 0.96);
+  --cp-sheen: rgba(255, 255, 255, 0.55);
+  --cp-highlight: rgba(177, 31, 75, 0.12);
 }
 
-[data-theme="light"] {
-  --bg-color: var(--cp-bg-light);
-  --text-color: var(--cp-text-light);
-  --muted-color: var(--cp-muted-light);
-  --border-color: var(--cp-border-light);
-  --shadow: var(--cp-shadow-light);
-  --lane-bg: var(--cp-lane-bg-light);
-  --bg-illustrative: var(--cp-bg-illustrative-light);
-}
-
-[data-theme="dark"] {
-  --bg-color: var(--cp-bg-dark);
-  --text-color: var(--cp-text-dark);
-  --muted-color: var(--cp-muted-dark);
-  --border-color: var(--cp-border-dark);
-  --shadow: var(--cp-shadow-dark);
-  --lane-bg: var(--cp-lane-bg-dark);
-  --bg-illustrative: var(--cp-bg-illustrative-dark);
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --cp-bg: #3d3b3a;
+  --cp-bg-elevated: #343231;
+  --cp-surface: #292929;
+  --cp-surface-soft: #2e2e2e;
+  --cp-border: #474747;
+  --cp-border-strong: #5f5f5f;
+  --cp-text: #dedede;
+  --cp-text-muted: #919191;
+  --cp-text-soft: #b0b0b0;
+  --cp-accent: #fd8ea1;
+  --cp-accent-hover: #fb7b91;
+  --cp-accent-soft: rgba(253, 142, 161, 0.14);
+  --cp-accent-fg: #1a1a1a;
+  --cp-success: #4ade80;
+  --cp-danger: #f87171;
+  --cp-warning: #fbbf24;
+  --cp-link: #4da6ff;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+  --cp-overlay: rgba(41, 41, 41, 0.88);
+  --cp-panel: rgba(41, 41, 41, 0.72);
+  --cp-panel-strong: rgba(41, 41, 41, 0.96);
+  --cp-sheen: rgba(255, 255, 255, 0.04);
+  --cp-highlight: rgba(253, 142, 161, 0.12);
 }
 
 body {
   margin: 0;
-  font-family: var(--cp-font);
-  background-color: var(--bg-color);
-  color: var(--text-color);
+  font-family: "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--cp-bg);
+  color: var(--cp-text);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -57,7 +66,7 @@ body {
 
 .illustrative-banner {
   background-color: var(--cp-warning);
-  color: #fff;
+  color: var(--cp-text);
   text-align: center;
   padding: 8px;
   font-weight: bold;
@@ -84,29 +93,30 @@ body {
 .badge {
   display: inline-block;
   padding: 4px 8px;
-  border-radius: var(--cp-radius-sm);
+  border-radius: 10px;
   font-size: 12px;
   font-weight: bold;
   text-transform: uppercase;
 }
 
 .badge.illustrative {
-  background-color: var(--bg-illustrative);
-  color: var(--cp-warning);
-  border: 1px solid var(--cp-warning);
+  background-color: var(--cp-warning);
+  color: var(--cp-text);
+  border: 1px solid var(--cp-border);
 }
 
 .badge.measured {
-  background-color: var(--muted-color);
-  color: var(--text-color);
+  background-color: var(--cp-surface-soft);
+  color: var(--cp-text);
+  border: 1px solid var(--cp-border);
 }
 
 .card {
-  background: var(--bg-color);
-  border: 1px solid var(--border-color);
-  border-radius: var(--cp-radius-lg);
+  background: var(--cp-surface);
+  border: 1px solid var(--cp-border);
+  border-radius: 16px;
   padding: 16px;
-  box-shadow: var(--shadow);
+  box-shadow: 0 0 2px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.14);
 }
 
 .filters {
@@ -124,34 +134,34 @@ body {
 
 .filter-group select {
   padding: 8px;
-  border-radius: var(--cp-radius-sm);
-  border: 1px solid var(--border-color);
-  background: var(--bg-color);
-  color: var(--text-color);
-  font-family: var(--cp-font);
+  border-radius: 10px;
+  border: 1px solid var(--cp-border);
+  background: var(--cp-surface);
+  color: var(--cp-text);
+  font-family: inherit;
 }
 
 .view-toggle {
   display: flex;
   gap: 8px;
-  background: var(--muted-color);
+  background: var(--cp-surface-soft);
   padding: 4px;
-  border-radius: var(--cp-radius-sm);
+  border-radius: 10px;
 }
 
 .view-toggle button {
   padding: 6px 12px;
   border: none;
   background: transparent;
-  color: var(--text-color);
+  color: var(--cp-text);
   cursor: pointer;
-  border-radius: var(--cp-radius-sm);
-  font-family: var(--cp-font);
+  border-radius: 10px;
+  font-family: inherit;
 }
 
 .view-toggle button.active {
-  background: var(--bg-color);
-  box-shadow: var(--shadow);
+  background: var(--cp-surface);
+  box-shadow: 0 0 2px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.14);
   font-weight: bold;
 }
 
@@ -163,16 +173,17 @@ body {
 }
 
 .lane-card {
-  background: var(--lane-bg);
-  border-radius: var(--cp-radius-lg);
+  background: var(--cp-surface-soft);
+  border-radius: 16px;
   padding: 16px;
+  border: 1px solid var(--cp-border);
 }
 
 .lane-card h3 {
   margin-top: 0;
   margin-bottom: 12px;
   font-size: 16px;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--cp-border);
   padding-bottom: 8px;
 }
 
@@ -195,11 +206,11 @@ body {
 .runs-table th, .runs-table td {
   padding: 12px;
   text-align: left;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--cp-border);
 }
 
 .runs-table th {
-  background: var(--muted-color);
+  background: var(--cp-surface-soft);
   font-weight: bold;
 }
 
@@ -212,10 +223,9 @@ body {
 }
 
 .claim-card {
-  background: var(--bg-color);
+  background: var(--cp-surface);
   border: 1px solid var(--cp-accent);
-  border-left: 6px solid var(--cp-accent);
-  border-radius: var(--cp-radius-sm);
+  border-radius: 10px;
   padding: 16px;
   margin-bottom: 24px;
 }
@@ -225,16 +235,15 @@ body {
   color: var(--cp-accent);
 }
 
-/* Specific status colors */
 .status-supported { color: var(--cp-success); font-weight: bold; }
 .status-not-supported { color: var(--cp-danger); font-weight: bold; }
 .status-inconclusive { color: var(--cp-warning); font-weight: bold; }
-.status-not-evaluated { color: var(--text-color); font-weight: bold; }
+.status-not-evaluated { color: var(--cp-text); font-weight: bold; }
 
 .run-details {
-  background: var(--muted-color);
+  background: var(--cp-surface-soft);
   padding: 12px;
-  border-radius: var(--cp-radius-sm);
+  border-radius: 10px;
   margin-top: 8px;
   font-size: 14px;
 }

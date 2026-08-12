@@ -59,7 +59,7 @@ const HardGatesDisplay = ({ gates }: { gates: HardGate[] }) => {
           <span className={g.status === 'passed' ? 'hard-gate-pass' : g.status === 'failed' ? 'hard-gate-fail' : ''}>
             {g.id}: {g.status}
           </span>
-          {g.reason && <span style={{ fontSize: '12px', color: 'var(--muted-color)' }}>({g.reason})</span>}
+          {g.reason && <span style={{ fontSize: '12px', color: 'var(--cp-text-muted)' }}>({g.reason})</span>}
         </div>
       ))}
     </div>
@@ -147,11 +147,11 @@ export default function App() {
                 {metadata.dataKind.toUpperCase()}
               </span>
               <span className="badge measured">v{metadata.benchmarkVersion}</span>
-              <span style={{ fontSize: '12px', color: 'var(--muted-color)' }}>
+              <span style={{ fontSize: '12px', color: 'var(--cp-text-muted)' }}>
                 Generated: {new Date(metadata.generatedAt).toLocaleString()}
               </span>
               {metadata.frozenInputs?.evaluatorSha256 && (
-                <span style={{ fontSize: '12px', color: 'var(--muted-color)' }}>
+                <span style={{ fontSize: '12px', color: 'var(--cp-text-muted)' }}>
                   Evaluator Hash: {metadata.frozenInputs.evaluatorSha256.substring(0,8)}...
                 </span>
               )}
@@ -217,7 +217,7 @@ export default function App() {
 
           return (
             <div key={episode.id} style={{ marginBottom: '40px' }}>
-              <h2 style={{ borderBottom: '2px solid var(--border-color)', paddingBottom: '8px' }}>
+              <h2 style={{ borderBottom: '2px solid var(--cp-border)', paddingBottom: '8px' }}>
                 Episode: {episode.name}
               </h2>
               
@@ -227,12 +227,12 @@ export default function App() {
               <div className="lanes-grid">
                 {epLanes.map(lane => (
                   <div key={`${lane.laneId}-${lane.modelDisplayName}`} className="lane-card">
-                    <h3 data-testid="lane-header">{lane.laneId.toUpperCase()} <span style={{ fontWeight: 'normal', color: 'var(--muted-color)', fontSize: '14px' }}>({lane.modelDisplayName})</span></h3>
+                    <h3 data-testid="lane-header">{lane.laneId.toUpperCase()} <span style={{ fontWeight: 'normal', color: 'var(--cp-text-muted)', fontSize: '14px' }}>({lane.modelDisplayName})</span></h3>
                     <div className="stat-row">
                       <span>Quality (Median)</span>
                       <span className="stat-value">{formatScore(lane.qualityMedian)}</span>
                     </div>
-                    <div className="stat-row" style={{ color: 'var(--muted-color)', fontSize: '12px' }}>
+                    <div className="stat-row" style={{ color: 'var(--cp-text-muted)', fontSize: '12px' }}>
                       <span>Range</span>
                       <span>{formatScore(lane.qualityMin)} - {formatScore(lane.qualityMax)}</span>
                     </div>
