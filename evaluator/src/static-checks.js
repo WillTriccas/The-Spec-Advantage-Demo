@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { TIMEOUTS_MS } from './constants.js';
 import { spawnCommand } from './commands.js';
+import { tryParseJson } from './json.js';
 import { toPosixRelative } from './paths.js';
 
 const TEXT_EXTENSIONS = new Set([
@@ -59,8 +60,12 @@ export async function runStaticChecks(candidateRoot, dotnetPath) {
   }
 
   const dependencyAuditCommands = await runDependencyAuditCommands(candidateRoot, dotnetPath);
+  const dependencyFindings = dependencyAuditCommands.flatMap((command) => parseDependencyFindings(command));
+  findings.push(...dependencyFindings);
   const criticalFindings = findings.filter((finding) => finding.severity === 'critical').length;
+  const blockingFindings = findings.filter((finding) => finding.severity === 'critical' || (finding.source === 'dependency-audit' && finding.severity === 'high')).length;
   return {
+    blockingFindings,
     criticalFindings,
     findings: findings.sort((a, b) => `${a.severity}:${a.ruleId}:${a.path}`.localeCompare(`${b.severity}:${b.ruleId}:${b.path}`)),
     dependencyAuditCommands
@@ -103,6 +108,7 @@ async function runDependencyAuditCommands(candidateRoot, dotnetPath) {
       id: 'dotnet-list-package-vulnerable',
       exitCode: result.exitCode,
       timedOut: result.timedOut,
+      kind: 'dotnet',
       stdout: result.stdout,
       stderr: result.stderr
     });
@@ -119,12 +125,111 @@ async function runDependencyAuditCommands(candidateRoot, dotnetPath) {
       id: 'npm-audit-json',
       exitCode: result.exitCode,
       timedOut: result.timedOut,
+      kind: 'npm',
       stdout: result.stdout,
       stderr: result.stderr
     });
   }
 
   return commands;
+}
+
+export function parseDependencyFindings(command) {
+  if (!command || command.timedOut) {
+    return [];
+  }
+  if (command.kind === 'npm' || command.id === 'npm-audit-json') {
+    return parseNpmAuditFindings(command.stdout);
+  }
+  if (command.kind === 'dotnet' || command.id === 'dotnet-list-package-vulnerable') {
+    return parseDotnetVulnerabilityFindings(command.stdout);
+  }
+  return [];
+}
+
+export function parseNpmAuditFindings(stdout) {
+  const parsed = tryParseJson(stdout);
+  if (!parsed || typeof parsed !== 'object') {
+    return [];
+  }
+
+  const findings = [];
+  if (parsed.vulnerabilities && typeof parsed.vulnerabilities === 'object') {
+    for (const [packageName, vulnerability] of Object.entries(parsed.vulnerabilities)) {
+      const severity = normalizeSeverity(vulnerability?.severity);
+      if (isBlockingDependencySeverity(severity)) {
+        findings.push({
+          ruleId: 'npm-audit-vulnerability',
+          severity,
+          source: 'dependency-audit',
+          package: packageName,
+          path: 'package-lock.json',
+          via: Array.isArray(vulnerability?.via) ? vulnerability.via.map((item) => typeof item === 'string' ? item : item?.title).filter(Boolean).sort() : []
+        });
+      }
+    }
+  }
+
+  if (parsed.advisories && typeof parsed.advisories === 'object') {
+    for (const advisory of Object.values(parsed.advisories)) {
+      const severity = normalizeSeverity(advisory?.severity);
+      if (isBlockingDependencySeverity(severity)) {
+        findings.push({
+          ruleId: 'npm-audit-advisory',
+          severity,
+          source: 'dependency-audit',
+          package: advisory?.module_name ?? advisory?.name ?? 'unknown',
+          path: 'package-lock.json',
+          via: [advisory?.title].filter(Boolean)
+        });
+      }
+    }
+  }
+
+  return dedupeFindings(findings);
+}
+
+export function parseDotnetVulnerabilityFindings(stdout) {
+  const findings = [];
+  for (const line of String(stdout ?? '').split(/\r?\n/)) {
+    const severityMatch = line.match(/\b(Critical|High|Moderate|Low)\b/i);
+    if (!severityMatch) {
+      continue;
+    }
+    const severity = normalizeSeverity(severityMatch[1]);
+    if (!isBlockingDependencySeverity(severity)) {
+      continue;
+    }
+    const packageMatch = line.match(/^\s*[>\s]*(?:Top-level|Transitive)?\s*([A-Za-z0-9_.-]+)\s+/i);
+    findings.push({
+      ruleId: 'dotnet-vulnerable-package',
+      severity,
+      source: 'dependency-audit',
+      package: packageMatch?.[1] ?? 'unknown',
+      path: 'dotnet-package-reference'
+    });
+  }
+  return dedupeFindings(findings);
+}
+
+function normalizeSeverity(value) {
+  return String(value ?? '').trim().toLowerCase();
+}
+
+function isBlockingDependencySeverity(severity) {
+  return severity === 'critical' || severity === 'high';
+}
+
+function dedupeFindings(findings) {
+  const seen = new Set();
+  return findings.filter((finding) => {
+    const key = JSON.stringify(finding);
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
 }
 
 async function findFirst(directory, predicate) {

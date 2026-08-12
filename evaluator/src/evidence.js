@@ -46,6 +46,7 @@ export function createBaseEvidence(episodeId) {
       errors: []
     },
     staticChecks: {
+      blockingFindings: 0,
       criticalFindings: 0,
       findings: [],
       dependencyAuditCommands: []

@@ -22,7 +22,9 @@ Audit-feature candidates must provide `audit-adapter.json` matching `contracts/a
 
 Evidence is emitted with schema `sealed-evaluator-evidence/1.0.0`. Modernization gates are `build`, `essential-business-invariants`, and `no-critical-security-findings`. Audit-feature adds `maker-checker-separation` and `audit-integrity`.
 
-Static checks are pinned pattern scans for common committed secrets, unsafe deserialization/process-execution patterns, and dependency vulnerability command output where supported manifests exist. These checks are evidence signals only and are not a security certification.
+Static checks are pinned pattern scans for common committed secrets, unsafe deserialization/process-execution patterns, and dependency vulnerability output where supported manifests exist. Critical static findings and high/critical dependency findings fail `no-critical-security-findings`. These checks are evidence signals only and are not a security certification.
+
+Timeouts terminate the spawned adapter process tree using executable/argument process APIs (`taskkill.exe /pid ... /t /f` on Windows, process-group `SIGKILL` on Unix). The evaluator still never executes shell strings.
 
 ## Blindness attestation
 

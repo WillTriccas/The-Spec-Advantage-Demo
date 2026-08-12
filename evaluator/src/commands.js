@@ -51,6 +51,7 @@ export async function spawnCommand(executable, argumentsList, options = {}) {
     let timedOut = false;
     const child = spawn(executable, argumentsList, {
       cwd,
+      detached: process.platform !== 'win32',
       shell: false,
       windowsHide: true,
       stdio: ['ignore', 'pipe', 'pipe']
@@ -58,7 +59,7 @@ export async function spawnCommand(executable, argumentsList, options = {}) {
 
     const timer = setTimeout(() => {
       timedOut = true;
-      child.kill('SIGKILL');
+      terminateProcessTree(child);
     }, timeoutMs);
 
     child.stdout.on('data', (chunk) => {
@@ -96,6 +97,30 @@ export async function spawnCommand(executable, argumentsList, options = {}) {
       });
     });
   });
+}
+
+function terminateProcessTree(child) {
+  if (child.pid == null) {
+    return;
+  }
+
+  if (process.platform === 'win32') {
+    const killer = spawn('taskkill.exe', ['/pid', String(child.pid), '/t', '/f'], {
+      shell: false,
+      windowsHide: true,
+      stdio: 'ignore'
+    });
+    killer.on('error', () => {
+      child.kill('SIGKILL');
+    });
+    return;
+  }
+
+  try {
+    process.kill(-child.pid, 'SIGKILL');
+  } catch {
+    child.kill('SIGKILL');
+  }
 }
 
 function resolveExecutable(executable, cwd, candidateRoot, dotnetPath) {

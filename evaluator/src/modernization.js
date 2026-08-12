@@ -42,7 +42,7 @@ export async function evaluateModernization(candidateRoot, options) {
   }
 
   evidence.staticChecks = await runStaticChecks(candidateRoot, options.dotnetPath);
-  setGate(evidence, 'no-critical-security-findings', evidence.staticChecks.criticalFindings === 0, `${evidence.staticChecks.criticalFindings} critical static finding(s)`);
+  setGate(evidence, 'no-critical-security-findings', evidence.staticChecks.blockingFindings === 0, `${evidence.staticChecks.blockingFindings} blocking static/dependency finding(s)`);
 
   const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'sealed-modernization-'));
   const inputDirectory = path.join(tempRoot, 'input');
@@ -105,6 +105,9 @@ export async function evaluateModernization(candidateRoot, options) {
     const secondOutputs = await collectOutputs(outputDirectory, adapter.outputs);
 
     const checks = evaluateModernizationOutputs(firstOutputs, secondOutputs, run1, run2);
+    if (!test.passed) {
+      checks.failed.push('test command failed or timed out');
+    }
     setGate(evidence, 'essential-business-invariants', checks.failed.length === 0, checks.failed.length === 0 ? 'all hidden business invariant checks passed' : checks.failed.join('; '));
 
     if (build.passed && test.passed && run1.passed && run2.passed && checks.failed.length === 0) {
@@ -119,10 +122,10 @@ export async function evaluateModernization(candidateRoot, options) {
       failDimension(evidence, 'scopeTraceability', 'declared output contract was incomplete or invalid');
     }
 
-    if (evidence.staticChecks.criticalFindings === 0) {
-      passDimension(evidence, 'securityControls', 'No critical pinned static findings were detected; this is not a security certification.');
+    if (evidence.staticChecks.blockingFindings === 0) {
+      passDimension(evidence, 'securityControls', 'No blocking pinned static/dependency findings were detected; this is not a security certification.');
     } else {
-      failDimension(evidence, 'securityControls', 'Critical pinned static findings were detected.');
+      failDimension(evidence, 'securityControls', 'Blocking pinned static/dependency findings were detected.');
     }
 
     passDimension(evidence, 'maintainability', 'Candidate exposed a schema-valid data-only benchmark adapter.');

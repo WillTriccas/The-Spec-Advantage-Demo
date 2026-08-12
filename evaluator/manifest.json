@@ -32,7 +32,7 @@
     {
       "id": "dependency-vulnerability-command-output",
       "version": "2026.08.12",
-      "description": "Best-effort package manager vulnerability command capture where candidate manifests exist."
+      "description": "Best-effort package manager vulnerability parsing where candidate manifests exist; high and critical dependency findings are blocking."
     }
   ],
   "allowedSourcesUsedForDesign": [
