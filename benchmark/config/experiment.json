@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "1.1.0",
+  "schemaVersion": "2.0.0",
   "benchmarkVersion": "unfrozen",
   "repetitionsPerLane": 3,
   "models": {
@@ -7,13 +7,21 @@
       "id": "mai-code-1.1-flash",
       "displayName": "MAI Code 1.1 Flash",
       "buildId": null,
-      "reasoningEffort": "high"
+      "agentVersion": null,
+      "effortParams": {
+        "reasoningEffort": null
+      },
+      "notes": "Pin buildId, agentVersion, and effortParams to exact dated values before measured runs."
     },
     "frontier": {
       "id": "claude-opus-5",
       "displayName": "Claude Opus 5",
       "buildId": null,
-      "reasoningEffort": "high"
+      "agentVersion": null,
+      "effortParams": {
+        "reasoningEffort": null
+      },
+      "notes": "Pin buildId, agentVersion, and effortParams to exact dated values before measured runs."
     }
   },
   "episodes": [
@@ -60,11 +68,13 @@
     "humanRemediation": false,
     "preserveFailedRuns": true,
     "failedRunTreatment": "score-zero-and-fail-applicable-gates",
-    "timeoutSeconds": 3600,
-    "maximumToolCalls": 200,
+    "timeoutSeconds": 5400,
+    "toolCallCap": 200,
     "toolPermissionProfile": "standard-coding",
-    "agentVersion": null,
-    "runOrdering": "randomized-interleaved",
-    "recordQueueTimeSeparately": true
+    "runOrder": "randomized-interleaved",
+    "runOrderNotes": "Execute the seeded order across lanes rather than grouping by model or treatment.",
+    "captureQueueAndThrottleTime": true,
+    "queueAndThrottleNotes": "Record queue and throttle time separately from productive execution time."
   }
 }
+

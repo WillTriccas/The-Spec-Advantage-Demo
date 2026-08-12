@@ -7,5 +7,19 @@
   ],
   "decision": "approved",
   "decidedAt": "2024-02-14T17:30:00Z",
-  "notes": "Approved on condition that the 12-file golden regression suite (RISK-1 mitigation) is committed to the repository before implementation begins, and that the legacy binary's scheduled task is kept disabled-but-available for one full settlement cycle after cutover (RISK-3 mitigation). All critical ambiguities were resolved prior to this review; no open items remain."
+  "notes": "Approved on condition that the 12-file golden regression suite (RISK-1 mitigation) is committed to the repository before implementation begins, and that the legacy binary's scheduled task is kept disabled-but-available for one full settlement cycle after cutover (RISK-3 mitigation). All critical ambiguities were resolved prior to this review; no open items remain.",
+  "authors": [
+    { "name": "M. Nakamura", "role": "Domain Architect, Trade Reconciliation" },
+    { "name": "D. Ibarra", "role": "Business Analyst, Trade Operations" }
+  ],
+  "blindnessAttestation": {
+    "attested": true,
+    "statement": "M. Nakamura and D. Ibarra attest they authored this spec from the brownfield discovery notes and stakeholder interviews only. Neither had access to, nor any prior knowledge of, the benchmark's hidden evaluator rubric, evaluator JSON schema, or scoring weights (benchmark/config/scoring.json) at any point before or during authoring. Neither is listed as an evaluator author for this episode."
+  },
+  "authoringEffort": {
+    "elapsedMinutes": 285,
+    "inputTokens": 41200,
+    "outputTokens": 18650,
+    "estimatedCostUsd": null
+  }
 }

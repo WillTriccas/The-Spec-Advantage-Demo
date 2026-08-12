@@ -116,6 +116,42 @@ test("approve writes a manifest.json with a valid sha256 and quality score", () 
   });
 });
 
+test("approve writes authorship, blindness attestation and authoring effort into the manifest", () => {
+  withTempDir((dir) => {
+    cpSync(MODERNIZATION_DIR, dir, { recursive: true });
+    const capture = captureConsole();
+    try {
+      cmdApprove(dir, { id: "test-bundle" });
+    } finally {
+      capture.restore();
+    }
+    const manifest = JSON.parse(readFileSync(path.join(dir, "manifest.json"), "utf8"));
+    assert.ok(manifest.authors.length > 0);
+    assert.strictEqual(manifest.blindnessAttestation.attested, true);
+    assert.strictEqual(typeof manifest.authoringEffort.elapsedMinutes, "number");
+  });
+});
+
+test("approve refuses when the blindness attestation is not attested", () => {
+  withTempDir((dir) => {
+    cpSync(MODERNIZATION_DIR, dir, { recursive: true });
+    rmSync(path.join(dir, "manifest.json"), { force: true });
+    const signoffPath = path.join(dir, "signoff.json");
+    const signoff = JSON.parse(readFileSync(signoffPath, "utf8"));
+    signoff.blindnessAttestation = { attested: false, statement: "not attested" };
+    writeFileSync(signoffPath, JSON.stringify(signoff), "utf8");
+    const capture = captureConsole();
+    let exitCode;
+    try {
+      exitCode = cmdApprove(dir, {});
+    } finally {
+      capture.restore();
+    }
+    assert.strictEqual(exitCode, 1);
+    assert.ok(!existsSync(path.join(dir, "manifest.json")));
+  });
+});
+
 test("approve refuses when signoff.decision is not approved", () => {
   withTempDir((dir) => {
     cpSync(MODERNIZATION_DIR, dir, { recursive: true });

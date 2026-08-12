@@ -23,6 +23,18 @@ const EPISODE_NAMES = {
  * always forced to claim.status "not-evaluated" regardless of the numbers
  * present, per the committed decision record: illustrative data may
  * exercise the dashboard but must never support the benchmark claim.
+ *
+ * `determineClaim` (see claim.js) computes a claim per episode plus an
+ * overall claim that is always the weaker of the per-episode claims (never
+ * an average), per correction item 4. Because `contracts/report.schema.json`
+ * only allows a single flat `{status, qualityDelta, costSavingPercent,
+ * message}` claim object at the top level, this function writes exactly
+ * that shape into the returned `report` (stripping the richer
+ * `episodeClaims`/`secondaryClaims` detail so schema validation passes),
+ * and separately returns `claimDetail` -- the full per-episode/secondary
+ * structure -- for the caller to persist as a supplementary, non-contract
+ * `claim-detail.json` artifact (see `writeClaimDetail` below and
+ * `benchmark/src/cli.js`'s `report` command, which writes both files).
  */
 export function buildReport({
   runs,
@@ -66,7 +78,21 @@ export function buildReport({
     }))
   }));
 
-  const claim = determineClaim(runs, { claimRule: scoringConfig.claimRule, dataKind });
+  const fullClaim = determineClaim(runs, {
+    claimRule: scoringConfig.claimRule,
+    secondaryClaimRules: scoringConfig.secondaryClaimRules ?? [],
+    dataKind
+  });
+  // Only these four fields are valid on contracts/report.schema.json's
+  // top-level `claim` object (additionalProperties: false) -- the richer
+  // episodeClaims/secondaryClaims detail is returned separately below as
+  // claimDetail, never inlined here.
+  const claim = {
+    status: fullClaim.status,
+    qualityDelta: fullClaim.qualityDelta,
+    costSavingPercent: fullClaim.costSavingPercent,
+    message: fullClaim.message
+  };
 
   const report = {
     schemaVersion: "1.0.0",
@@ -87,10 +113,31 @@ export function buildReport({
     throw new Error(`Report failed contracts/report.schema.json validation:\n${errors.map((e) => `  - ${e}`).join("\n")}`);
   }
 
-  return report;
+  const claimDetail = {
+    schemaVersion: "1.0.0",
+    generatedAt,
+    dataKind,
+    note:
+      "Supplementary, non-contract artifact. contracts/report.schema.json's claim object only allows {status, qualityDelta, costSavingPercent, message}, so the richer per-episode quality/efficiency verdict breakdown and pre-registered secondary claim rules (design-review corrections items 4 and 9) live here instead.",
+    episodeClaims: fullClaim.episodeClaims,
+    secondaryClaims: fullClaim.secondaryClaims
+  };
+
+  return { report, claimDetail };
 }
 
 export function writeReport(report, outputPath) {
   writeFileSync(outputPath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
   return outputPath;
 }
+
+/**
+ * Write the supplementary claim-detail artifact alongside report.json. Not
+ * bound by contracts/report.schema.json since it isn't part of the
+ * committed contract -- see buildReport's docstring.
+ */
+export function writeClaimDetail(claimDetail, outputPath) {
+  writeFileSync(outputPath, `${JSON.stringify(claimDetail, null, 2)}\n`, "utf8");
+  return outputPath;
+}
+

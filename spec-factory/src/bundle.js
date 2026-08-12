@@ -187,6 +187,24 @@ export function renderSpecMarkdown(bundle, meta = {}) {
     lines.push("");
     lines.push(`Decision: **${signoff.decision}** on ${signoff.decidedAt}`);
     lines.push("");
+    lines.push("**Authors**");
+    for (const author of signoff.authors ?? []) {
+      lines.push(`- ${author.name} (${author.role})`);
+    }
+    lines.push("");
+    if (signoff.blindnessAttestation) {
+      lines.push(
+        `**Blindness attestation**: ${signoff.blindnessAttestation.attested ? "attested" : "NOT attested"} — ${signoff.blindnessAttestation.statement}`
+      );
+      lines.push("");
+    }
+    if (signoff.authoringEffort) {
+      const effort = signoff.authoringEffort;
+      lines.push(
+        `**Authoring effort**: ${effort.elapsedMinutes} min, ${effort.inputTokens ?? "n/a"} input / ${effort.outputTokens ?? "n/a"} output tokens, cost ${effort.estimatedCostUsd ?? "not priced"}`
+      );
+      lines.push("");
+    }
     lines.push("**Reviewers**");
     for (const reviewer of signoff.reviewers ?? []) {
       lines.push(`- ${reviewer.name} (${reviewer.role}): ${reviewer.verdict}`);

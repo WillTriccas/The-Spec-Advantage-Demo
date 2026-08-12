@@ -93,3 +93,45 @@ test("sign-off decision must be approved or rejected", () => {
   const { errors } = validateBundle(mutated);
   assert.ok(errors.some((msg) => msg.includes('"decision"')));
 });
+
+test("an unattested blindness attestation blocks approval even with an otherwise complete bundle", () => {
+  const bundle = loadBundle(MODERNIZATION_DIR);
+  const mutated = {
+    ...bundle,
+    signoff: {
+      ...bundle.signoff,
+      blindnessAttestation: { attested: false, statement: "not yet attested" }
+    }
+  };
+  const { criticalBlocks } = validateBundle(mutated);
+  assert.ok(criticalBlocks.some((msg) => msg.includes("blindnessAttestation")));
+  assert.strictEqual(isApprovable(mutated), false);
+});
+
+test("a blindness attestation explicitly set to false (not merely absent) also blocks approval", () => {
+  const bundle = loadBundle(MODERNIZATION_DIR);
+  const mutated = {
+    ...bundle,
+    signoff: {
+      ...bundle.signoff,
+      blindnessAttestation: { attested: false, statement: "spec authors reviewed the evaluator rubric" }
+    }
+  };
+  const { criticalBlocks } = validateBundle(mutated);
+  assert.ok(criticalBlocks.some((msg) => msg.toLowerCase().includes("attested")));
+});
+
+test("an empty authors list is a structural error", () => {
+  const bundle = loadBundle(MODERNIZATION_DIR);
+  const mutated = { ...bundle, signoff: { ...bundle.signoff, authors: [] } };
+  const { errors } = validateBundle(mutated);
+  assert.ok(errors.some((msg) => msg.includes('"authors"')));
+});
+
+test("a missing authoringEffort field is a structural error", () => {
+  const bundle = loadBundle(MODERNIZATION_DIR);
+  const { authoringEffort, ...signoffWithoutEffort } = bundle.signoff;
+  const mutated = { ...bundle, signoff: signoffWithoutEffort };
+  const { errors } = validateBundle(mutated);
+  assert.ok(errors.some((msg) => msg.includes("authoringEffort")));
+});

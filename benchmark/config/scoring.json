@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "1.1.0",
+  "schemaVersion": "2.0.0",
   "weights": {
     "functionalCorrectness": 35,
     "behaviorPreservation": 20,
@@ -8,7 +8,14 @@
     "operability": 10,
     "scopeTraceability": 5
   },
-  "hardGates": {
+  "allHardGates": [
+    "build",
+    "essential-business-invariants",
+    "no-critical-security-findings",
+    "maker-checker-separation",
+    "audit-integrity"
+  ],
+  "hardGatesByEpisode": {
     "modernization": [
       "build",
       "essential-business-invariants",
@@ -17,9 +24,9 @@
     "audit-feature": [
       "build",
       "essential-business-invariants",
+      "no-critical-security-findings",
       "maker-checker-separation",
-      "audit-integrity",
-      "no-critical-security-findings"
+      "audit-integrity"
     ]
   },
   "claimRule": {
@@ -28,11 +35,13 @@
     "equivalentWithinPoints": 3,
     "betterByMoreThanPoints": 3,
     "aggregation": "marginal-medians",
-    "requireComparisonLaneHardGates": true,
+    "requireAllHardGates": true,
+    "comparisonLaneGatesDetermineEligibility": true,
     "controlLaneGateFailuresAreReportedSeparately": true,
     "inconclusiveWhenDeltaWithinObservedLaneSpread": true,
     "overallRollup": "weaker-episode",
-    "qualityAndEfficiencyVerdictsAreSeparate": true
+    "qualityAndEfficiencyVerdictsAreSeparate": true,
+    "notes": "Quality is worse only when comparison median minus control median is below negative equivalentWithinPoints."
   },
   "efficiencyRule": {
     "primaryMetrics": [
@@ -42,16 +51,18 @@
     "elapsedTimeIsContextOnly": true,
     "unknownCostIsUnavailable": true
   },
-  "secondaryAnalyses": [
+  "secondaryClaimRules": [
     {
-      "id": "efficient-spec-effect",
+      "id": "efficient-within-model-spec-effect",
       "comparisonLane": "efficient-spec",
-      "controlLane": "efficient-raw"
+      "controlLane": "efficient-raw",
+      "description": "Pre-registered secondary comparison of the spec effect within the efficient model."
     },
     {
-      "id": "frontier-spec-effect",
+      "id": "frontier-within-model-spec-effect",
       "comparisonLane": "frontier-spec",
-      "controlLane": "frontier-raw"
+      "controlLane": "frontier-raw",
+      "description": "Pre-registered secondary comparison of the spec effect within the frontier model."
     }
   ],
   "failedRunTreatment": {
@@ -60,3 +71,4 @@
     "applicableGates": "failed"
   }
 }
+

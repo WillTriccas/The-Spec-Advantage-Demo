@@ -82,8 +82,17 @@ export const STAGES = [
     id: "signoff",
     file: "signoff.json",
     title: "Review and sign-off",
-    description: "Reviewer roster, decision and approval date.",
-    requiredKeys: ["reviewers", "decision", "decidedAt", "notes"]
+    description:
+      "Reviewer roster, decision, approval date, spec authorship, a blindness attestation that authors had no access to the benchmark's hidden evaluator rubric, and the effort spent authoring the spec.",
+    requiredKeys: [
+      "reviewers",
+      "decision",
+      "decidedAt",
+      "notes",
+      "authors",
+      "blindnessAttestation",
+      "authoringEffort"
+    ]
   }
 ];
 

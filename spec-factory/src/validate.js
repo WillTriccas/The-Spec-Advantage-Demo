@@ -82,6 +82,27 @@ export function validateBundle(bundle) {
     errors.push('Sign-off "decision" must be "approved" or "rejected"');
   }
 
+  // Spec authors must be identified separately from the benchmark's hidden
+  // evaluator authors, so an independent third party can confirm no single
+  // person wrote both the spec and the rubric that later scores it.
+  if (!(bundle.signoff.authors ?? []).length) {
+    errors.push('Sign-off "authors" must list at least one spec author');
+  }
+
+  // Blindness attestation gate: approval must record that the spec authors
+  // attested they had no access to the benchmark's hidden evaluator rubric,
+  // evaluator JSON schema, or scoring weights while authoring the spec. An
+  // unattested (or explicitly false) attestation blocks approval outright --
+  // this is a critical block, not merely a missing-field structural error,
+  // because a spec authored with sight of the rubric would invalidate the
+  // benchmark's raw-vs-spec comparison.
+  const attestation = bundle.signoff.blindnessAttestation;
+  if (attestation?.attested !== true) {
+    criticalBlocks.push(
+      "Sign-off blindnessAttestation.attested must be true: spec authors must attest they had no access to the hidden evaluator rubric before approval"
+    );
+  }
+
   return { errors, criticalBlocks };
 }
 

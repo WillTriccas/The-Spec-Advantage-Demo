@@ -93,7 +93,10 @@ export function cmdApprove(bundleDir, { id } = {}) {
     qualityScore: scoreResult.score,
     dimensions: scoreResult.dimensions,
     approvedAt: bundle.signoff.decidedAt,
-    reviewers: bundle.signoff.reviewers
+    reviewers: bundle.signoff.reviewers,
+    authors: bundle.signoff.authors,
+    blindnessAttestation: bundle.signoff.blindnessAttestation,
+    authoringEffort: bundle.signoff.authoringEffort
   };
 
   writeFileSync(

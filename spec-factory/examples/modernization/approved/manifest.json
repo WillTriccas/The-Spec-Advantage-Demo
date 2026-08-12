@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "id": "modernization-approved",
-  "sha256": "a1d4e04df72adfcfaaebb789bb97fd82bda1399b6693b44b5e03299f5b4bc2dd",
+  "sha256": "0f22b48adfcd5a062faa0bd7291c9b3f15835274d8f8b9407ea4df4582d4ce68",
   "qualityScore": 100,
   "dimensions": {
     "completeness": 1,
@@ -32,5 +32,25 @@
       "role": "Compliance",
       "verdict": "approve"
     }
-  ]
+  ],
+  "authors": [
+    {
+      "name": "M. Nakamura",
+      "role": "Domain Architect, Trade Reconciliation"
+    },
+    {
+      "name": "D. Ibarra",
+      "role": "Business Analyst, Trade Operations"
+    }
+  ],
+  "blindnessAttestation": {
+    "attested": true,
+    "statement": "M. Nakamura and D. Ibarra attest they authored this spec from the brownfield discovery notes and stakeholder interviews only. Neither had access to, nor any prior knowledge of, the benchmark's hidden evaluator rubric, evaluator JSON schema, or scoring weights (benchmark/config/scoring.json) at any point before or during authoring. Neither is listed as an evaluator author for this episode."
+  },
+  "authoringEffort": {
+    "elapsedMinutes": 285,
+    "inputTokens": 41200,
+    "outputTokens": 18650,
+    "estimatedCostUsd": null
+  }
 }

@@ -1,26 +1,28 @@
 import { readFileSync } from "node:fs";
 import { loadExperimentConfig, loadScoringConfig } from "./config.js";
-import { buildPlannedRuns, plannedRunCount } from "./runs.js";
-import { prepareRunWorkspace } from "./prepare.js";
+import { buildPlannedRuns, plannedRunCount, assignRandomizedOrder } from "./runs.js";
+import { prepareRunWorkspace, assertFrozenForMeasuredData } from "./prepare.js";
 import { importRun } from "./import.js";
 import { scoreRun } from "./scoring.js";
 import { aggregateLane, groupByLane } from "./aggregate.js";
-import { buildReport, writeReport } from "./report.js";
+import { buildReport, writeReport, writeClaimDetail } from "./report.js";
 import { benchmarkContractVersion } from "./index.js";
 
 function printUsage() {
   console.log(`benchmark <command> [options]
 
 Commands:
-  list-runs                                   List all planned runs (24 by default)
+  list-runs [--randomized]                    List all planned runs (24 by default); --randomized
+                                               shows the seeded execution order per executionPolicy.runOrder
   prepare --run <id> --baseline <dir> --out <dir>
                                                Prepare an isolated workspace for one planned run
-  import --run-dir <dir> --execution <file> [--benchmark-version <v>]
+  import --run-dir <dir> --execution <file> [--benchmark-version <v>] [--skip-frozen-check]
                                                Import execution metadata/evidence into run.json
-  score --evaluator <file>                    Score one run's evaluator JSON against scoring.json
+  score --evaluator <file> --episode-id <id> [--execution-status <status>] [--input-mode <raw|spec>]
+                                               Score one run's evaluator JSON against scoring.json
   aggregate --runs <file>                     Aggregate scored runs (JSON array) into lane summaries
   report --runs <file> --data-kind <illustrative|measured> --out <file>
-                                               Build and write a full evidence report
+                                               Build and write a full evidence report plus claim-detail.json
 `);
 }
 
@@ -29,17 +31,34 @@ function parseOptions(args) {
   for (let i = 0; i < args.length; i += 1) {
     const arg = args[i];
     if (arg.startsWith("--")) {
-      options[arg.slice(2)] = args[i + 1];
-      i += 1;
+      const key = arg.slice(2);
+      const next = args[i + 1];
+      if (next === undefined || next.startsWith("--")) {
+        options[key] = true; // boolean flag, e.g. --randomized, --skip-frozen-check
+      } else {
+        options[key] = next;
+        i += 1;
+      }
     }
   }
   return options;
 }
 
-export function cmdListRuns() {
+export function cmdListRuns(options = {}) {
   const config = loadExperimentConfig();
-  const runs = buildPlannedRuns(config);
+  let runs = buildPlannedRuns(config);
   console.log(`Planned runs: ${runs.length} (expected ${plannedRunCount(config)})`);
+  if (options.randomized) {
+    runs = assignRandomizedOrder(runs);
+    runs.sort((a, b) => a.executionOrder - b.executionOrder);
+    console.log(`Execution order per executionPolicy.runOrder ("${config.executionPolicy?.runOrder ?? "unspecified"}"):`);
+    for (const run of runs) {
+      console.log(
+        `#${String(run.executionOrder).padStart(2, "0")} ${run.runId.padEnd(28)} episode=${run.episodeId.padEnd(14)} lane=${run.laneId.padEnd(15)} model=${run.modelDisplayName.padEnd(20)} mode=${run.inputMode.padEnd(4)} rep=${run.repetition}`
+      );
+    }
+    return 0;
+  }
   for (const run of runs) {
     console.log(
       `${run.runId.padEnd(28)} episode=${run.episodeId.padEnd(14)} lane=${run.laneId.padEnd(15)} model=${run.modelDisplayName.padEnd(20)} mode=${run.inputMode.padEnd(4)} rep=${run.repetition}`
@@ -61,38 +80,53 @@ export function cmdPrepare(options) {
     return 1;
   }
   const result = prepareRunWorkspace(run, { baselineDir: baseline, outputRoot: out });
-  console.log(JSON.stringify({ runDir: result.runDir, promptPath: result.promptPath, planPath: result.planPath }, null, 2));
+  console.log(JSON.stringify({ runDir: result.runDir, promptPath: result.promptPath, planPath: result.planPath, provenancePath: result.provenancePath }, null, 2));
   return 0;
 }
 
 export function cmdImport(options) {
-  const { "run-dir": runDir, execution: executionPath, "benchmark-version": benchmarkVersion } = options;
+  const { "run-dir": runDir, execution: executionPath, "benchmark-version": benchmarkVersion, "skip-frozen-check": skipFrozenCheck } = options;
   if (!runDir || !executionPath) {
-    console.error("Usage: benchmark import --run-dir <dir> --execution <file> [--benchmark-version <v>]");
+    console.error("Usage: benchmark import --run-dir <dir> --execution <file> [--benchmark-version <v>] [--skip-frozen-check]");
     return 1;
   }
+  const resolvedBenchmarkVersion = benchmarkVersion ?? benchmarkContractVersion;
+  // Per correction item 8, measured data (any benchmarkVersion other than
+  // "unfrozen") must come from a clean, committed working tree. Allow an
+  // explicit opt-out for exceptional/manual scenarios.
+  if (!skipFrozenCheck) {
+    assertFrozenForMeasuredData(resolvedBenchmarkVersion);
+  }
   const executionInput = JSON.parse(readFileSync(executionPath, "utf8"));
-  const { run } = importRun({
+  const { run, provenancePath } = importRun({
     runDir,
-    benchmarkVersion: benchmarkVersion ?? benchmarkContractVersion,
+    benchmarkVersion: resolvedBenchmarkVersion,
     baselineCommit: executionInput.baselineCommit,
     execution: executionInput.execution,
     source: executionInput.source,
     evidence: executionInput.evidence
   });
-  console.log(JSON.stringify(run, null, 2));
+  console.log(JSON.stringify({ run, provenancePath }, null, 2));
   return 0;
 }
 
 export function cmdScore(options) {
-  const { evaluator: evaluatorPath } = options;
-  if (!evaluatorPath) {
-    console.error("Usage: benchmark score --evaluator <file>");
+  const { evaluator: evaluatorPath, "episode-id": episodeId, "execution-status": executionStatus, "input-mode": inputMode } = options;
+  if (!evaluatorPath || !episodeId) {
+    console.error("Usage: benchmark score --evaluator <file> --episode-id <id> [--execution-status <status>] [--input-mode <raw|spec>]");
     return 1;
   }
   const evaluator = JSON.parse(readFileSync(evaluatorPath, "utf8"));
-  const result = scoreRun(evaluator, loadScoringConfig());
+  const result = scoreRun(evaluator, {
+    scoringConfig: loadScoringConfig(),
+    episodeId,
+    executionStatus: executionStatus ?? "completed",
+    inputMode
+  });
   console.log(JSON.stringify(result, null, 2));
+  if (result.warnings.length > 0) {
+    for (const warning of result.warnings) console.error(`warning: ${warning}`);
+  }
   return result.hardGatesPassed ? 0 : 1;
 }
 
@@ -117,7 +151,7 @@ export function cmdReport(options) {
   }
   const runs = JSON.parse(readFileSync(runsPath, "utf8"));
   const experimentConfig = loadExperimentConfig();
-  const report = buildReport({
+  const { report, claimDetail } = buildReport({
     runs,
     benchmarkVersion: experimentConfig.benchmarkVersion,
     repetitionsPerLane: experimentConfig.repetitionsPerLane,
@@ -125,7 +159,9 @@ export function cmdReport(options) {
     pricingAsOf: pricingAsOf ?? null
   });
   writeReport(report, out);
-  console.log(`Wrote report to ${out} (claim: ${report.claim.status})`);
+  const claimDetailPath = out.replace(/\.json$/i, "") + ".claim-detail.json";
+  writeClaimDetail(claimDetail, claimDetailPath);
+  console.log(`Wrote report to ${out} (claim: ${report.claim.status}) and claim detail to ${claimDetailPath}`);
   return 0;
 }
 
@@ -134,7 +170,7 @@ export function run(argv) {
   const options = parseOptions(rest);
   switch (command) {
     case "list-runs":
-      return cmdListRuns();
+      return cmdListRuns(options);
     case "prepare":
       return cmdPrepare(options);
     case "import":
@@ -150,3 +186,4 @@ export function run(argv) {
       return command ? 1 : 0;
   }
 }
+

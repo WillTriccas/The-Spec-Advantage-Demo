@@ -7,5 +7,19 @@
   ],
   "decision": "approved",
   "decidedAt": "2024-05-02T15:00:00Z",
-  "notes": "Approved on condition that append-only enforcement includes a database-permission-level control (RISK-1 mitigation), not application logic alone, and that the CI log-content scan (NFR-1) is implemented as an allow-list before this feature ships (RISK-4 mitigation). All critical ambiguities regarding exception identity scope and maker-checker exceptions were resolved prior to this review; no open items remain."
+  "notes": "Approved on condition that append-only enforcement includes a database-permission-level control (RISK-1 mitigation), not application logic alone, and that the CI log-content scan (NFR-1) is implemented as an allow-list before this feature ships (RISK-4 mitigation). All critical ambiguities regarding exception identity scope and maker-checker exceptions were resolved prior to this review; no open items remain.",
+  "authors": [
+    { "name": "D. Ibarra", "role": "Business Analyst, Trade Operations" },
+    { "name": "R. Chen", "role": "Compliance" }
+  ],
+  "blindnessAttestation": {
+    "attested": true,
+    "statement": "D. Ibarra and R. Chen attest they authored this spec from the modernized-service discovery notes and compliance requirements interviews only. Neither had access to, nor any prior knowledge of, the benchmark's hidden evaluator rubric, evaluator JSON schema, or scoring weights (benchmark/config/scoring.json) at any point before or during authoring. Neither is listed as an evaluator author for this episode. R. Chen's role here (spec co-author) is authoring-time only and is disjoint from any evaluator role; R. Chen did not evaluate audit-feature runs."
+  },
+  "authoringEffort": {
+    "elapsedMinutes": 340,
+    "inputTokens": 52800,
+    "outputTokens": 24100,
+    "estimatedCostUsd": null
+  }
 }

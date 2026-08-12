@@ -111,3 +111,121 @@ test("importRun throws if the assembled run fails contract schema validation", (
     assert.throws(() => importRun(baseArgs(runDir)), /schema/i);
   });
 });
+
+test("importRun throws when a raw-lane plan carries a non-null spec", () => {
+  withTempDir((runDir) => {
+    writePlan(runDir, {
+      laneId: "efficient-raw",
+      inputMode: "raw",
+      spec: { id: "modernization-approved", sha256: "b".repeat(64), qualityScore: 100 }
+    });
+    assert.throws(() => importRun(baseArgs(runDir)), /raw-lane run but carries a non-null spec/);
+  });
+});
+
+test("importRun throws when a spec-lane plan carries a null spec", () => {
+  withTempDir((runDir) => {
+    writePlan(runDir, { laneId: "efficient-spec", inputMode: "spec", spec: null });
+    assert.throws(() => importRun(baseArgs(runDir)), /spec-lane run but carries a null spec/);
+  });
+});
+
+test("importRun throws when the plan's model.id doesn't match the model tier's configured model", () => {
+  withTempDir((runDir) => {
+    writePlan(runDir, { model: { id: "not-the-configured-model", displayName: "x", tier: "efficient" } });
+    assert.throws(() => importRun(baseArgs(runDir)), /model\.id/);
+  });
+});
+
+test("importRun writes a provenance.json merging prepare-time hashes with import-time frozen versions", () => {
+  withTempDir((runDir) => {
+    writeFileSync(
+      path.join(runDir, "provenance.json"),
+      JSON.stringify({ schemaVersion: "1.0.0", runId: "modernization-efficient-spec-r1", hashes: { taskBriefSha256: null, specManifestSha256: "c".repeat(64) } }),
+      "utf8"
+    );
+    writePlan(runDir);
+    const { provenancePath } = importRun(baseArgs(runDir, { benchmarkVersion: "unfrozen" }));
+    const provenance = JSON.parse(readFileSync(provenancePath, "utf8"));
+    assert.strictEqual(provenance.hashes.specManifestSha256, "c".repeat(64));
+    assert.strictEqual(provenance.frozenVersions.benchmarkVersion, "unfrozen");
+    assert.strictEqual(provenance.frozenVersions.baselineRef, "refs/tags/benchmark-legacy-v1");
+    assert.match(provenance.hashes.costsConfigSha256, /^[a-f0-9]{64}$/);
+  });
+});
+
+test("importRun leaves estimatedCostUsd null when costs.json has no dated pricing for the model", () => {
+  withTempDir((runDir) => {
+    writePlan(runDir);
+    const { run } = importRun(baseArgs(runDir, { costsConfig: { models: {} } }));
+    assert.strictEqual(run.execution.estimatedCostUsd, null);
+  });
+});
+
+test("importRun auto-computes estimatedCostUsd from token usage once costs.json has dated pricing", () => {
+  withTempDir((runDir) => {
+    writePlan(runDir);
+    const costsConfig = {
+      models: {
+        "mai-code-1.1-flash": {
+          pricingAsOf: "2025-01-01",
+          source: "test fixture",
+          rateType: "list",
+          inputPerMillionTokens: 1,
+          outputPerMillionTokens: 2
+        }
+      }
+    };
+    const { run } = importRun(baseArgs(runDir, { costsConfig }));
+    // inputTokens=100, outputTokens=50 from baseArgs
+    assert.strictEqual(run.execution.estimatedCostUsd, (100 / 1_000_000) * 1 + (50 / 1_000_000) * 2);
+  });
+});
+
+test("importRun respects an explicit non-null estimatedCostUsd supplied by the caller over auto-computed cost", () => {
+  withTempDir((runDir) => {
+    writePlan(runDir);
+    const costsConfig = {
+      models: {
+        "mai-code-1.1-flash": {
+          pricingAsOf: "2025-01-01",
+          source: "test fixture",
+          rateType: "list",
+          inputPerMillionTokens: 1,
+          outputPerMillionTokens: 2
+        }
+      }
+    };
+    const { run } = importRun(
+      baseArgs(runDir, { costsConfig, execution: { ...baseArgs(runDir).execution, estimatedCostUsd: 9.99 } })
+    );
+    assert.strictEqual(run.execution.estimatedCostUsd, 9.99);
+  });
+});
+
+test("importRun folds an amortized spec-authoring share into a spec-lane run's auto-computed cost", () => {
+  withTempDir((runDir) => {
+    writePlan(runDir); // spec lane (efficient-spec), episodeId "modernization"
+    const costsConfig = {
+      models: {
+        "mai-code-1.1-flash": {
+          pricingAsOf: "2025-01-01",
+          source: "test fixture",
+          rateType: "list",
+          inputPerMillionTokens: 1,
+          outputPerMillionTokens: 2
+        }
+      }
+    };
+    const tokenCostOnly = (100 / 1_000_000) * 1 + (50 / 1_000_000) * 2;
+    const { run } = importRun(baseArgs(runDir, { costsConfig }));
+    // The committed modernization spec's manifest.authoringEffort.estimatedCostUsd
+    // is currently null (no dated pricing yet), so no amortized share can be
+    // added and the auto-computed cost equals the token cost alone. This test
+    // documents that expectation and will need updating once authoring cost
+    // pricing is dated.
+    assert.strictEqual(run.execution.estimatedCostUsd, tokenCostOnly);
+  });
+});
+
+

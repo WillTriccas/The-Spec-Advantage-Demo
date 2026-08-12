@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "id": "audit-feature-approved",
-  "sha256": "bb526a80b36ad4fe69869619da4f2501407406bcdbb2847a69e050743a179aa8",
+  "sha256": "ab93b42695f8a2cb7dcb4151f5e78069d0a4dcc34c99f788fddfc08156b6b843",
   "qualityScore": 100,
   "dimensions": {
     "completeness": 1,
@@ -32,5 +32,25 @@
       "role": "Security",
       "verdict": "approve"
     }
-  ]
+  ],
+  "authors": [
+    {
+      "name": "D. Ibarra",
+      "role": "Business Analyst, Trade Operations"
+    },
+    {
+      "name": "R. Chen",
+      "role": "Compliance"
+    }
+  ],
+  "blindnessAttestation": {
+    "attested": true,
+    "statement": "D. Ibarra and R. Chen attest they authored this spec from the modernized-service discovery notes and compliance requirements interviews only. Neither had access to, nor any prior knowledge of, the benchmark's hidden evaluator rubric, evaluator JSON schema, or scoring weights (benchmark/config/scoring.json) at any point before or during authoring. Neither is listed as an evaluator author for this episode. R. Chen's role here (spec co-author) is authoring-time only and is disjoint from any evaluator role; R. Chen did not evaluate audit-feature runs."
+  },
+  "authoringEffort": {
+    "elapsedMinutes": 340,
+    "inputTokens": 52800,
+    "outputTokens": 24100,
+    "estimatedCostUsd": null
+  }
 }

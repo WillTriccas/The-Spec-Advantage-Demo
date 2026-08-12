@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "1.0.0",
+  "generatedAt": "2024-01-01T00:00:00.000Z",
+  "dataKind": "illustrative",
+  "note": "Supplementary, non-contract artifact. contracts/report.schema.json's claim object only allows {status, qualityDelta, costSavingPercent, message}, so the richer per-episode quality/efficiency verdict breakdown and pre-registered secondary claim rules (design-review corrections items 4 and 9) live here instead.",
+  "episodeClaims": [],
+  "secondaryClaims": []
+}

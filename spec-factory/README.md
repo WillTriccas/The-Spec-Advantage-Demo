@@ -34,7 +34,7 @@ be authored:
 7. **risks** — risks with likelihood, impact and mitigation.
 8. **acceptanceCriteria** — Given/When/Then scenarios tied to requirements. **Untestable acceptance criteria block approval.**
 9. **traceability** — links from requirement → acceptance criteria / invariants / risks. Every requirement must have at least one link with at least one acceptance criterion, or the bundle is structurally invalid.
-10. **signoff** — reviewer roster and an explicit `approved`/`rejected` decision.
+10. **signoff** — reviewer roster and an explicit `approved`/`rejected` decision, plus (per an independent design-review correction) the spec-authoring record required to keep the benchmark's raw-vs-spec comparison valid: `authors` (distinct from the benchmark's hidden evaluator team), a `blindnessAttestation` (`attested: true` required — the authors must confirm they had no access to the hidden evaluator rubric, evaluator JSON schema, or scoring weights while authoring), and `authoringEffort` (`elapsedMinutes`/`inputTokens`/`outputTokens`/`estimatedCostUsd`, so the benchmark can amortize the one-time authoring cost across the spec's repeated reuse — see `benchmark/README.md`'s cost/efficiency correction).
 
 ## CLI usage
 
@@ -57,7 +57,16 @@ node bin/spec-factory.js render <dir> --title "My Spec"
 - any requirement has an unresolved traceability gap,
 - any `critical` ambiguity is not `resolved`,
 - any requirement or acceptance criterion is marked `testable: false`,
-- `signoff.decision` is not `"approved"`.
+- `signoff.decision` is not `"approved"`,
+- `signoff.blindnessAttestation.attested` is not exactly `true` — an
+  unattested (or explicitly `false`) attestation is a critical block, not a
+  missing-field warning, since a spec authored with sight of the hidden
+  evaluator rubric would invalidate the benchmark's raw-vs-spec comparison.
+
+`manifest.json` (written by `approve`) records the bundle's sha256 hash,
+quality score, and approval timestamp — the downstream benchmark's
+`provenance.json` cites this hash so any measured run can be traced back to
+the exact spec text an agent received.
 
 ## Quality scoring
 

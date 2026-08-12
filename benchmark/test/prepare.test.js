@@ -4,7 +4,7 @@ import { mkdtempSync, rmSync, writeFileSync, mkdirSync, existsSync, readFileSync
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { prepareRunWorkspace, hashDirectory, assertNoSpecLeakage } from "../src/prepare.js";
+import { prepareRunWorkspace, hashDirectory, assertNoSpecLeakage, assertFrozenForMeasuredData } from "../src/prepare.js";
 import { buildPlannedRuns } from "../src/runs.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -128,3 +128,71 @@ test("assertNoSpecLeakage throws if a spec-bundle file is found in a raw workspa
     });
   });
 });
+
+test("prepareRunWorkspace writes a provenance.json with task-brief and config hashes for a raw lane", () => {
+  withTempDir((baselineDir) => {
+    writeFileSync(path.join(baselineDir, "Program.cs"), "// legacy code", "utf8");
+    withTempDir((outputRoot) => {
+      const run = buildPlannedRuns().find((r) => r.runId === "modernization-efficient-raw-r1");
+      const result = prepareRunWorkspace(run, { baselineDir, outputRoot, repoRoot: REPO_ROOT });
+      assert.ok(existsSync(result.provenancePath));
+      const provenance = JSON.parse(readFileSync(result.provenancePath, "utf8"));
+      assert.match(provenance.hashes.taskBriefSha256, /^[a-f0-9]{64}$/);
+      assert.strictEqual(provenance.hashes.specManifestSha256, null);
+      assert.match(provenance.hashes.scoringConfigSha256, /^[a-f0-9]{64}$/);
+      assert.match(provenance.hashes.experimentConfigSha256, /^[a-f0-9]{64}$/);
+    });
+  });
+});
+
+test("prepareRunWorkspace writes a provenance.json with a spec-manifest hash (not a task-brief hash) for a spec lane", () => {
+  withTempDir((baselineDir) => {
+    writeFileSync(path.join(baselineDir, "Program.cs"), "// legacy code", "utf8");
+    withTempDir((outputRoot) => {
+      const run = buildPlannedRuns().find((r) => r.runId === "modernization-efficient-spec-r1");
+      const result = prepareRunWorkspace(run, { baselineDir, outputRoot, repoRoot: REPO_ROOT });
+      const provenance = JSON.parse(readFileSync(result.provenancePath, "utf8"));
+      assert.strictEqual(provenance.hashes.taskBriefSha256, null);
+      assert.match(provenance.hashes.specManifestSha256, /^[a-f0-9]{64}$/);
+    });
+  });
+});
+
+test("plan.json's model object carries buildId/agentVersion/effortParams through from the run descriptor", () => {
+  withTempDir((baselineDir) => {
+    writeFileSync(path.join(baselineDir, "Program.cs"), "// legacy code", "utf8");
+    withTempDir((outputRoot) => {
+      const run = { ...buildPlannedRuns().find((r) => r.runId === "modernization-efficient-raw-r1"), modelBuildId: "build-123", modelAgentVersion: "agent-9", modelEffortParams: { reasoningEffort: "high" } };
+      const result = prepareRunWorkspace(run, { baselineDir, outputRoot, repoRoot: REPO_ROOT });
+      assert.strictEqual(result.plan.model.buildId, "build-123");
+      assert.strictEqual(result.plan.model.agentVersion, "agent-9");
+      assert.deepStrictEqual(result.plan.model.effortParams, { reasoningEffort: "high" });
+    });
+  });
+});
+
+test("validateRunConsistency throws when a run's inputMode doesn't match its lane's configured inputMode", () => {
+  withTempDir((baselineDir) => {
+    writeFileSync(path.join(baselineDir, "Program.cs"), "// legacy code", "utf8");
+    withTempDir((outputRoot) => {
+      const run = { ...buildPlannedRuns().find((r) => r.runId === "modernization-efficient-raw-r1"), inputMode: "spec" };
+      assert.throws(() => prepareRunWorkspace(run, { baselineDir, outputRoot, repoRoot: REPO_ROOT }), /inputMode/);
+    });
+  });
+});
+
+test("validateRunConsistency throws when a run's modelId doesn't match its modelTier's configured model", () => {
+  withTempDir((baselineDir) => {
+    writeFileSync(path.join(baselineDir, "Program.cs"), "// legacy code", "utf8");
+    withTempDir((outputRoot) => {
+      const run = { ...buildPlannedRuns().find((r) => r.runId === "modernization-efficient-raw-r1"), modelId: "not-the-configured-model" };
+      assert.throws(() => prepareRunWorkspace(run, { baselineDir, outputRoot, repoRoot: REPO_ROOT }), /modelId/);
+    });
+  });
+});
+
+test("assertFrozenForMeasuredData is a no-op for an unfrozen benchmarkVersion", () => {
+  const result = assertFrozenForMeasuredData("unfrozen");
+  assert.strictEqual(result.enforced, false);
+});
+
