@@ -1,0 +1,91 @@
+{
+  "schemaVersion": "1.0.0",
+  "metadata": {
+    "benchmarkVersion": "1.0",
+    "generatedAt": "2026-08-12T17:00:00Z",
+    "dataKind": "illustrative",
+    "repetitionsPerLane": 3
+  },
+  "claim": {
+    "status": "not-evaluated",
+    "qualityDelta": null,
+    "message": "Dashboard sample data."
+  },
+  "episodes": [
+    {
+      "id": "modernization",
+      "name": "Modernization",
+      "laneSummaries": [
+        {
+          "laneId": "spec",
+          "modelDisplayName": "GPT-4",
+          "inputMode": "spec",
+          "qualityMedian": 85.5,
+          "qualityMin": 80.0,
+          "qualityMax": 90.0,
+          "hardGatePassCount": 3,
+          "runCount": 3,
+          "elapsedMedianSeconds": 12.5,
+          "costMedianUsd": 0.05
+        },
+        {
+          "laneId": "generate",
+          "modelDisplayName": "GPT-4",
+          "inputMode": "raw",
+          "qualityMedian": 60.0,
+          "qualityMin": 50.0,
+          "qualityMax": 70.0,
+          "hardGatePassCount": 1,
+          "runCount": 3,
+          "elapsedMedianSeconds": 18.0,
+          "costMedianUsd": null
+        }
+      ],
+      "runs": [
+        {
+          "runId": "run-1",
+          "laneId": "spec",
+          "modelDisplayName": "GPT-4",
+          "inputMode": "spec",
+          "repetition": 1,
+          "status": "completed",
+          "qualityScore": 85.5,
+          "hardGatesPassed": true,
+          "scores": {
+            "functionalCorrectness": 90,
+            "behaviorPreservation": 85,
+            "securityControls": 95,
+            "maintainability": 80,
+            "operability": 80,
+            "scopeTraceability": 90
+          },
+          "elapsedSeconds": 12.5,
+          "toolCalls": 5,
+          "evidencePath": "/evidence/run-1.json",
+          "estimatedCostUsd": 0.05
+        },
+        {
+          "runId": "run-2",
+          "laneId": "generate",
+          "modelDisplayName": "GPT-4",
+          "inputMode": "raw",
+          "repetition": 1,
+          "status": "completed",
+          "qualityScore": 60.0,
+          "hardGatesPassed": false,
+          "scores": {
+            "functionalCorrectness": 60,
+            "behaviorPreservation": 60,
+            "securityControls": 50,
+            "maintainability": 50,
+            "operability": 50,
+            "scopeTraceability": 60
+          },
+          "elapsedSeconds": 18.0,
+          "toolCalls": 0,
+          "evidencePath": "/evidence/run-2.json"
+        }
+      ]
+    }
+  ]
+}
