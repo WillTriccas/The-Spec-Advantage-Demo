@@ -11,19 +11,19 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "lucide-react": "^0.474.0"
+    "lucide-react": "1.28.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
   },
   "devDependencies": {
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
-    "@vitejs/plugin-react": "^4.3.4",
-    "typescript": "^5.7.2",
-    "vite": "^6.0.1",
-    "vite-plugin-singlefile": "^2.1.0",
-    "vitest": "^2.1.8",
-    "jsdom": "^25.0.1",
-    "@testing-library/react": "^16.1.0"
+    "@testing-library/react": "16.3.2",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4",
+    "@vitejs/plugin-react": "6.0.5",
+    "jsdom": "29.0.1",
+    "typescript": "7.0.2",
+    "vite": "8.2.0",
+    "vite-plugin-singlefile": "2.3.3",
+    "vitest": "4.1.10"
   }
 }

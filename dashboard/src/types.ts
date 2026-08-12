@@ -42,15 +42,15 @@ export type Run = {
   hardGatesPassed: boolean;
   scores: ScoreBreakdown;
   elapsedSeconds: number;
-  productiveSeconds?: number | null;
-  queueSeconds?: number | null;
+  productiveSeconds: number | null;
+  queueSeconds: number | null;
   toolCalls: number;
-  inputTokens?: number | null;
-  cachedInputTokens?: number | null;
-  outputTokens?: number | null;
-  reasoningTokens?: number | null;
-  estimatedCostUsd?: number | null;
-  specAuthoringAmortizedCostUsd?: number | null;
+  inputTokens: number | null;
+  cachedInputTokens: number | null;
+  outputTokens: number | null;
+  reasoningTokens: number | null;
+  estimatedCostUsd: number | null;
+  specAuthoringAmortizedCostUsd: number | null;
   evidencePath: string;
 };
 
@@ -65,9 +65,9 @@ export type LaneSummary = {
   hardGateFailCount: number;
   runCount: number;
   elapsedMedianSeconds: number;
-  productiveMedianSeconds?: number | null;
-  tokenMedian?: number | null;
-  costMedianUsd?: number | null;
+  productiveMedianSeconds: number | null;
+  tokenMedian: number | null;
+  costMedianUsd: number | null;
 };
 
 export type Episode = {
@@ -85,13 +85,13 @@ export type Report = {
     generatedAt: string;
     dataKind: "illustrative" | "measured";
     repetitionsPerLane: number;
-    pricingAsOf?: string | null;
+    pricingAsOf: string | null;
     rateType: "list" | "negotiated" | "internal-chargeback" | "unavailable";
     frozenInputs: {
-      freezeRecordSha256?: string | null;
+      freezeRecordSha256: string | null;
       evaluatorSha256: string;
       scoringConfigSha256: string;
-      claimRule: any;
+      claimRule: Record<string, unknown>;
     };
     frozenVersions: string[];
   };

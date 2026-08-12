@@ -6,6 +6,7 @@
   "workspaces": [
     "benchmark",
     "dashboard",
+    "evaluator",
     "spec-factory"
   ],
   "scripts": {
@@ -14,7 +15,9 @@
     "check": "npm run check --workspaces --if-present"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=20.19.0"
+  },
+  "devDependencies": {
+    "jsdom": "29.0.1"
   }
 }
-
