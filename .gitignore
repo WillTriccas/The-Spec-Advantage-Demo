@@ -1,0 +1,12 @@
+node_modules/
+dist/
+coverage/
+TestResults/
+bin/
+obj/
+.runs/
+.prepared/
+*.user
+*.suo
+*.log
+

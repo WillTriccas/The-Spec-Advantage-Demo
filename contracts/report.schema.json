@@ -1,0 +1,209 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/spec-demo/report.schema.json",
+  "title": "Benchmark evidence report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "metadata", "claim", "episodes"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "benchmarkVersion",
+        "generatedAt",
+        "dataKind",
+        "repetitionsPerLane"
+      ],
+      "properties": {
+        "benchmarkVersion": { "type": "string", "minLength": 1 },
+        "generatedAt": { "type": "string", "format": "date-time" },
+        "dataKind": { "enum": ["illustrative", "measured"] },
+        "repetitionsPerLane": { "type": "integer", "minimum": 1 },
+        "pricingAsOf": { "type": ["string", "null"] }
+      }
+    },
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "qualityDelta", "message"],
+      "properties": {
+        "status": {
+          "enum": [
+            "supported",
+            "inconclusive",
+            "not-supported",
+            "not-evaluated"
+          ]
+        },
+        "qualityDelta": { "type": ["number", "null"] },
+        "costSavingPercent": { "type": ["number", "null"] },
+        "message": { "type": "string", "minLength": 1 }
+      }
+    },
+    "episodes": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/episode" }
+    }
+  },
+  "$defs": {
+    "scoreBreakdown": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "functionalCorrectness",
+        "behaviorPreservation",
+        "securityControls",
+        "maintainability",
+        "operability",
+        "scopeTraceability"
+      ],
+      "properties": {
+        "functionalCorrectness": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "behaviorPreservation": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "securityControls": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "maintainability": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "operability": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "scopeTraceability": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        }
+      }
+    },
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runId",
+        "laneId",
+        "modelDisplayName",
+        "inputMode",
+        "repetition",
+        "status",
+        "qualityScore",
+        "hardGatesPassed",
+        "scores",
+        "elapsedSeconds",
+        "toolCalls",
+        "evidencePath"
+      ],
+      "properties": {
+        "runId": { "type": "string", "minLength": 1 },
+        "laneId": { "type": "string", "minLength": 1 },
+        "modelDisplayName": { "type": "string", "minLength": 1 },
+        "inputMode": { "enum": ["raw", "spec"] },
+        "repetition": { "type": "integer", "minimum": 1 },
+        "status": {
+          "enum": ["completed", "failed", "timed-out", "cancelled"]
+        },
+        "qualityScore": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "hardGatesPassed": { "type": "boolean" },
+        "scores": { "$ref": "#/$defs/scoreBreakdown" },
+        "elapsedSeconds": { "type": "number", "minimum": 0 },
+        "toolCalls": { "type": "integer", "minimum": 0 },
+        "inputTokens": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "outputTokens": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "estimatedCostUsd": {
+          "type": ["number", "null"],
+          "minimum": 0
+        },
+        "evidencePath": { "type": "string", "minLength": 1 }
+      }
+    },
+    "laneSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "laneId",
+        "modelDisplayName",
+        "inputMode",
+        "qualityMedian",
+        "qualityMin",
+        "qualityMax",
+        "hardGatePassCount",
+        "runCount",
+        "elapsedMedianSeconds",
+        "costMedianUsd"
+      ],
+      "properties": {
+        "laneId": { "type": "string", "minLength": 1 },
+        "modelDisplayName": { "type": "string", "minLength": 1 },
+        "inputMode": { "enum": ["raw", "spec"] },
+        "qualityMedian": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "qualityMin": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "qualityMax": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "hardGatePassCount": { "type": "integer", "minimum": 0 },
+        "runCount": { "type": "integer", "minimum": 1 },
+        "elapsedMedianSeconds": { "type": "number", "minimum": 0 },
+        "costMedianUsd": {
+          "type": ["number", "null"],
+          "minimum": 0
+        }
+      }
+    },
+    "episode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "laneSummaries", "runs"],
+      "properties": {
+        "id": { "enum": ["modernization", "audit-feature"] },
+        "name": { "type": "string", "minLength": 1 },
+        "laneSummaries": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/laneSummary" }
+        },
+        "runs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/run" }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0.0",
+  "weights": {
+    "functionalCorrectness": 35,
+    "behaviorPreservation": 20,
+    "securityControls": 15,
+    "maintainability": 15,
+    "operability": 10,
+    "scopeTraceability": 5
+  },
+  "hardGates": [
+    "build",
+    "essential-business-invariants",
+    "maker-checker-separation",
+    "audit-integrity",
+    "no-critical-security-findings"
+  ],
+  "claimRule": {
+    "comparisonLane": "efficient-spec",
+    "controlLane": "frontier-raw",
+    "equivalentWithinPoints": 3,
+    "betterByMoreThanPoints": 3,
+    "requireAllHardGates": true,
+    "requireLowerMedianCostOrElapsedTimeForEfficiency": true
+  }
+}
+

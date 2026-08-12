@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "1.0.0",
+  "pricingAsOf": null,
+  "currency": "USD",
+  "models": {
+    "mai-code-1.1-flash": {
+      "inputPerMillionTokens": null,
+      "outputPerMillionTokens": null,
+      "notes": "Set from an approved, dated pricing or internal chargeback source before freezing the benchmark."
+    },
+    "claude-opus-5": {
+      "inputPerMillionTokens": null,
+      "outputPerMillionTokens": null,
+      "notes": "Set from an approved, dated pricing or internal chargeback source before freezing the benchmark."
+    }
+  }
+}
+
