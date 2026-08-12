@@ -112,6 +112,7 @@ test('safe path validation fails an escaping working directory', async () => {
 
 test('audit evaluator passes maker-checker, idempotency, conflict, export, and sentinel checks', async () => {
   const candidate = await makeCandidate('audit-pass');
+  await writeBenchmarkAdapter(candidate);
   await fs.writeFile(path.join(candidate, 'audit-adapter.json'), JSON.stringify({
     schemaVersion: '1.0.0',
     workingDirectory: '.',
@@ -198,6 +199,29 @@ test('audit evaluator fails when a crashing conflict command is the only conflic
   assert.equal(evidence.outcome, 'failed');
   assert.equal(evidence.gates['audit-integrity'].passed, false);
   assert.match(evidence.gates['audit-integrity'].findings.join('\n'), /conflict commands did not complete/);
+});
+
+test('audit evaluator sets build gate from the real benchmark build command', async () => {
+  const candidate = await makeCandidate('audit-build-fails');
+  await writeAuditAdapter(candidate, { benchmark: { buildArguments: ['-e', 'process.exit(7)'] } });
+  await writeAuditRunner(candidate);
+
+  const evidence = await evaluateAuditFeature(candidate, {});
+  assert.equal(evidence.outcome, 'failed');
+  assert.equal(evidence.gates.build.passed, false);
+  assert.equal(evidence.commands.find((entry) => entry.id === 'application-build').passed, false);
+});
+
+test('audit evaluator folds benchmark test failures into essential-business-invariants', async () => {
+  const candidate = await makeCandidate('audit-test-fails');
+  await writeAuditAdapter(candidate, { benchmark: { testArguments: ['-e', 'process.exit(8)'] } });
+  await writeAuditRunner(candidate);
+
+  const evidence = await evaluateAuditFeature(candidate, {});
+  assert.equal(evidence.outcome, 'failed');
+  assert.equal(evidence.gates.build.passed, true);
+  assert.equal(evidence.gates['essential-business-invariants'].passed, false);
+  assert.match(evidence.gates['essential-business-invariants'].findings.join('\n'), /application test command failed/);
 });
 
 test('dependency vulnerability parsers promote high and critical findings', () => {
@@ -313,6 +337,7 @@ async function writeModernizationPassingRunner(candidate) {
 }
 
 async function writeAuditAdapter(candidate, options = {}) {
+  await writeBenchmarkAdapter(candidate, options.benchmark ?? {});
   await fs.writeFile(path.join(candidate, 'audit-adapter.json'), JSON.stringify({
     schemaVersion: '1.0.0',
     workingDirectory: '.',
@@ -320,6 +345,18 @@ async function writeAuditAdapter(candidate, options = {}) {
     propose: command(process.execPath, ['audit-runner.mjs', 'propose', '{stateDirectory}', '{requestId}', '{proposer}', '{businessDate}', '{reason}', '{evidence}', '{accountSentinel}', '{amountSentinel}'], [0, 2]),
     decide: command(process.execPath, ['audit-runner.mjs', 'decide', '{stateDirectory}', '{requestId}', '{approver}', '{decision}', '{reason}', '{evidence}'], options.decideExitCodes ?? [0, 2]),
     export: command(process.execPath, ['audit-runner.mjs', 'export', '{stateDirectory}', '{fromDate}', '{toDate}', '{exportPath}'])
+  }, null, 2));
+}
+
+async function writeBenchmarkAdapter(candidate, options = {}) {
+  await writeModernizationPassingRunner(candidate);
+  await fs.writeFile(path.join(candidate, 'benchmark-adapter.json'), JSON.stringify({
+    schemaVersion: '1.0.0',
+    workingDirectory: '.',
+    build: command(process.execPath, options.buildArguments ?? ['-e', '']),
+    test: command(process.execPath, options.testArguments ?? ['-e', '']),
+    run: command(process.execPath, ['modernization-runner.mjs', '{businessDate}', '{inputDirectory}', '{outputDirectory}']),
+    outputs: ['matched-trades.csv', 'break-queue.csv', 'end-of-day-report.txt']
   }, null, 2));
 }
 

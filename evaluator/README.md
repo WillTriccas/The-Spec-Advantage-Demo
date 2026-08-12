@@ -16,7 +16,7 @@ node evaluator\bin\evaluate.js fixture-hashes
 
 Modernization candidates must provide `benchmark-adapter.json` matching `contracts/candidate-adapter.schema.json`. The evaluator substitutes `{businessDate}`, `{inputDirectory}`, and `{outputDirectory}` into command arguments and evaluates the declared output files.
 
-Audit-feature candidates must provide `audit-adapter.json` matching `contracts/audit-adapter.schema.json`. Commands should support these placeholders in arguments: `{stateDirectory}`, `{requestId}`, `{proposer}`, `{approver}`, `{otherApprover}`, `{decision}`, `{businessDate}`, `{fromDate}`, `{toDate}`, `{exportPath}`, `{reason}`, `{evidence}`, `{accountSentinel}`, and `{amountSentinel}`. `propose`, `decide`, and `export` should return parseable JSON on stdout or, for export, write JSON to `{exportPath}`.
+Audit-feature candidates must provide both `benchmark-adapter.json` matching `contracts/candidate-adapter.schema.json` and `audit-adapter.json` matching `contracts/audit-adapter.schema.json`. The evaluator runs the benchmark adapter's real build and test commands, then runs one evaluator-owned reconciliation fixture through the benchmark adapter before exercising audit commands. Audit commands should support these placeholders in arguments: `{stateDirectory}`, `{requestId}`, `{proposer}`, `{approver}`, `{otherApprover}`, `{decision}`, `{businessDate}`, `{fromDate}`, `{toDate}`, `{exportPath}`, `{reason}`, `{evidence}`, `{accountSentinel}`, and `{amountSentinel}`. `propose`, `decide`, and `export` should return parseable JSON on stdout or, for export, write JSON to `{exportPath}`.
 
 ## Evidence and gates
 

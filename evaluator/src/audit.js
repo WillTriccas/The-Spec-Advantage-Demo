@@ -4,25 +4,37 @@ import path from 'node:path';
 import { TIMEOUTS_MS } from './constants.js';
 import { runAdapterCommand } from './commands.js';
 import { createBaseEvidence, failDimension, finalizeEvidence, passDimension, setGate } from './evidence.js';
-import { AUDIT_SYNTHETIC_VALUES } from './fixtures.js';
+import { AUDIT_SYNTHETIC_VALUES, MODERNIZATION_BUSINESS_DATE, writeModernizationFixture } from './fixtures.js';
 import { tryParseJson } from './json.js';
+import { collectOutputs, evaluateModernizationOutputs } from './modernization.js';
 import { resolveInside } from './paths.js';
-import { validateAuditAdapter } from './schema.js';
+import { validateAuditAdapter, validateModernizationAdapter } from './schema.js';
 import { runStaticChecks } from './static-checks.js';
 
 export async function evaluateAuditFeature(candidateRoot, options) {
   const evidence = createBaseEvidence('audit-feature');
   const adapterPath = path.join(candidateRoot, 'audit-adapter.json');
+  const benchmarkAdapterPath = path.join(candidateRoot, 'benchmark-adapter.json');
 
   let adapter;
+  let benchmarkAdapter;
   try {
     adapter = JSON.parse(await fs.readFile(adapterPath, 'utf8'));
   } catch (error) {
     evidence.adapterValidation.errors.push(`Unable to read audit-adapter.json: ${error.message}`);
     return finalizeEvidence(evidence);
   }
+  try {
+    benchmarkAdapter = JSON.parse(await fs.readFile(benchmarkAdapterPath, 'utf8'));
+  } catch (error) {
+    evidence.adapterValidation.errors.push(`Unable to read benchmark-adapter.json: ${error.message}`);
+    return finalizeEvidence(evidence);
+  }
 
-  const validationErrors = validateAuditAdapter(adapter);
+  const validationErrors = [
+    ...validateAuditAdapter(adapter).map((error) => `audit-adapter: ${error}`),
+    ...validateModernizationAdapter(benchmarkAdapter).map((error) => `benchmark-adapter: ${error}`)
+  ];
   evidence.adapterValidation = {
     passed: validationErrors.length === 0,
     errors: validationErrors
@@ -32,8 +44,10 @@ export async function evaluateAuditFeature(candidateRoot, options) {
   }
 
   let workingDirectory;
+  let benchmarkWorkingDirectory;
   try {
     workingDirectory = resolveInside(candidateRoot, adapter.workingDirectory, 'workingDirectory');
+    benchmarkWorkingDirectory = resolveInside(candidateRoot, benchmarkAdapter.workingDirectory, 'benchmark workingDirectory');
   } catch (error) {
     evidence.adapterValidation.passed = false;
     evidence.adapterValidation.errors.push(error.message);
@@ -45,11 +59,18 @@ export async function evaluateAuditFeature(candidateRoot, options) {
   setGate(evidence, 'build', true, 'audit adapter is command-based and schema-valid');
 
   const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'sealed-audit-'));
+  const inputDirectory = path.join(tempRoot, 'input');
+  const outputDirectory = path.join(tempRoot, 'output');
   const stateDirectory = path.join(tempRoot, 'state');
   const exportPath = path.join(tempRoot, 'export.json');
+  await writeModernizationFixture(inputDirectory);
+  await fs.mkdir(outputDirectory, { recursive: true });
   await fs.mkdir(stateDirectory, { recursive: true });
 
   const baseSubstitutions = {
+    businessDate: MODERNIZATION_BUSINESS_DATE,
+    inputDirectory,
+    outputDirectory,
     stateDirectory,
     exportPath,
     accountSentinel: AUDIT_SYNTHETIC_VALUES.accountSentinel,
@@ -57,7 +78,7 @@ export async function evaluateAuditFeature(candidateRoot, options) {
     proposer: AUDIT_SYNTHETIC_VALUES.proposer,
     approver: AUDIT_SYNTHETIC_VALUES.approver,
     otherApprover: AUDIT_SYNTHETIC_VALUES.otherApprover,
-    businessDate: AUDIT_SYNTHETIC_VALUES.date,
+    auditBusinessDate: AUDIT_SYNTHETIC_VALUES.date,
     fromDate: '2026-02-01',
     toDate: '2026-02-28',
     reason: AUDIT_SYNTHETIC_VALUES.reason,
@@ -67,6 +88,45 @@ export async function evaluateAuditFeature(candidateRoot, options) {
   };
 
   try {
+    const applicationBuild = await runAdapterCommand({
+      id: 'application-build',
+      command: benchmarkAdapter.build,
+      cwd: benchmarkWorkingDirectory,
+      candidateRoot,
+      substitutions: baseSubstitutions,
+      dotnetPath: options.dotnetPath,
+      timeoutMs: TIMEOUTS_MS.build
+    });
+    evidence.commands.push(applicationBuild);
+    setGate(evidence, 'build', applicationBuild.passed, applicationBuild.passed ? 'benchmark-adapter build command completed with an allowed exit code' : 'benchmark-adapter build command failed or timed out');
+
+    const applicationTest = await runAdapterCommand({
+      id: 'application-test',
+      command: benchmarkAdapter.test,
+      cwd: benchmarkWorkingDirectory,
+      candidateRoot,
+      substitutions: baseSubstitutions,
+      dotnetPath: options.dotnetPath,
+      timeoutMs: TIMEOUTS_MS.test
+    });
+    evidence.commands.push(applicationTest);
+
+    const applicationRun = await runAdapterCommand({
+      id: 'application-run-canonical-fixture',
+      command: benchmarkAdapter.run,
+      cwd: benchmarkWorkingDirectory,
+      candidateRoot,
+      substitutions: baseSubstitutions,
+      dotnetPath: options.dotnetPath,
+      timeoutMs: TIMEOUTS_MS.run
+    });
+    evidence.commands.push(applicationRun);
+    const applicationOutputs = await collectOutputs(outputDirectory, benchmarkAdapter.outputs);
+    const applicationChecks = evaluateModernizationOutputs(applicationOutputs, applicationOutputs, applicationRun, applicationRun);
+    if (!applicationTest.passed) {
+      applicationChecks.failed.push('application test command failed or timed out');
+    }
+
     const commands = [
       ['initialize', adapter.initialize, {}],
       ['propose-main', adapter.propose, { requestId: 'REQ-A', reason: AUDIT_SYNTHETIC_VALUES.reason, evidence: AUDIT_SYNTHETIC_VALUES.evidence }],
@@ -135,19 +195,21 @@ export async function evaluateAuditFeature(candidateRoot, options) {
     }
 
     const checks = evaluateAuditResults(evidence.commands, exported);
+    checks.essential.unshift(...applicationChecks.failed);
+    checks.all = [...checks.essential, ...checks.makerChecker, ...checks.integrity];
     setGate(evidence, 'essential-business-invariants', checks.essential.length === 0, checks.essential.join('; ') || 'audit workflow command contract passed');
     setGate(evidence, 'maker-checker-separation', checks.makerChecker.length === 0, checks.makerChecker.join('; ') || 'self-approval was prevented and different checker decisions were accepted');
     setGate(evidence, 'audit-integrity', checks.integrity.length === 0, checks.integrity.join('; ') || 'history was append-only, exportable, and sentinel-safe');
 
-    if (checks.all.length === 0 && evidence.staticChecks.blockingFindings === 0) {
+    if (applicationBuild.passed && checks.all.length === 0 && evidence.staticChecks.blockingFindings === 0) {
       passDimension(evidence, 'functionalCorrectness', 'Synthetic audit workflow passed hidden command checks.');
       passDimension(evidence, 'behaviorPreservation', 'Audit feature preserved core reconciliation exception resolution invariants.');
       passDimension(evidence, 'securityControls', 'No blocking pinned static/dependency findings and no sentinel values were exposed in command output/export.');
       passDimension(evidence, 'maintainability', 'Candidate exposed a schema-valid audit adapter with explicit lifecycle commands.');
-      passDimension(evidence, 'operability', 'State-directory lifecycle initialized, proposed, decided, and exported deterministically.');
+      passDimension(evidence, 'operability', 'Application build/test/run and audit state-directory lifecycle completed deterministically.');
       passDimension(evidence, 'scopeTraceability', 'Maker-checker and audit-integrity gates map to the audit-feature prompt.');
     } else {
-      failDimension(evidence, 'functionalCorrectness', checks.all.join('; ') || 'critical static findings detected');
+      failDimension(evidence, 'functionalCorrectness', checks.all.join('; ') || (applicationBuild.passed ? 'critical static findings detected' : 'application build failed'));
       failDimension(evidence, 'behaviorPreservation', 'required audit behavior was not fully preserved');
       failDimension(evidence, 'securityControls', 'sentinel exposure or critical static findings were detected');
       failDimension(evidence, 'maintainability', 'audit adapter did not provide a complete lifecycle contract');

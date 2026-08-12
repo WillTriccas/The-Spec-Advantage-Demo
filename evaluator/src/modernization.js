@@ -138,7 +138,7 @@ export async function evaluateModernization(candidateRoot, options) {
   return finalizeEvidence(evidence);
 }
 
-async function collectOutputs(outputDirectory, declaredOutputs) {
+export async function collectOutputs(outputDirectory, declaredOutputs) {
   const files = {};
   for (const declared of declaredOutputs) {
     const relative = declared
@@ -173,7 +173,7 @@ async function findByName(directory, basename) {
   return null;
 }
 
-function evaluateModernizationOutputs(firstOutputs, secondOutputs, run1, run2) {
+export function evaluateModernizationOutputs(firstOutputs, secondOutputs, run1, run2) {
   const failed = [];
   const missing = Object.entries(firstOutputs).filter(([, content]) => content == null).map(([name]) => name);
   if (missing.length > 0) {
