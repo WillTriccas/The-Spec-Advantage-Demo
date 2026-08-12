@@ -38,6 +38,8 @@ See:
 - [Experiment protocol](docs/experiment-protocol.md)
 - [Facilitator guide](docs/facilitator-guide.md)
 - [Benchmark freeze checklist](docs/benchmark-freeze.md)
+- [Reviewer independence register](docs/reviewer-register.md)
+- [Client adaptation guide](docs/client-adaptation.md)
 - [Experiment contract decision](docs/decisions/0001-experiment-contract.md)
 
 ## Prerequisites
@@ -58,4 +60,3 @@ Install JavaScript dependencies with `npm install`. Repository-level build, test
 - Failed runs are retained.
 - Pricing remains unavailable until a dated, approved price source is configured.
 - The benchmark and claim rule are frozen before measured model runs begin.
-
