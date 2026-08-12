@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "audit-feature-approved",
+  "sha256": "bb526a80b36ad4fe69869619da4f2501407406bcdbb2847a69e050743a179aa8",
+  "qualityScore": 100,
+  "dimensions": {
+    "completeness": 1,
+    "clarity": 1,
+    "testability": 1,
+    "traceabilityCoverage": 1,
+    "riskCoverage": 1
+  },
+  "approvedAt": "2024-05-02T15:00:00Z",
+  "reviewers": [
+    {
+      "name": "R. Chen",
+      "role": "Compliance",
+      "verdict": "approve"
+    },
+    {
+      "name": "P. Okafor",
+      "role": "Trade Operations Manager",
+      "verdict": "approve"
+    },
+    {
+      "name": "J. Alvarez",
+      "role": "Engineering Lead, Reconciliation Services",
+      "verdict": "approve"
+    },
+    {
+      "name": "D. Whitfield",
+      "role": "Security",
+      "verdict": "approve"
+    }
+  ]
+}

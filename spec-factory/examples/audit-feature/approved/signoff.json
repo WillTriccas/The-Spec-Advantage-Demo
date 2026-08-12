@@ -1,0 +1,11 @@
+{
+  "reviewers": [
+    { "name": "R. Chen", "role": "Compliance", "verdict": "approve" },
+    { "name": "P. Okafor", "role": "Trade Operations Manager", "verdict": "approve" },
+    { "name": "J. Alvarez", "role": "Engineering Lead, Reconciliation Services", "verdict": "approve" },
+    { "name": "D. Whitfield", "role": "Security", "verdict": "approve" }
+  ],
+  "decision": "approved",
+  "decidedAt": "2024-05-02T15:00:00Z",
+  "notes": "Approved on condition that append-only enforcement includes a database-permission-level control (RISK-1 mitigation), not application logic alone, and that the CI log-content scan (NFR-1) is implemented as an allow-list before this feature ships (RISK-4 mitigation). All critical ambiguities regarding exception identity scope and maker-checker exceptions were resolved prior to this review; no open items remain."
+}

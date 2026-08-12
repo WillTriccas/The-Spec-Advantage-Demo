@@ -1,0 +1,24 @@
+{
+  "items": [
+    {
+      "id": "INV-1",
+      "statement": "Every trade in the input set appears in exactly one of: the matched set, or the exceptions set — never both, and never dropped silently.",
+      "enforcementPoint": "TradeReconciliationEngine's classification loop; enforced by a unit test asserting matched.Count + exceptions.Count == inputTrades.Count for every fixture."
+    },
+    {
+      "id": "INV-2",
+      "statement": "A settlement record is never matched to more than one trade.",
+      "enforcementPoint": "TradeReconciliationEngine's matching index, which removes a settlement record from the candidate pool once consumed by a match."
+    },
+    {
+      "id": "INV-3",
+      "statement": "The tolerance comparison is a closed interval: an amount difference exactly equal to the configured tolerance is a MATCH, not AMOUNT_MISMATCH.",
+      "enforcementPoint": "TradeReconciliationEngine.IsWithinTolerance, covered by a boundary-value unit test at exactly the tolerance value."
+    },
+    {
+      "id": "INV-4",
+      "statement": "Monetary values written to output files never lose precision relative to the decimal values read from input (no float/double coercion anywhere in the pipeline).",
+      "enforcementPoint": "All trade/settlement amount fields are typed as System.Decimal end-to-end; enforced by static analysis rule banning double/float on amount-named fields in the reconciliation namespace."
+    }
+  ]
+}

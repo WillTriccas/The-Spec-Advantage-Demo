@@ -1,0 +1,27 @@
+{
+  "systemSummary": "The audit feature builds on the modernized .NET 8 reconciliation service (see the approved 'modernization' spec bundle). That service already produces exceptions.csv each run, classified by reason (UNSETTLED, ORPHAN_SETTLEMENT, AMOUNT_MISMATCH, DUPLICATE_TRADE_KEY). Today, analysts resolve exceptions by manually editing that CSV in place; there is no resolution API, no persistence of resolution history, and no separation between the person who proposes a resolution and the person who approves it.",
+  "components": [
+    "ReconciliationService (modernized) — produces exceptions.csv per run; this feature adds a resolution workflow layered on top, keyed by exception identity (run id + trade/settlement key).",
+    "New: ExceptionResolutionApi — accepts a maker's proposed resolution (reason code + evidence) and a checker's approve/reject decision.",
+    "New: AuditEventStore — append-only persistence for every resolution lifecycle event (proposed, approved, rejected).",
+    "New: AuditExportService — reads the AuditEventStore for a date range and produces a durable export file.",
+    "Existing telemetry pipeline — structured logging/metrics infrastructure already used by the modernized reconciliation service; this feature must emit events into it without adding sensitive fields."
+  ],
+  "dataFlows": [
+    "Analyst (maker) reviews an exception from exceptions.csv → submits a proposed resolution (reason code, evidence, exception identity) → ExceptionResolutionApi → AuditEventStore (event type PROPOSED).",
+    "A different analyst (checker) reviews the proposed resolution → submits approve or reject → ExceptionResolutionApi → AuditEventStore (event type APPROVED or REJECTED).",
+    "Compliance requests an export for a date range → AuditExportService reads AuditEventStore → durable export file (see REQ-8).",
+    "Every lifecycle transition also emits a telemetry event (counts and identifiers only, no trade/settlement content) to the existing telemetry pipeline."
+  ],
+  "constraints": [
+    "Must build on top of the modernized .NET 8 reconciliation service; it must not require changes to the reconciliation engine's matching/classification logic.",
+    "Exception identity must be derived from data already produced by the reconciliation run (run id + TradeId + SettlementDate) since no new identifier scheme exists upstream.",
+    "The audit trail must be append-only: the data store chosen must not allow UPDATE or DELETE against existing resolution events at the application layer.",
+    "Concurrent resolution attempts (e.g. two makers proposing for the same exception, or a retried submission from a flaky client) must be handled safely without creating duplicate or conflicting final states.",
+    "No sensitive trade or settlement data (amounts, counterparty identifiers, account numbers) may appear in logs or telemetry, per existing Security policy carried over from the modernization effort's NFR-5 observability baseline."
+  ],
+  "knownBehaviors": [
+    "exceptions.csv rows are uniquely identified today only by their (TradeId, SettlementDate, reason) tuple within a given run id; there is no persistent exception identifier across runs.",
+    "The modernized reconciliation service's structured run-summary log (NFR-5 in the modernization spec) contains only counts, never per-record content — this feature must preserve that same discipline for its own telemetry."
+  ]
+}

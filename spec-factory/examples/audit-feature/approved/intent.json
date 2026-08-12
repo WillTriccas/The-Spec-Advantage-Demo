@@ -1,0 +1,28 @@
+{
+  "problemStatement": "Following the .NET 8 modernization of the trade reconciliation service, Compliance and Trade Operations have no auditable trail of who overrode or annotated a reconciliation exception, why, and when. Analysts currently resolve exceptions by editing the exceptions.csv output directly, which leaves no record of the reason for a resolution, allows a single analyst to both flag and clear the same exception unchecked, and provides no way to export a defensible history for a regulatory inquiry.",
+  "goals": [
+    "Let an analyst attach a structured reason code and free-text evidence to a reconciliation exception when resolving it.",
+    "Require a second, different person to approve any exception resolution before it is considered final (maker-checker separation).",
+    "Preserve a complete, append-only history of every resolution action so nothing can be silently altered or deleted after the fact.",
+    "Allow Compliance to export a given period's audit history in a durable, reviewable format.",
+    "Make resolution actions observable in telemetry without ever emitting sensitive trade or settlement data to logs."
+  ],
+  "nonGoals": [
+    "Changing how exceptions are detected or classified by the reconciliation engine itself.",
+    "Building a general-purpose workflow engine; this feature covers only exception resolution.",
+    "Supporting bulk/batch approval of multiple exceptions in a single action (deferred).",
+    "Real-time notification/alerting integrations (e.g. email, Slack) for pending approvals."
+  ],
+  "successMetrics": [
+    "100% of exception resolutions in the audit period have a non-null reason code, evidence note, maker identity, and (once approved) a distinct checker identity.",
+    "Zero resolution records can be updated or deleted through the application; only new append-only events are possible, verified by an automated test that attempts and fails at mutation/deletion.",
+    "Compliance can export a complete, correctly ordered audit history for an arbitrary date range in under 30 seconds for a 100k-event period.",
+    "Zero occurrences of raw trade amounts, counterparty identifiers, or settlement account numbers in application logs, verified by a log-content scan in CI."
+  ],
+  "stakeholders": [
+    "Compliance (owns audit requirements and export/regulatory response)",
+    "Trade Operations (analysts who resolve exceptions; approvers who check resolutions)",
+    "Engineering Lead for Reconciliation Services (technical approver)",
+    "Security (reviews sensitive-data-in-logs requirement)"
+  ]
+}

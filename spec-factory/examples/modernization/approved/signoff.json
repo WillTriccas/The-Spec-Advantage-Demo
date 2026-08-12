@@ -1,0 +1,11 @@
+{
+  "reviewers": [
+    { "name": "J. Alvarez", "role": "Engineering Lead, Reconciliation Services", "verdict": "approve" },
+    { "name": "P. Okafor", "role": "Trade Operations Manager", "verdict": "approve" },
+    { "name": "S. Meyer", "role": "Platform Engineering", "verdict": "approve" },
+    { "name": "R. Chen", "role": "Compliance", "verdict": "approve" }
+  ],
+  "decision": "approved",
+  "decidedAt": "2024-02-14T17:30:00Z",
+  "notes": "Approved on condition that the 12-file golden regression suite (RISK-1 mitigation) is committed to the repository before implementation begins, and that the legacy binary's scheduled task is kept disabled-but-available for one full settlement cycle after cutover (RISK-3 mitigation). All critical ambiguities were resolved prior to this review; no open items remain."
+}

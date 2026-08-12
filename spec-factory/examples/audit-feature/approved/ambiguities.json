@@ -1,0 +1,39 @@
+{
+  "items": [
+    {
+      "id": "AMB-1",
+      "description": "Exceptions have no persistent identifier across runs (see discovery.knownBehaviors); it was unclear whether resolution should be scoped to a single run's exception instance or should attempt to correlate the 'same' exception across reruns.",
+      "severity": "critical",
+      "resolution": "Compliance and Engineering agreed resolution is scoped strictly to a single run's exception instance, identified by (runId, tradeId, settlementDate, reason). If the same underlying issue reappears in a later run, it is a new exception requiring a new resolution — this avoids ambiguous cross-run identity matching and keeps the audit trail unambiguous (see REQ-1).",
+      "status": "resolved"
+    },
+    {
+      "id": "AMB-2",
+      "description": "It was unclear whether the maker and checker could be the same person under any circumstance (e.g. a senior analyst self-approving in an emergency).",
+      "severity": "critical",
+      "resolution": "Compliance confirmed no exceptions: maker and checker must always be different identities with no override path, including for emergencies. An emergency process, if ever needed, is out of scope and handled outside this system (see REQ-3, INV-1).",
+      "status": "resolved"
+    },
+    {
+      "id": "AMB-3",
+      "description": "The concurrency behavior when two makers submit a proposal for the same exception identity at nearly the same time was unspecified.",
+      "severity": "major",
+      "resolution": "Engineering decided the first accepted PROPOSED event for a given exception identity wins; subsequent proposal attempts for an exception that already has a pending or resolved state are rejected with a conflict response rather than silently overwritten (see REQ-6, INV-4).",
+      "status": "resolved"
+    },
+    {
+      "id": "AMB-4",
+      "description": "It was unclear what export format Compliance requires and whether it must be human-readable or machine-parseable.",
+      "severity": "minor",
+      "resolution": "Compliance confirmed CSV is sufficient and matches the existing exceptions.csv convention already familiar to Trade Operations; a machine-parseable format was not required for this iteration (see REQ-8).",
+      "status": "resolved"
+    },
+    {
+      "id": "AMB-5",
+      "description": "Whether reason codes are a fixed enumerated set or free text was unclear from the initial ask.",
+      "severity": "minor",
+      "resolution": "Compliance provided a fixed enumerated list of reason codes (see REQ-2) to keep reporting consistent; free-text evidence remains available alongside the code for case-specific detail.",
+      "status": "resolved"
+    }
+  ]
+}

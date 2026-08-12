@@ -1,0 +1,32 @@
+{
+  "items": [
+    {
+      "id": "RISK-1",
+      "description": "Untested legacy matching logic may contain undocumented edge-case behavior that a straightforward re-implementation misses, causing silent reconciliation drift in production.",
+      "likelihood": "medium",
+      "impact": "high",
+      "mitigation": "Build the golden-file regression suite (12 historical trade/settlement file pairs plus their legacy matched.csv/exceptions.csv outputs) before writing any new code, and gate the port on byte-identical output against all 12 before cutover."
+    },
+    {
+      "id": "RISK-2",
+      "description": "Changing the input transport from MSMQ to file-drop could introduce message loss or duplication if the upstream system's write is not atomic (e.g. partial file visible mid-write).",
+      "likelihood": "medium",
+      "impact": "high",
+      "mitigation": "Require the upstream system to write via temp-file-then-atomic-rename (matching the existing settlement file convention) and have the inbound adapter ignore files without the expected .ready marker suffix."
+    },
+    {
+      "id": "RISK-3",
+      "description": "A rushed cutover could leave both the legacy binary and the ported service writing to the same outbound folder, corrupting downstream reports.",
+      "likelihood": "low",
+      "impact": "high",
+      "mitigation": "Cut over via a single Platform Engineering-owned scheduled task change with the legacy binary's task disabled in the same deployment window; keep the legacy binary and its scheduled task available, disabled, for one full settlement cycle as rollback."
+    },
+    {
+      "id": "RISK-4",
+      "description": "The 90% branch coverage target may be missed for exotic settlement file parsing edge cases that lack real-world fixtures.",
+      "likelihood": "low",
+      "impact": "medium",
+      "mitigation": "Track coverage in CI per module; if SettlementFileReader coverage lags, synthesize additional fixtures from the documented fixed-width format spec rather than blocking the cutover on real-world data availability."
+    }
+  ]
+}

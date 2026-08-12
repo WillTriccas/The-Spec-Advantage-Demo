@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "modernization-approved",
+  "sha256": "a1d4e04df72adfcfaaebb789bb97fd82bda1399b6693b44b5e03299f5b4bc2dd",
+  "qualityScore": 100,
+  "dimensions": {
+    "completeness": 1,
+    "clarity": 1,
+    "testability": 1,
+    "traceabilityCoverage": 1,
+    "riskCoverage": 1
+  },
+  "approvedAt": "2024-02-14T17:30:00Z",
+  "reviewers": [
+    {
+      "name": "J. Alvarez",
+      "role": "Engineering Lead, Reconciliation Services",
+      "verdict": "approve"
+    },
+    {
+      "name": "P. Okafor",
+      "role": "Trade Operations Manager",
+      "verdict": "approve"
+    },
+    {
+      "name": "S. Meyer",
+      "role": "Platform Engineering",
+      "verdict": "approve"
+    },
+    {
+      "name": "R. Chen",
+      "role": "Compliance",
+      "verdict": "approve"
+    }
+  ]
+}

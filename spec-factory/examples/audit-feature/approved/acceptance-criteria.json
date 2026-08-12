@@ -1,0 +1,84 @@
+{
+  "items": [
+    {
+      "id": "AC-1",
+      "requirementId": "REQ-1",
+      "given": "a reconciliation run that produced an exception with reason AMOUNT_MISMATCH for a given trade",
+      "when": "the exception is looked up by (runId, tradeId, settlementDate, reason)",
+      "then": "exactly one exception record is returned, uniquely identified",
+      "testable": true
+    },
+    {
+      "id": "AC-2",
+      "requirementId": "REQ-2",
+      "given": "an analyst viewing an open exception",
+      "when": "they submit a proposal with reason code MANUAL_MATCH_CONFIRMED and evidence text 'Confirmed via custodian phone call ref #4471'",
+      "then": "a PROPOSED event is recorded containing the maker identity, reason code, and evidence text",
+      "testable": true
+    },
+    {
+      "id": "AC-3",
+      "requirementId": "REQ-3",
+      "given": "a PROPOSED event created by maker 'analyst.jones'",
+      "when": "'analyst.jones' attempts to submit an approve decision for that same proposal",
+      "then": "the request is rejected because checker identity equals maker identity, and no APPROVED event is written",
+      "testable": true
+    },
+    {
+      "id": "AC-4",
+      "requirementId": "REQ-3",
+      "given": "a PROPOSED event created by maker 'analyst.jones'",
+      "when": "checker 'analyst.patel' submits an approve decision",
+      "then": "an APPROVED event is recorded and the exception's derived state becomes 'approved'",
+      "testable": true
+    },
+    {
+      "id": "AC-5",
+      "requirementId": "REQ-4",
+      "given": "an existing APPROVED event in the audit event store",
+      "when": "any code path attempts to call an update or delete operation against that event through the store's public API",
+      "then": "no such operation exists / the call is rejected, and the event's original content is unchanged",
+      "testable": true
+    },
+    {
+      "id": "AC-6",
+      "requirementId": "REQ-5",
+      "given": "a sequence of exactly one PROPOSED event and one REJECTED event for an exception identity",
+      "when": "the state-derivation function replays those events",
+      "then": "the derived state is 'rejected'",
+      "testable": true
+    },
+    {
+      "id": "AC-7",
+      "requirementId": "REQ-6",
+      "given": "an exception identity with an existing pending PROPOSED event",
+      "when": "a second, different maker submits a new proposal for the same exception identity",
+      "then": "the request is rejected with a conflict response and no second PROPOSED event is written",
+      "testable": true
+    },
+    {
+      "id": "AC-8",
+      "requirementId": "REQ-7",
+      "given": "a proposal request submitted with idempotency key 'k-1001' that succeeds and writes one PROPOSED event",
+      "when": "the identical request (same idempotency key, maker, exception identity, reason, evidence) is submitted again due to a client retry",
+      "then": "no second PROPOSED event is written and the original event's result is returned",
+      "testable": true
+    },
+    {
+      "id": "AC-9",
+      "requirementId": "REQ-8",
+      "given": "audit events for 3 exceptions with lifecycle events across a 5-day window",
+      "when": "Compliance exports the 5-day date range",
+      "then": "the resulting CSV contains all events for those 3 exceptions, ordered by exception identity then event time, with actor identities, reason codes, evidence and timestamps present",
+      "testable": true
+    },
+    {
+      "id": "AC-10",
+      "requirementId": "REQ-9",
+      "given": "a PROPOSED event is written containing a trade amount and evidence text referencing an account number",
+      "when": "the corresponding telemetry event is emitted",
+      "then": "the telemetry payload contains only event type, exception identity, actor role, reason code and timestamp — the trade amount and account number do not appear anywhere in the payload",
+      "testable": true
+    }
+  ]
+}

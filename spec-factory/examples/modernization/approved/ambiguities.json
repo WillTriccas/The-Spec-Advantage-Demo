@@ -1,0 +1,32 @@
+{
+  "items": [
+    {
+      "id": "AMB-1",
+      "description": "MSMQ has no direct .NET 8 equivalent. It is unclear whether the replacement input transport should be a file-drop adapter (matching the existing settlement file pattern) or a hosted queue service (e.g. a message broker), which would add new infrastructure dependencies.",
+      "severity": "critical",
+      "resolution": "Trade Operations and Platform Engineering agreed to a file-drop adapter: the upstream trade capture system will be changed (tracked in a separate, already-approved ticket) to write the same TradeMessage payload as newline-delimited JSON files into an inbound folder, mirroring the existing settlement file pattern. This avoids introducing new broker infrastructure and keeps the reconciliation app's operational model consistent (poll two folders, write two folders).",
+      "status": "resolved"
+    },
+    {
+      "id": "AMB-2",
+      "description": "It is unclear whether 'DUPLICATE_TRADE_KEY' trades should still be checked for amount tolerance against a settlement record, or immediately flagged without attempting a match.",
+      "severity": "major",
+      "resolution": "Confirmed with Trade Operations via the 2016 runbook example set: duplicate-keyed trades are flagged as DUPLICATE_TRADE_KEY without attempting tolerance matching, and this must be preserved exactly (see REQ-4).",
+      "status": "resolved"
+    },
+    {
+      "id": "AMB-3",
+      "description": "The App.config tolerance value's unit (currency units vs. basis points) is undocumented in the runbook.",
+      "severity": "minor",
+      "resolution": "Verified against the legacy source: the tolerance is an absolute currency-unit difference (System.Decimal), not a percentage or basis-point value. Confirmed with a passing golden-file regression at tolerance=0.01.",
+      "status": "resolved"
+    },
+    {
+      "id": "AMB-4",
+      "description": "Whether the ported service should retain the 15-minute polling model or gain a push-based trigger was raised by Platform Engineering.",
+      "severity": "minor",
+      "resolution": "Out of scope for this modernization: the polling model and cadence are preserved unchanged (see NFR-3). A push-based trigger is deferred to a future proposal.",
+      "status": "resolved"
+    }
+  ]
+}

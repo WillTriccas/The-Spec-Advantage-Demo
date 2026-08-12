@@ -1,0 +1,46 @@
+{
+  "items": [
+    {
+      "id": "REQ-1",
+      "statement": "The ported service must read trade records from newline-delimited JSON files dropped into a configurable inbound folder, replacing the MSMQ input adapter, while producing an in-memory trade list identical in content to what MsmqTradeSource previously produced.",
+      "rationale": "MSMQ is unavailable on .NET 8 (see AMB-1); the file-drop adapter is the agreed replacement transport.",
+      "testable": true
+    },
+    {
+      "id": "REQ-2",
+      "statement": "The ported service must match trades to settlement records by (TradeId, SettlementDate) and classify each trade as MATCHED, or as an exception with reason UNSETTLED, ORPHAN_SETTLEMENT, AMOUNT_MISMATCH, or DUPLICATE_TRADE_KEY, using the exact classification rules documented in discovery.knownBehaviors.",
+      "rationale": "Preserves the reconciliation behavior Trade Operations currently depends on.",
+      "testable": true
+    },
+    {
+      "id": "REQ-3",
+      "statement": "The reconciliation tolerance must remain externally configurable as an absolute decimal currency-unit value, sourced from configuration (e.g. appsettings.json) rather than App.config, defaulting to 0.01.",
+      "rationale": "Preserves current operational configurability while moving off App.config, which is not supported on .NET 8 in the same form.",
+      "testable": true
+    },
+    {
+      "id": "REQ-4",
+      "statement": "Trades sharing a duplicate (TradeId, SettlementDate) key must be classified as DUPLICATE_TRADE_KEY without first attempting amount-tolerance matching against a settlement record.",
+      "rationale": "Confirmed legacy behavior per AMB-2; changing this would silently alter exception counts Trade Operations relies on.",
+      "testable": true
+    },
+    {
+      "id": "REQ-5",
+      "statement": "matched.csv and exceptions.csv must be written to the configured outbound folder on every run, including header-only files when there are zero matches or zero exceptions, using the same column order, headers, and invariant-culture 2-decimal-place number formatting as the legacy output.",
+      "rationale": "The downstream reporting job depends on both files always existing with a stable schema (see discovery.constraints).",
+      "testable": true
+    },
+    {
+      "id": "REQ-6",
+      "statement": "Re-running the service against an unchanged pair of inbound trade and settlement files must produce byte-identical matched.csv and exceptions.csv output (idempotent by rerun).",
+      "rationale": "Operations relies on safe reruns after a failed downstream step; this is an existing implicit behavior that must not regress.",
+      "testable": true
+    },
+    {
+      "id": "REQ-7",
+      "statement": "The settlement file parser must continue to accept the existing fixed-width custodian bank file format unchanged.",
+      "rationale": "The file format is owned by an external party and cannot change (see discovery.constraints).",
+      "testable": true
+    }
+  ]
+}
