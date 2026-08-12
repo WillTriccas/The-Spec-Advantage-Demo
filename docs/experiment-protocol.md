@@ -36,6 +36,8 @@ The lane controls are:
 
 Model randomness cannot be fully controlled in an agent environment. Replication and complete failure retention expose that variability rather than hiding it.
 
+Run order is randomized and interleaved across lanes. Model build IDs, agent build, reasoning-effort settings, time limit, tool-call cap, permission profile, execution order, and queue or throttle time are frozen or recorded. Provider queue time is not treated as productive engineering time.
+
 ## Specification treatment
 
 Raw lanes receive the concise task brief and baseline only.
@@ -49,6 +51,9 @@ Spec lanes receive the same brief plus the approved, hashed bundle. Approval req
 - Domain invariants and failure behavior.
 - Security, operational, migration, and rollback constraints.
 - Recorded review identity and timestamp.
+- A blindness attestation confirming that authors and reviewers did not access hidden evaluator source or expected results.
+
+Spec-authoring elapsed time, model usage, and human review effort are recorded. The report shows both per-run execution efficiency and a transparent amortized view of the spec investment.
 
 ## Evaluation
 
@@ -65,25 +70,36 @@ The Quality Index is a weighted score:
 
 Quality is reported separately from elapsed time, token use, tool calls, estimated cost, time to first green build, and rework.
 
-The following are hard gates:
+The following hard gates apply to modernization:
 
 - Build succeeds.
 - Essential business invariants pass.
-- Maker-checker separation holds where applicable.
-- Audit integrity holds where applicable.
 - No critical security finding exists.
+
+The audit-feature episode adds:
+
+- Maker-checker separation holds.
+- Audit integrity holds.
+
+Each gate is recorded as passed, failed, or not applicable. A skipped gate is never treated as passed. Scanner, ruleset, and severity mapping are pinned in the freeze record.
 
 A high aggregate score cannot compensate for a failed hard gate.
 
+Failed, timed-out, and cancelled runs remain in the aggregation with a Quality Index of zero and all applicable gates failed.
+
 ## Claim rule
 
-The pre-registered comparison is the median efficient/spec result against the median frontier/raw result.
+The pre-registered comparison uses marginal lane medians for efficient/spec and frontier/raw. Ranges and gate counts are always shown next to those medians.
 
-- **Equivalent:** efficient/spec is within three Quality Index points and all compared runs pass required hard gates.
-- **Better:** efficient/spec is more than three points higher and all compared runs pass required hard gates.
-- **More efficient:** equivalent-or-better quality plus lower median cost or elapsed time.
-- **Inconclusive:** evidence is missing, inconsistent, or cannot establish the registered comparison.
-- **Not supported:** efficient/spec falls outside the quality margin, fails a hard gate, or does not improve either efficiency measure.
+- **Equivalent quality:** efficient/spec is within three Quality Index points and its applicable hard gates pass.
+- **Better quality:** efficient/spec is more than three points higher and its applicable hard gates pass.
+- **Worse quality:** efficient/spec is more than three points lower or fails an applicable hard gate.
+- **Inconclusive quality:** evidence is missing or the observed delta is not distinguishable from within-lane spread.
+- **Better efficiency:** equivalent-or-better quality plus lower median token or monetary cost after including amortized spec-authoring effort.
+
+Quality and efficiency verdicts are reported separately. Elapsed time is contextual and cannot alone establish the headline efficiency claim. A control-lane gate failure remains prominent but does not penalize the comparison lane. Each episode gets its own claim; the overall status is the weaker episode, never an average.
+
+Secondary, pre-registered analyses measure the spec effect within MAI Code 1.1 Flash and within Claude Opus 5. Scope and traceability are scored against expected requirement coverage in all lanes, not against the presence of spec-only identifiers.
 
 Three repetitions demonstrate spread but do not justify claims of statistical generality across all codebases or models.
 
@@ -97,6 +113,8 @@ Token counts and elapsed time may be reported as observed. Monetary cost is calc
 - Any platform multipliers or flat charges are explicitly represented.
 
 Unknown cost is displayed as unavailable, never as zero.
+
+Pricing captures standard, cached, reasoning, and output token classes plus flat charges where applicable. The rate source, effective date, and rate type are required before any monetary comparison.
 
 ## Run evidence
 
@@ -114,3 +132,4 @@ Every imported run retains:
 
 The report generator includes all eligible runs and does not select a preferred repetition.
 
+All non-completed runs are eligible and receive the registered zero-score treatment. Every frozen benchmark version that produced a measured run is disclosed in the final report, including superseded versions.

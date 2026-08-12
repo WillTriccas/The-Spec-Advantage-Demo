@@ -4,9 +4,9 @@
   "title": "Benchmark evidence report",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "metadata", "claim", "episodes"],
+  "required": ["schemaVersion", "metadata", "overallClaim", "episodes"],
   "properties": {
-    "schemaVersion": { "const": "1.0.0" },
+    "schemaVersion": { "const": "1.1.0" },
     "metadata": {
       "type": "object",
       "additionalProperties": false,
@@ -14,20 +14,70 @@
         "benchmarkVersion",
         "generatedAt",
         "dataKind",
-        "repetitionsPerLane"
+        "repetitionsPerLane",
+        "pricingAsOf",
+        "rateType",
+        "frozenInputs",
+        "frozenVersions"
       ],
       "properties": {
         "benchmarkVersion": { "type": "string", "minLength": 1 },
         "generatedAt": { "type": "string", "format": "date-time" },
         "dataKind": { "enum": ["illustrative", "measured"] },
         "repetitionsPerLane": { "type": "integer", "minimum": 1 },
-        "pricingAsOf": { "type": ["string", "null"] }
+        "pricingAsOf": { "type": ["string", "null"] },
+        "rateType": {
+          "enum": ["list", "negotiated", "internal-chargeback", "unavailable"]
+        },
+        "frozenInputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "freezeRecordSha256",
+            "evaluatorSha256",
+            "scoringConfigSha256",
+            "claimRule"
+          ],
+          "properties": {
+            "freezeRecordSha256": { "type": ["string", "null"] },
+            "evaluatorSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "scoringConfigSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "claimRule": { "type": "object" }
+          }
+        },
+        "frozenVersions": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
       }
     },
+    "overallClaim": { "$ref": "#/$defs/claim" },
+    "episodes": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/episode" }
+    }
+  },
+  "$defs": {
     "claim": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["status", "qualityDelta", "message"],
+      "required": [
+        "status",
+        "qualityVerdict",
+        "efficiencyVerdict",
+        "drivingMetric",
+        "qualityDelta",
+        "costSavingPercent",
+        "message"
+      ],
       "properties": {
         "status": {
           "enum": [
@@ -37,18 +87,20 @@
             "not-evaluated"
           ]
         },
+        "qualityVerdict": {
+          "enum": ["better", "equivalent", "worse", "indeterminate"]
+        },
+        "efficiencyVerdict": {
+          "enum": ["better", "equivalent", "worse", "unavailable"]
+        },
+        "drivingMetric": {
+          "enum": ["cost", "tokens", "elapsed", "unavailable"]
+        },
         "qualityDelta": { "type": ["number", "null"] },
         "costSavingPercent": { "type": ["number", "null"] },
         "message": { "type": "string", "minLength": 1 }
       }
     },
-    "episodes": {
-      "type": "array",
-      "minItems": 1,
-      "items": { "$ref": "#/$defs/episode" }
-    }
-  },
-  "$defs": {
     "scoreBreakdown": {
       "type": "object",
       "additionalProperties": false,
@@ -93,25 +145,61 @@
         }
       }
     },
+    "hardGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "applicable", "status", "reason"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "applicable": { "type": "boolean" },
+        "status": { "enum": ["passed", "failed", "not-applicable"] },
+        "reason": { "type": ["string", "null"] }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "applicable": { "const": false } } },
+          "then": {
+            "properties": { "status": { "const": "not-applicable" } }
+          }
+        },
+        {
+          "if": { "properties": { "applicable": { "const": true } } },
+          "then": {
+            "properties": { "status": { "enum": ["passed", "failed"] } }
+          }
+        }
+      ]
+    },
     "run": {
       "type": "object",
       "additionalProperties": false,
       "required": [
         "runId",
+        "dataKind",
         "laneId",
         "modelDisplayName",
         "inputMode",
         "repetition",
         "status",
         "qualityScore",
+        "hardGates",
         "hardGatesPassed",
         "scores",
         "elapsedSeconds",
+        "productiveSeconds",
+        "queueSeconds",
         "toolCalls",
+        "inputTokens",
+        "cachedInputTokens",
+        "outputTokens",
+        "reasoningTokens",
+        "estimatedCostUsd",
+        "specAuthoringAmortizedCostUsd",
         "evidencePath"
       ],
       "properties": {
         "runId": { "type": "string", "minLength": 1 },
+        "dataKind": { "enum": ["illustrative", "measured"] },
         "laneId": { "type": "string", "minLength": 1 },
         "modelDisplayName": { "type": "string", "minLength": 1 },
         "inputMode": { "enum": ["raw", "spec"] },
@@ -124,15 +212,24 @@
           "minimum": 0,
           "maximum": 100
         },
+        "hardGates": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/hardGate" }
+        },
         "hardGatesPassed": { "type": "boolean" },
         "scores": { "$ref": "#/$defs/scoreBreakdown" },
         "elapsedSeconds": { "type": "number", "minimum": 0 },
+        "productiveSeconds": { "type": ["number", "null"], "minimum": 0 },
+        "queueSeconds": { "type": ["number", "null"], "minimum": 0 },
         "toolCalls": { "type": "integer", "minimum": 0 },
-        "inputTokens": {
+        "inputTokens": { "type": ["integer", "null"], "minimum": 0 },
+        "cachedInputTokens": {
           "type": ["integer", "null"],
           "minimum": 0
         },
-        "outputTokens": {
+        "outputTokens": { "type": ["integer", "null"], "minimum": 0 },
+        "reasoningTokens": {
           "type": ["integer", "null"],
           "minimum": 0
         },
@@ -140,8 +237,29 @@
           "type": ["number", "null"],
           "minimum": 0
         },
+        "specAuthoringAmortizedCostUsd": {
+          "type": ["number", "null"],
+          "minimum": 0
+        },
         "evidencePath": { "type": "string", "minLength": 1 }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": ["failed", "timed-out", "cancelled"]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "qualityScore": { "const": 0 },
+              "hardGatesPassed": { "const": false }
+            }
+          }
+        }
+      ]
     },
     "laneSummary": {
       "type": "object",
@@ -154,8 +272,11 @@
         "qualityMin",
         "qualityMax",
         "hardGatePassCount",
+        "hardGateFailCount",
         "runCount",
         "elapsedMedianSeconds",
+        "productiveMedianSeconds",
+        "tokenMedian",
         "costMedianUsd"
       ],
       "properties": {
@@ -178,8 +299,14 @@
           "maximum": 100
         },
         "hardGatePassCount": { "type": "integer", "minimum": 0 },
+        "hardGateFailCount": { "type": "integer", "minimum": 0 },
         "runCount": { "type": "integer", "minimum": 1 },
         "elapsedMedianSeconds": { "type": "number", "minimum": 0 },
+        "productiveMedianSeconds": {
+          "type": ["number", "null"],
+          "minimum": 0
+        },
+        "tokenMedian": { "type": ["number", "null"], "minimum": 0 },
         "costMedianUsd": {
           "type": ["number", "null"],
           "minimum": 0
@@ -189,10 +316,11 @@
     "episode": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "name", "laneSummaries", "runs"],
+      "required": ["id", "name", "claim", "laneSummaries", "runs"],
       "properties": {
         "id": { "enum": ["modernization", "audit-feature"] },
         "name": { "type": "string", "minLength": 1 },
+        "claim": { "$ref": "#/$defs/claim" },
         "laneSummaries": {
           "type": "array",
           "minItems": 1,
@@ -205,5 +333,34 @@
         }
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "metadata": {
+            "properties": { "dataKind": { "const": "measured" } }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "metadata": {
+            "properties": {
+              "benchmarkVersion": { "not": { "const": "unfrozen" } },
+              "frozenInputs": {
+                "properties": {
+                  "freezeRecordSha256": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  }
+                }
+              },
+              "frozenVersions": { "minItems": 1 }
+            }
+          }
+        }
+      }
+    }
+  ]
 }

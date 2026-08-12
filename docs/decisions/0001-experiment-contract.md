@@ -15,7 +15,7 @@ The demo compares MAI Code 1.1 Flash and Claude Opus 5 in a four-cell design:
 
 Each lane runs three times for each of two independent episodes. Episode 1 starts from an immutable legacy baseline. Episode 2 starts from an immutable canonical .NET 8 baseline so that Episode 1 variation cannot contaminate the feature comparison.
 
-Software quality and delivery efficiency remain separate. The pre-registered comparison is efficient/spec against frontier/raw, using a three-point non-inferiority margin and mandatory hard-gate passage.
+Software quality and delivery efficiency remain separate. The pre-registered comparison is efficient/spec against frontier/raw, using marginal medians, a three-point non-inferiority margin, and mandatory comparison-lane hard-gate passage. Failed runs score zero and remain in the aggregation.
 
 ## Rationale
 
@@ -29,3 +29,6 @@ The four cells isolate the effect of specification quality from model tier. Repl
 - No human remediation is allowed during a scored run.
 - Pricing inputs must be dated and approved before monetary claims are enabled.
 - Illustrative data can exercise the dashboard but cannot support the benchmark claim.
+- Spec authors cannot access hidden evaluator source or expected results.
+- Episode claims remain separate and the overall result is the weaker episode.
+- Spec-authoring effort is included in the efficiency view.

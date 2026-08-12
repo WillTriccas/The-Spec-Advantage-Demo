@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "1.0.0",
+  "schemaVersion": "1.1.0",
   "weights": {
     "functionalCorrectness": 35,
     "behaviorPreservation": 20,
@@ -8,20 +8,55 @@
     "operability": 10,
     "scopeTraceability": 5
   },
-  "hardGates": [
-    "build",
-    "essential-business-invariants",
-    "maker-checker-separation",
-    "audit-integrity",
-    "no-critical-security-findings"
-  ],
+  "hardGates": {
+    "modernization": [
+      "build",
+      "essential-business-invariants",
+      "no-critical-security-findings"
+    ],
+    "audit-feature": [
+      "build",
+      "essential-business-invariants",
+      "maker-checker-separation",
+      "audit-integrity",
+      "no-critical-security-findings"
+    ]
+  },
   "claimRule": {
     "comparisonLane": "efficient-spec",
     "controlLane": "frontier-raw",
     "equivalentWithinPoints": 3,
     "betterByMoreThanPoints": 3,
-    "requireAllHardGates": true,
-    "requireLowerMedianCostOrElapsedTimeForEfficiency": true
+    "aggregation": "marginal-medians",
+    "requireComparisonLaneHardGates": true,
+    "controlLaneGateFailuresAreReportedSeparately": true,
+    "inconclusiveWhenDeltaWithinObservedLaneSpread": true,
+    "overallRollup": "weaker-episode",
+    "qualityAndEfficiencyVerdictsAreSeparate": true
+  },
+  "efficiencyRule": {
+    "primaryMetrics": [
+      "estimated-cost-including-amortized-spec-authoring",
+      "total-tokens-including-spec-authoring"
+    ],
+    "elapsedTimeIsContextOnly": true,
+    "unknownCostIsUnavailable": true
+  },
+  "secondaryAnalyses": [
+    {
+      "id": "efficient-spec-effect",
+      "comparisonLane": "efficient-spec",
+      "controlLane": "efficient-raw"
+    },
+    {
+      "id": "frontier-spec-effect",
+      "comparisonLane": "frontier-spec",
+      "controlLane": "frontier-raw"
+    }
+  ],
+  "failedRunTreatment": {
+    "includeInAggregation": true,
+    "qualityScore": 0,
+    "applicableGates": "failed"
   }
 }
-

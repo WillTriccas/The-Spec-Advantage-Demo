@@ -23,7 +23,14 @@ flowchart LR
 
 ### Authoring zone
 
-Contains scenario source, spec-factory assets, scoring configuration, and evaluator source. It is available to benchmark maintainers but never copied wholesale into a scored agent workspace.
+This is split into independent authoring roles:
+
+- Scenario maintainers own baseline behavior and raw briefs.
+- Spec authors and reviewers own discovery and approved bundles but cannot access hidden evaluator source or expected results.
+- Evaluator authors own hidden checks but cannot alter approved specs.
+- Claim adjudicators review frozen configuration and generated evidence without changing either treatment.
+
+No authoring repository content is copied wholesale into a scored agent workspace.
 
 ### Agent workspace
 
@@ -34,10 +41,13 @@ Contains only the selected baseline, the common task brief, and, for a spec lane
 - Hidden evaluator source and expected results.
 - Scoring weights and claim logic.
 - Prior run conversations or evidence.
+- Any Git refs or history that expose excluded content.
 
 ### Evaluation zone
 
 Receives the completed run after execution. It applies hidden behavior, control, security, operability, and structural checks. Evaluation output is machine-readable and append-only within the run evidence directory.
+
+Hidden checks must be defensible from baseline behavior and the raw brief. They cannot introduce requirements known only to a spec lane.
 
 ### Presentation zone
 
@@ -68,4 +78,3 @@ This avoids compounding Episode 1 implementation quality into Episode 2 and pres
 ## Live execution adapters
 
 The benchmark prepares a provider-neutral workspace and prompt bundle. A Copilot/app session adapter can launch that bundle in a clean session with an exact model selection. When direct invocation is unavailable, the same bundle can be exported and its completed workspace imported without changing the scoring path.
-

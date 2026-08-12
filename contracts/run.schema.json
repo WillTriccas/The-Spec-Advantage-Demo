@@ -6,6 +6,7 @@
   "additionalProperties": false,
   "required": [
     "schemaVersion",
+    "dataKind",
     "runId",
     "benchmarkVersion",
     "episodeId",
@@ -14,20 +15,22 @@
     "inputMode",
     "repetition",
     "baseline",
+    "brief",
+    "spec",
+    "frozenInputs",
     "execution",
     "source",
     "evidence"
   ],
   "properties": {
-    "schemaVersion": { "const": "1.0.0" },
+    "schemaVersion": { "const": "1.1.0" },
+    "dataKind": { "enum": ["illustrative", "measured"] },
     "runId": {
       "type": "string",
       "pattern": "^[a-z0-9][a-z0-9-]+$"
     },
     "benchmarkVersion": { "type": "string", "minLength": 1 },
-    "episodeId": {
-      "enum": ["modernization", "audit-feature"]
-    },
+    "episodeId": { "enum": ["modernization", "audit-feature"] },
     "laneId": {
       "enum": [
         "efficient-raw",
@@ -39,11 +42,12 @@
     "model": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "displayName", "tier"],
+      "required": ["id", "displayName", "tier", "buildId"],
       "properties": {
         "id": { "type": "string", "minLength": 1 },
         "displayName": { "type": "string", "minLength": 1 },
-        "tier": { "enum": ["efficient", "frontier"] }
+        "tier": { "enum": ["efficient", "frontier"] },
+        "buildId": { "type": ["string", "null"] }
       }
     },
     "inputMode": { "enum": ["raw", "spec"] },
@@ -61,13 +65,30 @@
         }
       }
     },
+    "brief": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
     "spec": {
       "oneOf": [
         { "type": "null" },
         {
           "type": "object",
           "additionalProperties": false,
-          "required": ["id", "sha256", "qualityScore"],
+          "required": [
+            "id",
+            "sha256",
+            "qualityScore",
+            "authoringEffort"
+          ],
           "properties": {
             "id": { "type": "string", "minLength": 1 },
             "sha256": {
@@ -78,36 +99,100 @@
               "type": "number",
               "minimum": 0,
               "maximum": 100
+            },
+            "authoringEffort": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "elapsedSeconds",
+                "inputTokens",
+                "outputTokens",
+                "estimatedCostUsd",
+                "amortizedAcrossRuns"
+              ],
+              "properties": {
+                "elapsedSeconds": { "type": "number", "minimum": 0 },
+                "inputTokens": { "type": ["integer", "null"], "minimum": 0 },
+                "outputTokens": { "type": ["integer", "null"], "minimum": 0 },
+                "estimatedCostUsd": {
+                  "type": ["number", "null"],
+                  "minimum": 0
+                },
+                "amortizedAcrossRuns": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
             }
           }
         }
       ]
+    },
+    "frozenInputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "freezeRecordSha256",
+        "evaluatorSha256",
+        "scoringConfigSha256"
+      ],
+      "properties": {
+        "freezeRecordSha256": {
+          "type": ["string", "null"],
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "evaluatorSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "scoringConfigSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
     },
     "execution": {
       "type": "object",
       "additionalProperties": false,
       "required": [
         "status",
+        "order",
         "startedAt",
         "endedAt",
         "elapsedSeconds",
+        "productiveSeconds",
+        "queueSeconds",
         "agentVersion",
-        "toolCalls"
+        "agentBuildId",
+        "reasoningEffort",
+        "toolCalls",
+        "inputTokens",
+        "cachedInputTokens",
+        "outputTokens",
+        "reasoningTokens",
+        "estimatedCostUsd"
       ],
       "properties": {
         "status": {
           "enum": ["completed", "failed", "timed-out", "cancelled"]
         },
+        "order": { "type": "integer", "minimum": 1 },
         "startedAt": { "type": "string", "format": "date-time" },
         "endedAt": { "type": "string", "format": "date-time" },
         "elapsedSeconds": { "type": "number", "minimum": 0 },
+        "productiveSeconds": { "type": ["number", "null"], "minimum": 0 },
+        "queueSeconds": { "type": ["number", "null"], "minimum": 0 },
         "agentVersion": { "type": "string", "minLength": 1 },
+        "agentBuildId": { "type": ["string", "null"] },
+        "reasoningEffort": { "type": ["string", "null"] },
         "toolCalls": { "type": "integer", "minimum": 0 },
-        "inputTokens": {
+        "inputTokens": { "type": ["integer", "null"], "minimum": 0 },
+        "cachedInputTokens": {
           "type": ["integer", "null"],
           "minimum": 0
         },
-        "outputTokens": {
+        "outputTokens": { "type": ["integer", "null"], "minimum": 0 },
+        "reasoningTokens": {
           "type": ["integer", "null"],
           "minimum": 0
         },
@@ -136,5 +221,91 @@
         "evaluatorPath": { "type": "string", "minLength": 1 }
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "dataKind": { "const": "measured" } } },
+      "then": {
+        "properties": {
+          "benchmarkVersion": { "not": { "const": "unfrozen" } },
+          "model": {
+            "properties": { "buildId": { "type": "string", "minLength": 1 } }
+          },
+          "frozenInputs": {
+            "properties": {
+              "freezeRecordSha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            }
+          },
+          "execution": {
+            "properties": {
+              "agentBuildId": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "laneId": { "const": "efficient-raw" } } },
+      "then": {
+        "properties": {
+          "inputMode": { "const": "raw" },
+          "spec": { "type": "null" },
+          "model": {
+            "properties": {
+              "tier": { "const": "efficient" },
+              "id": { "const": "mai-code-1.1-flash" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "laneId": { "const": "efficient-spec" } } },
+      "then": {
+        "properties": {
+          "inputMode": { "const": "spec" },
+          "spec": { "type": "object" },
+          "model": {
+            "properties": {
+              "tier": { "const": "efficient" },
+              "id": { "const": "mai-code-1.1-flash" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "laneId": { "const": "frontier-raw" } } },
+      "then": {
+        "properties": {
+          "inputMode": { "const": "raw" },
+          "spec": { "type": "null" },
+          "model": {
+            "properties": {
+              "tier": { "const": "frontier" },
+              "id": { "const": "claude-opus-5" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "laneId": { "const": "frontier-spec" } } },
+      "then": {
+        "properties": {
+          "inputMode": { "const": "spec" },
+          "spec": { "type": "object" },
+          "model": {
+            "properties": {
+              "tier": { "const": "frontier" },
+              "id": { "const": "claude-opus-5" }
+            }
+          }
+        }
+      }
+    }
+  ]
 }
