@@ -35,7 +35,12 @@ public sealed class FileReportWriter : IReportWriter
         var directory = Path.Combine(_options.OutputDirectory, businessDate.ToString("yyyy-MM-dd"));
         Directory.CreateDirectory(directory);
 
-        var extension = reportName.Contains("register", StringComparison.OrdinalIgnoreCase) ? ".csv" : ".txt";
+        var extension = reportName switch
+        {
+            _ when reportName.Contains("register", StringComparison.OrdinalIgnoreCase) => ".csv",
+            _ when reportName.Contains("result", StringComparison.OrdinalIgnoreCase) => ".json",
+            _ => ".txt"
+        };
         var path = Path.Combine(directory, reportName + extension);
 
         await File.WriteAllTextAsync(path, content, cancellationToken).ConfigureAwait(false);
