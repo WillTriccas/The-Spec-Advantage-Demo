@@ -80,6 +80,32 @@ test("a requirement without a traceability link is a structural error", () => {
   assert.ok(errors.some((msg) => msg.includes("no traceability link")));
 });
 
+test("traceability rejects unknown or cross-requirement acceptance criteria", () => {
+  const bundle = loadBundle(MODERNIZATION_DIR);
+  const [firstLink] = bundle.traceability.links;
+  const criterion = bundle.acceptanceCriteria.items.find(
+    (entry) => entry.requirementId !== firstLink.requirementId
+  );
+  const unknown = {
+    ...bundle,
+    traceability: {
+      links: bundle.traceability.links.map((link, index) =>
+        index === 0 ? { ...link, acceptanceCriteriaIds: ["AC-UNKNOWN"] } : link
+      )
+    }
+  };
+  const crossRequirement = {
+    ...bundle,
+    traceability: {
+      links: bundle.traceability.links.map((link, index) =>
+        index === 0 ? { ...link, acceptanceCriteriaIds: [criterion.id] } : link
+      )
+    }
+  };
+  assert.ok(validateBundle(unknown).errors.some((message) => message.includes("unknown acceptance criterion")));
+  assert.ok(validateBundle(crossRequirement).errors.some((message) => message.includes("belongs to requirement")));
+});
+
 test("a missing stage file is reported as a structural error", () => {
   const bundle = loadBundle(MODERNIZATION_DIR);
   const { risks, ...withoutRisks } = bundle;
@@ -126,6 +152,37 @@ test("an empty authors list is a structural error", () => {
   const mutated = { ...bundle, signoff: { ...bundle.signoff, authors: [] } };
   const { errors } = validateBundle(mutated);
   assert.ok(errors.some((msg) => msg.includes('"authors"')));
+});
+
+test("an approved sign-off requires identified approving reviewers and a valid timestamp", () => {
+  const bundle = loadBundle(MODERNIZATION_DIR);
+  const noReviewers = {
+    ...bundle,
+    signoff: { ...bundle.signoff, reviewers: [] }
+  };
+  const rejectingReviewer = {
+    ...bundle,
+    signoff: {
+      ...bundle.signoff,
+      reviewers: [{ name: "Independent reviewer", role: "Engineering Lead", verdict: "reject" }]
+    }
+  };
+  const invalidTimestamp = {
+    ...bundle,
+    signoff: { ...bundle.signoff, decidedAt: "not-a-timestamp" }
+  };
+
+  assert.ok(validateBundle(noReviewers).errors.some((message) => message.includes('"reviewers"')));
+  assert.strictEqual(isApprovable(noReviewers), false);
+  assert.ok(
+    validateBundle(rejectingReviewer).criticalBlocks.some((message) =>
+      message.includes("every listed reviewer")
+    )
+  );
+  assert.strictEqual(isApprovable(rejectingReviewer), false);
+  assert.ok(
+    validateBundle(invalidTimestamp).errors.some((message) => message.includes('"decidedAt"'))
+  );
 });
 
 test("a missing authoringEffort field is a structural error", () => {

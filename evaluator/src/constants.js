@@ -12,6 +12,7 @@ export const TIMEOUTS_MS = Object.freeze({
   test: 120_000,
   run: 60_000,
   auditCommand: 15_000,
+  restore: 120_000,
   scanner: 30_000
 });
 

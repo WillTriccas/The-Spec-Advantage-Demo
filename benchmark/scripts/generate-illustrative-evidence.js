@@ -18,10 +18,13 @@
  */
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { readFileSync } from "node:fs";
 import { buildPlannedRuns } from "../src/runs.js";
 import { scoreRun } from "../src/scoring.js";
 import { buildReport, writeReport, writeClaimDetail } from "../src/report.js";
-import { loadExperimentConfig, loadScoringConfig } from "../src/config.js";
+import { CONFIG_DIR, CONTRACTS_DIR, loadExperimentConfig, loadScoringConfig } from "../src/config.js";
+import { assemblePromptText, hashDirectory, hashFile, hashText } from "../src/prepare.js";
+import { loadBundle, renderSpecMarkdown } from "../../spec-factory/src/bundle.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "..", "..");
@@ -90,6 +93,38 @@ function main() {
   const experimentConfig = loadExperimentConfig();
   const scoringConfig = loadScoringConfig();
   const plannedRuns = buildPlannedRuns(experimentConfig);
+  const evaluatorSha256 = hashDirectory(path.join(REPO_ROOT, "evaluator"));
+  const scoringConfigSha256 = hashFile(path.join(CONFIG_DIR, "scoring.json"));
+  const costsConfigSha256 = hashFile(path.join(CONFIG_DIR, "costs.json"));
+  const benchmarkEngineSha256 = hashDirectory(path.join(REPO_ROOT, "benchmark", "src"));
+  const experimentConfigSha256 = hashFile(path.join(CONFIG_DIR, "experiment.json"));
+  const runSchemaSha256 = hashFile(path.join(CONTRACTS_DIR, "run.schema.json"));
+  const reportSchemaSha256 = hashFile(path.join(CONTRACTS_DIR, "report.schema.json"));
+  const promptHashes = new Map();
+  const specAuthoringTokens = new Map();
+  for (const episode of experimentConfig.episodes) {
+    const briefText = readFileSync(path.join(REPO_ROOT, episode.taskBrief), "utf8");
+    const manifest = JSON.parse(
+      readFileSync(path.join(REPO_ROOT, episode.specBundle, "manifest.json"), "utf8")
+    );
+    const renderedSpec = renderSpecMarkdown(
+      loadBundle(path.join(REPO_ROOT, episode.specBundle)),
+      { id: manifest.id, title: episode.name }
+    );
+    specAuthoringTokens.set(
+      episode.id,
+      (manifest.authoringEffort?.inputTokens ?? 0) +
+        (manifest.authoringEffort?.outputTokens ?? 0)
+    );
+    promptHashes.set(
+      `${episode.id}|raw`,
+      hashText(assemblePromptText({ briefText, inputMode: "raw" }))
+    );
+    promptHashes.set(
+      `${episode.id}|spec`,
+      hashText(assemblePromptText({ briefText, inputMode: "spec", renderedSpec }))
+    );
+  }
 
   // Illustrate correction item 3 (non-completed runs always score 0 and
   // fail every applicable gate): one run in each episode is fabricated as
@@ -109,6 +144,8 @@ function main() {
 
     return {
       runId: run.runId,
+      dataKind: "illustrative",
+      benchmarkVersion: "unfrozen",
       episodeId: run.episodeId,
       laneId: run.laneId,
       modelDisplayName: run.modelDisplayName,
@@ -117,6 +154,7 @@ function main() {
       status: executionStatus,
       qualityScore: scored.qualityScore,
       hardGatesPassed: scored.hardGatesPassed,
+      gateStates: scored.gateStates,
       scores: scored.scores ?? {
         functionalCorrectness: 0,
         behaviorPreservation: 0,
@@ -126,13 +164,41 @@ function main() {
         scopeTraceability: 0
       },
       elapsedSeconds,
+      productiveSeconds: Math.round(elapsedSeconds * 0.9),
+      queueSeconds: Math.round(elapsedSeconds * 0.05),
       toolCalls,
       // No dated pricing is configured in benchmark/config/costs.json, so
       // token counts are still fabricated for illustrative realism but the
       // resulting cost intentionally stays null throughout (see cost.js).
       inputTokens: Math.round(20000 + rand() * 40000),
+      cachedInputTokens: 0,
       outputTokens: Math.round(8000 + rand() * 20000),
+      reasoningTokens: 0,
       estimatedCostUsd: null,
+      specAuthoringAmortizedCostUsd: null,
+      specAuthoringAmortizedTokens:
+        run.inputMode === "spec"
+          ? Math.floor(
+              specAuthoringTokens.get(run.episodeId) /
+                experimentConfig.repetitionsPerLane
+            ) +
+            (run.repetition <=
+            specAuthoringTokens.get(run.episodeId) %
+              experimentConfig.repetitionsPerLane
+              ? 1
+              : 0)
+          : 0,
+      frozenInputs: {
+        freezeRecordSha256: null,
+        evaluatorSha256,
+        scoringConfigSha256,
+        costsConfigSha256,
+        benchmarkEngineSha256,
+        promptSha256: promptHashes.get(`${run.episodeId}|${run.inputMode}`),
+        experimentConfigSha256,
+        runSchemaSha256,
+        reportSchemaSha256
+      },
       evidencePath: `evidence/illustrative/fixtures/${run.runId}` // fabricated path; no such fixture files exist
     };
   });
@@ -144,12 +210,12 @@ function main() {
     dataKind: "illustrative",
     pricingAsOf: null,
     scoringConfig,
-    generatedAt: "2024-01-01T00:00:00.000Z"
+    generatedAt: "2026-08-12T13:00:00.000Z"
   });
 
   writeReport(report, path.join(OUT_DIR, "report.json"));
   writeClaimDetail(claimDetail, path.join(OUT_DIR, "claim-detail.json"));
-  console.log(`Wrote ${path.join(OUT_DIR, "report.json")} and claim-detail.json (claim.status: ${report.claim.status})`);
+  console.log(`Wrote ${path.join(OUT_DIR, "report.json")} and claim-detail.json (claim.status: ${report.overallClaim.status})`);
 }
 
 main();

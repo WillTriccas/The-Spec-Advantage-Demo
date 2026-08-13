@@ -8,6 +8,7 @@
       "displayName": "MAI Code 1.1 Flash",
       "buildId": null,
       "agentVersion": null,
+      "agentBuildId": null,
       "effortParams": {
         "reasoningEffort": null
       },
@@ -18,6 +19,7 @@
       "displayName": "Claude Opus 5",
       "buildId": null,
       "agentVersion": null,
+      "agentBuildId": null,
       "effortParams": {
         "reasoningEffort": null
       },
@@ -29,6 +31,7 @@
       "id": "modernization",
       "name": "Platform modernization",
       "baselineRef": "refs/tags/benchmark-legacy-v1",
+      "baselinePath": "src/legacy-trade-reconciliation",
       "taskBrief": "benchmark/prompts/modernization-raw.md",
       "specBundle": "spec-factory/examples/modernization/approved"
     },
@@ -36,6 +39,7 @@
       "id": "audit-feature",
       "name": "Explainable audit feature",
       "baselineRef": "refs/tags/benchmark-modernized-v1",
+      "baselinePath": "src/canonical-modernized",
       "taskBrief": "benchmark/prompts/audit-feature-raw.md",
       "specBundle": "spec-factory/examples/audit-feature/approved"
     }
@@ -77,4 +81,3 @@
     "queueAndThrottleNotes": "Record queue and throttle time separately from productive execution time."
   }
 }
-

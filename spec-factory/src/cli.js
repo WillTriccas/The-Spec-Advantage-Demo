@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, mkdirSync, rmSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { STAGES } from "./stages.js";
@@ -64,6 +64,8 @@ export function cmdScore(bundleDir) {
 }
 
 export function cmdApprove(bundleDir, { id } = {}) {
+  const manifestPath = path.join(bundleDir, "manifest.json");
+  rmSync(manifestPath, { force: true });
   const bundle = loadBundle(bundleDir);
   const { errors, criticalBlocks } = validateBundle(bundle);
   const scoreResult = scoreBundle(bundle);
@@ -100,7 +102,7 @@ export function cmdApprove(bundleDir, { id } = {}) {
   };
 
   writeFileSync(
-    path.join(bundleDir, "manifest.json"),
+    manifestPath,
     `${JSON.stringify(manifest, null, 2)}\n`,
     "utf8"
   );

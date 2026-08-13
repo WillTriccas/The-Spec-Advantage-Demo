@@ -63,6 +63,30 @@ function validateNode(schema, value, root, path, errors) {
     return;
   }
 
+  if (schema.allOf) {
+    for (const subSchema of schema.allOf) {
+      validateNode(subSchema, value, root, path, errors);
+    }
+  }
+
+  if (schema.not) {
+    const notErrors = [];
+    validateNode(schema.not, value, root, path, notErrors);
+    if (notErrors.length === 0) {
+      errors.push(`${path}: matched a forbidden "not" schema`);
+    }
+  }
+
+  if (schema.if) {
+    const conditionErrors = [];
+    validateNode(schema.if, value, root, path, conditionErrors);
+    if (conditionErrors.length === 0 && schema.then) {
+      validateNode(schema.then, value, root, path, errors);
+    } else if (conditionErrors.length > 0 && schema.else) {
+      validateNode(schema.else, value, root, path, errors);
+    }
+  }
+
   if (schema.const !== undefined) {
     if (value !== schema.const) {
       errors.push(`${path}: expected const ${JSON.stringify(schema.const)}, got ${JSON.stringify(value)}`);
@@ -116,6 +140,12 @@ function validateNode(schema, value, root, path, errors) {
       value.forEach((item, index) => {
         validateNode(schema.items, item, root, `${path}[${index}]`, errors);
       });
+    }
+    if (schema.uniqueItems) {
+      const serialized = value.map((item) => JSON.stringify(item));
+      if (new Set(serialized).size !== serialized.length) {
+        errors.push(`${path}: array items must be unique`);
+      }
     }
     return;
   }

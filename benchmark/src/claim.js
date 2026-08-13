@@ -1,18 +1,4 @@
 import { aggregateLane } from "./aggregate.js";
-import { loadCostsConfig } from "./config.js";
-
-/**
- * Read the pricingAsOf date from costs.json purely for labeling messages;
- * never used to gate anything (a null pricingAsOf just means costs stay
- * null, which aggregateLane already handles).
- */
-function currentPricingAsOf() {
-  try {
-    return loadCostsConfig().pricingAsOf ?? null;
-  } catch {
-    return null;
-  }
-}
 
 /**
  * Quality-range ("within observed within-lane spread") of a lane summary:
@@ -29,11 +15,9 @@ function laneQualitySpread(laneSummary) {
  * Decide the efficiency verdict (better/equivalent/worse/unavailable)
  * between a comparison and a control lane summary.
  *
- * Cost (token/monetary, already amortized-inclusive of spec-authoring
- * effort for spec lanes -- see cost.js) is the primary driving metric per
- * correction item 6. Elapsed time is only used as a fallback when cost is
- * unavailable for either lane, and the result is explicitly labeled as
- * elapsed-only so it can never be silently mistaken for a cost comparison.
+ * Monetary cost is primary. Token use is the fallback when dated pricing is
+ * unavailable. Elapsed time remains useful report context but cannot by
+ * itself support the benchmark's lower-cost hypothesis.
  */
 function determineEfficiencyVerdict(comparison, control) {
   const costAvailable = comparison.costMedianUsd !== null && control.costMedianUsd !== null;
@@ -41,24 +25,26 @@ function determineEfficiencyVerdict(comparison, control) {
   if (costAvailable) {
     const drivingMetric = "cost";
     if (comparison.costMedianUsd < control.costMedianUsd) {
-      return { efficiencyVerdict: "better", drivingMetric, elapsedOnly: false };
+      return { efficiencyVerdict: "better", drivingMetric };
     }
     if (comparison.costMedianUsd > control.costMedianUsd) {
-      return { efficiencyVerdict: "worse", drivingMetric, elapsedOnly: false };
+      return { efficiencyVerdict: "worse", drivingMetric };
     }
-    return { efficiencyVerdict: "equivalent", drivingMetric, elapsedOnly: false };
+    return { efficiencyVerdict: "equivalent", drivingMetric };
   }
 
-  // Cost unavailable (no dated pricing configured yet, per contract) --
-  // fall back to elapsed time only, but label it as such per item 6.
-  const drivingMetric = "elapsed-time-only (cost unavailable: no dated pricing configured)";
-  if (comparison.elapsedMedianSeconds < control.elapsedMedianSeconds) {
-    return { efficiencyVerdict: "better", drivingMetric, elapsedOnly: true };
+  if (comparison.tokenMedian !== null && control.tokenMedian !== null) {
+    const drivingMetric = "tokens";
+    if (comparison.tokenMedian < control.tokenMedian) {
+      return { efficiencyVerdict: "better", drivingMetric };
+    }
+    if (comparison.tokenMedian > control.tokenMedian) {
+      return { efficiencyVerdict: "worse", drivingMetric };
+    }
+    return { efficiencyVerdict: "equivalent", drivingMetric };
   }
-  if (comparison.elapsedMedianSeconds > control.elapsedMedianSeconds) {
-    return { efficiencyVerdict: "worse", drivingMetric, elapsedOnly: true };
-  }
-  return { efficiencyVerdict: "equivalent", drivingMetric, elapsedOnly: true };
+
+  return { efficiencyVerdict: "unavailable", drivingMetric: "unavailable" };
 }
 
 /**
@@ -81,7 +67,7 @@ export function computeEpisodeClaim(episodeId, comparisonRuns, controlRuns, { cl
       status: "not-evaluated",
       qualityVerdict: "indeterminate",
       efficiencyVerdict: "unavailable",
-      drivingMetric: null,
+      drivingMetric: "unavailable",
       qualityDelta: null,
       costSavingPercent: null,
       comparisonGatesPassed: null,
@@ -120,7 +106,7 @@ export function computeEpisodeClaim(episodeId, comparisonRuns, controlRuns, { cl
       status: "not-supported",
       qualityVerdict: "indeterminate",
       efficiencyVerdict: "unavailable",
-      drivingMetric: null,
+      drivingMetric: "unavailable",
       qualityDelta,
       costSavingPercent,
       comparisonGatesPassed,
@@ -135,7 +121,7 @@ export function computeEpisodeClaim(episodeId, comparisonRuns, controlRuns, { cl
       status: "inconclusive",
       qualityVerdict: "indeterminate",
       efficiencyVerdict: "unavailable",
-      drivingMetric: null,
+      drivingMetric: "unavailable",
       qualityDelta,
       costSavingPercent,
       comparisonGatesPassed,
@@ -150,7 +136,7 @@ export function computeEpisodeClaim(episodeId, comparisonRuns, controlRuns, { cl
       status: "not-supported",
       qualityVerdict: "worse",
       efficiencyVerdict: "unavailable",
-      drivingMetric: null,
+      drivingMetric: "unavailable",
       qualityDelta,
       costSavingPercent,
       comparisonGatesPassed,
@@ -160,11 +146,7 @@ export function computeEpisodeClaim(episodeId, comparisonRuns, controlRuns, { cl
   }
 
   const qualityVerdict = qualityDelta > claimRule.betterByMoreThanPoints ? "better" : "equivalent";
-  const { efficiencyVerdict, drivingMetric, elapsedOnly } = determineEfficiencyVerdict(comparison, control);
-
-  const elapsedOnlyLabel = elapsedOnly
-    ? " NOTE: cost is unavailable (no dated pricing configured), so this efficiency verdict is based on elapsed time only and must not be read as a cost comparison."
-    : "";
+  const { efficiencyVerdict, drivingMetric } = determineEfficiencyVerdict(comparison, control);
 
   if (efficiencyVerdict === "better") {
     return {
@@ -177,7 +159,7 @@ export function computeEpisodeClaim(episodeId, comparisonRuns, controlRuns, { cl
       costSavingPercent,
       comparisonGatesPassed,
       controlGatesPassed,
-      message: `Episode "${episodeId}": claim supported -- "${claimRule.comparisonLane}" is ${qualityVerdict === "better" ? "better than" : "non-inferior to"} "${claimRule.controlLane}" on quality (delta ${qualityDelta}) and shows a ${drivingMetric === "cost" ? "lower median cost" : "lower median elapsed time"}. ${gateNote}${elapsedOnlyLabel}`
+      message: `Episode "${episodeId}": claim supported -- "${claimRule.comparisonLane}" is ${qualityVerdict === "better" ? "better than" : "non-inferior to"} "${claimRule.controlLane}" on quality (delta ${qualityDelta}) and uses fewer median ${drivingMetric === "cost" ? "cost dollars" : "tokens"}. ${gateNote}`
     };
   }
 
@@ -191,7 +173,7 @@ export function computeEpisodeClaim(episodeId, comparisonRuns, controlRuns, { cl
     costSavingPercent,
     comparisonGatesPassed,
     controlGatesPassed,
-    message: `Episode "${episodeId}": quality is ${qualityVerdict} (delta ${qualityDelta}), but "${claimRule.comparisonLane}" did not show better efficiency than "${claimRule.controlLane}" (efficiency verdict: ${efficiencyVerdict}, driving metric: ${drivingMetric}), so the overall claim for this episode is inconclusive. ${gateNote}${elapsedOnlyLabel}`
+    message: `Episode "${episodeId}": quality is ${qualityVerdict} (delta ${qualityDelta}), but "${claimRule.comparisonLane}" did not show better efficiency than "${claimRule.controlLane}" (efficiency verdict: ${efficiencyVerdict}, driving metric: ${drivingMetric}), so the overall claim for this episode is inconclusive. ${gateNote}`
   };
 }
 
@@ -262,15 +244,39 @@ function evaluateSecondaryRule(rule, runsByEpisodeAndLane) {
  * "not-evaluated" — it must never be reported as if it were measured
  * support for or against the claim.
  */
-export function determineClaim(allRuns, { claimRule, secondaryClaimRules = [], dataKind }) {
+export function determineClaim(
+  allRuns,
+  {
+    claimRule,
+    secondaryClaimRules = [],
+    dataKind,
+    pricingAsOf = null,
+    episodeOrder = []
+  }
+) {
   if (dataKind === "illustrative") {
+    const episodeClaims = [...new Set(allRuns.map((run) => run.episodeId))].map((episodeId) => ({
+      episodeId,
+      status: "not-evaluated",
+      qualityVerdict: "indeterminate",
+      efficiencyVerdict: "unavailable",
+      drivingMetric: "unavailable",
+      qualityDelta: null,
+      costSavingPercent: null,
+      comparisonGatesPassed: null,
+      controlGatesPassed: null,
+      message: "Illustrative data cannot support a benchmark claim."
+    }));
     return {
       status: "not-evaluated",
+      qualityVerdict: "indeterminate",
+      efficiencyVerdict: "unavailable",
+      drivingMetric: "unavailable",
       qualityDelta: null,
       costSavingPercent: null,
       message:
         "This report contains illustrative data only, generated to exercise the dashboard. No real benchmark runs have been evaluated, so the pre-registered claim cannot be assessed. This data must not be interpreted as evidence for or against the benchmark claim.",
-      episodeClaims: [],
+      episodeClaims,
       secondaryClaims: []
     };
   }
@@ -283,8 +289,15 @@ export function determineClaim(allRuns, { claimRule, secondaryClaimRules = [], d
     byLane.get(run.laneId).push(run);
   }
 
+  const episodeRank = new Map(episodeOrder.map((episodeId, index) => [episodeId, index]));
+  const orderedEpisodes = [...runsByEpisodeAndLane.entries()].sort(([left], [right]) => {
+    const leftRank = episodeRank.get(left) ?? Number.MAX_SAFE_INTEGER;
+    const rightRank = episodeRank.get(right) ?? Number.MAX_SAFE_INTEGER;
+    return leftRank - rightRank || left.localeCompare(right);
+  });
+
   const episodeClaims = [];
-  for (const [episodeId, byLane] of runsByEpisodeAndLane.entries()) {
+  for (const [episodeId, byLane] of orderedEpisodes) {
     const comparisonRuns = byLane.get(claimRule.comparisonLane) ?? [];
     const controlRuns = byLane.get(claimRule.controlLane) ?? [];
     episodeClaims.push(computeEpisodeClaim(episodeId, comparisonRuns, controlRuns, { claimRule }));
@@ -293,6 +306,9 @@ export function determineClaim(allRuns, { claimRule, secondaryClaimRules = [], d
   if (episodeClaims.length === 0) {
     return {
       status: "not-evaluated",
+      qualityVerdict: "indeterminate",
+      efficiencyVerdict: "unavailable",
+      drivingMetric: "unavailable",
       qualityDelta: null,
       costSavingPercent: null,
       message: "No episodes present in the provided runs; the claim cannot be evaluated.",
@@ -309,10 +325,17 @@ export function determineClaim(allRuns, { claimRule, secondaryClaimRules = [], d
 
   const secondaryClaims = secondaryClaimRules.map((rule) => evaluateSecondaryRule(rule, runsByEpisodeAndLane));
 
-  const pricingAsOf = currentPricingAsOf();
-  const pricingNote = pricingAsOf
-    ? ` Pricing as of ${pricingAsOf}.`
-    : " Costs remain null (no dated pricing configured), so efficiency comparisons above are elapsed-time-only where noted.";
+  const drivingMetrics = [...new Set(episodeClaims.map((claim) => claim.drivingMetric))];
+  let pricingNote;
+  if (pricingAsOf) {
+    pricingNote = ` Pricing as of ${pricingAsOf}.`;
+  } else if (drivingMetrics.includes("cost")) {
+    pricingNote = " No dated price card is configured; cost verdicts use costs recorded directly in the run artifacts.";
+  } else if (drivingMetrics.includes("tokens")) {
+    pricingNote = " Monetary cost is unavailable, so efficiency verdicts use median total token consumption; elapsed time is context only.";
+  } else {
+    pricingNote = " Monetary cost and token evidence are unavailable, so no efficiency advantage is claimed.";
+  }
 
   const perEpisodeSummary = episodeClaims
     .map((c) => `[${c.episodeId}: ${c.status}, quality=${c.qualityVerdict}, efficiency=${c.efficiencyVerdict}]`)
@@ -324,6 +347,9 @@ export function determineClaim(allRuns, { claimRule, secondaryClaimRules = [], d
 
   return {
     status: overallStatus,
+    qualityVerdict: drivingEpisodeClaim.qualityVerdict,
+    efficiencyVerdict: drivingEpisodeClaim.efficiencyVerdict,
+    drivingMetric: drivingEpisodeClaim.drivingMetric,
     qualityDelta: drivingEpisodeClaim.qualityDelta,
     costSavingPercent: drivingEpisodeClaim.costSavingPercent,
     message,

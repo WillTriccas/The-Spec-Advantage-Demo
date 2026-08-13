@@ -1,14 +1,52 @@
 {
-  "schemaVersion": "1.0.0",
+  "schemaVersion": "1.1.0",
   "metadata": {
     "benchmarkVersion": "unfrozen",
-    "generatedAt": "2024-01-01T00:00:00.000Z",
+    "generatedAt": "2026-08-12T13:00:00.000Z",
     "dataKind": "illustrative",
     "repetitionsPerLane": 3,
-    "pricingAsOf": null
+    "pricingAsOf": null,
+    "rateType": "unavailable",
+    "frozenInputs": {
+      "freezeRecordSha256": null,
+      "evaluatorSha256": "320ae088ac684d017681f1575f7b96116a4447c16df27c453327087f15c1dcbd",
+      "scoringConfigSha256": "c9e7c3bebd575b3b56f0409d69cdb5d952c175a73ec11ada7599d73a9648bac6",
+      "costsConfigSha256": "3b2c5ed227eef9cb46c8686dca1bd76af97e2f50e36729358ebc7c9d00dc5ea5",
+      "benchmarkEngineSha256": "692ac1fb0026e3bc24ed523d12fe4fd38080991082114d3c88b5c0dac3af9977",
+      "promptSha256s": [
+        "f22d3d71127ff9f1e7c3e35706442e5d4a79443ef273fa28e43468c0dc789957",
+        "518d8bb000fd36bb982c37042636adf1f54c0d1a484ba5319578ec858452db23",
+        "f47aa4cd40324a29be02f62a6f7fb8c900a72017ad565ca3b3e7756e343d648d",
+        "b4a29ff8f3be258bdb86f51d78760adf86cd8319cd1a1051c7dd7216b10724f4"
+      ],
+      "experimentConfigSha256": "339acfd96e7453ae80c20dd95f9cb7608615045d210f325ea4fc916dd1820354",
+      "runSchemaSha256": "b4cc4103ec2613d7f6ce46aef274a32b4e58a63cebeaccefc609f645606ccf11",
+      "reportSchemaSha256": "0d500177cdd0c05b9d0a316e71da44352700c2452f97bba0da640b61462f88c9",
+      "claimRule": {
+        "comparisonLane": "efficient-spec",
+        "controlLane": "frontier-raw",
+        "equivalentWithinPoints": 3,
+        "betterByMoreThanPoints": 3,
+        "aggregation": "marginal-medians",
+        "requireAllHardGates": true,
+        "comparisonLaneGatesDetermineEligibility": true,
+        "controlLaneGateFailuresAreReportedSeparately": true,
+        "inconclusiveWhenDeltaWithinObservedLaneSpread": true,
+        "overallRollup": "weaker-episode",
+        "qualityAndEfficiencyVerdictsAreSeparate": true,
+        "notes": "Quality is worse only when comparison median minus control median is below negative equivalentWithinPoints."
+      }
+    },
+    "frozenVersions": [
+      "MAI Code 1.1 Flash",
+      "Claude Opus 5"
+    ]
   },
-  "claim": {
+  "overallClaim": {
     "status": "not-evaluated",
+    "qualityVerdict": "indeterminate",
+    "efficiencyVerdict": "unavailable",
+    "drivingMetric": "unavailable",
     "qualityDelta": null,
     "costSavingPercent": null,
     "message": "This report contains illustrative data only, generated to exercise the dashboard. No real benchmark runs have been evaluated, so the pre-registered claim cannot be assessed. This data must not be interpreted as evidence for or against the benchmark claim."
@@ -17,6 +55,15 @@
     {
       "id": "modernization",
       "name": "Platform modernization",
+      "claim": {
+        "status": "not-evaluated",
+        "qualityVerdict": "indeterminate",
+        "efficiencyVerdict": "unavailable",
+        "drivingMetric": "unavailable",
+        "qualityDelta": null,
+        "costSavingPercent": null,
+        "message": "Illustrative data cannot support a benchmark claim."
+      },
       "laneSummaries": [
         {
           "laneId": "efficient-raw",
@@ -26,8 +73,11 @@
           "qualityMin": 0,
           "qualityMax": 70.42,
           "hardGatePassCount": 0,
+          "hardGateFailCount": 3,
           "runCount": 3,
           "elapsedMedianSeconds": 1286,
+          "productiveMedianSeconds": 1157,
+          "tokenMedian": 65654,
           "costMedianUsd": null
         },
         {
@@ -38,8 +88,11 @@
           "qualityMin": 81.15,
           "qualityMax": 83.15,
           "hardGatePassCount": 2,
+          "hardGateFailCount": 1,
           "runCount": 3,
           "elapsedMedianSeconds": 1514,
+          "productiveMedianSeconds": 1363,
+          "tokenMedian": 89936,
           "costMedianUsd": null
         },
         {
@@ -50,8 +103,11 @@
           "qualityMin": 74.86,
           "qualityMax": 82.24,
           "hardGatePassCount": 1,
+          "hardGateFailCount": 2,
           "runCount": 3,
           "elapsedMedianSeconds": 2240,
+          "productiveMedianSeconds": 2016,
+          "tokenMedian": 55554,
           "costMedianUsd": null
         },
         {
@@ -62,20 +118,56 @@
           "qualityMin": 93.98,
           "qualityMax": 96.27,
           "hardGatePassCount": 2,
+          "hardGateFailCount": 1,
           "runCount": 3,
           "elapsedMedianSeconds": 2163,
+          "productiveMedianSeconds": 1947,
+          "tokenMedian": 58892,
           "costMedianUsd": null
         }
       ],
       "runs": [
         {
           "runId": "modernization-efficient-raw-r1",
+          "dataKind": "illustrative",
           "laneId": "efficient-raw",
           "modelDisplayName": "MAI Code 1.1 Flash",
           "inputMode": "raw",
           "repetition": 1,
           "status": "completed",
           "qualityScore": 62.67,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            }
+          ],
           "hardGatesPassed": false,
           "scores": {
             "functionalCorrectness": 59.9,
@@ -86,20 +178,59 @@
             "scopeTraceability": 62.4
           },
           "elapsedSeconds": 1157,
+          "productiveSeconds": 1041,
+          "queueSeconds": 58,
           "toolCalls": 17,
           "inputTokens": 55260,
+          "cachedInputTokens": 0,
           "outputTokens": 10394,
+          "reasoningTokens": 0,
           "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 0,
           "evidencePath": "evidence/illustrative/fixtures/modernization-efficient-raw-r1"
         },
         {
           "runId": "modernization-efficient-raw-r2",
+          "dataKind": "illustrative",
           "laneId": "efficient-raw",
           "modelDisplayName": "MAI Code 1.1 Flash",
           "inputMode": "raw",
           "repetition": 2,
           "status": "completed",
           "qualityScore": 70.42,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            }
+          ],
           "hardGatesPassed": false,
           "scores": {
             "functionalCorrectness": 72.5,
@@ -110,20 +241,59 @@
             "scopeTraceability": 68.9
           },
           "elapsedSeconds": 1286,
+          "productiveSeconds": 1157,
+          "queueSeconds": 64,
           "toolCalls": 21,
           "inputTokens": 46705,
+          "cachedInputTokens": 0,
           "outputTokens": 22906,
+          "reasoningTokens": 0,
           "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 0,
           "evidencePath": "evidence/illustrative/fixtures/modernization-efficient-raw-r2"
         },
         {
           "runId": "modernization-efficient-raw-r3",
+          "dataKind": "illustrative",
           "laneId": "efficient-raw",
           "modelDisplayName": "MAI Code 1.1 Flash",
           "inputMode": "raw",
           "repetition": 3,
           "status": "timed-out",
           "qualityScore": 0,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            }
+          ],
           "hardGatesPassed": false,
           "scores": {
             "functionalCorrectness": 75.6,
@@ -134,20 +304,59 @@
             "scopeTraceability": 83.6
           },
           "elapsedSeconds": 1540,
+          "productiveSeconds": 1386,
+          "queueSeconds": 77,
           "toolCalls": 15,
           "inputTokens": 28860,
+          "cachedInputTokens": 0,
           "outputTokens": 15234,
+          "reasoningTokens": 0,
           "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 0,
           "evidencePath": "evidence/illustrative/fixtures/modernization-efficient-raw-r3"
         },
         {
           "runId": "modernization-efficient-spec-r1",
+          "dataKind": "illustrative",
           "laneId": "efficient-spec",
           "modelDisplayName": "MAI Code 1.1 Flash",
           "inputMode": "spec",
           "repetition": 1,
           "status": "completed",
           "qualityScore": 81.15,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            }
+          ],
           "hardGatesPassed": true,
           "scores": {
             "functionalCorrectness": 81.2,
@@ -158,20 +367,59 @@
             "scopeTraceability": 84.1
           },
           "elapsedSeconds": 1600,
+          "productiveSeconds": 1440,
+          "queueSeconds": 80,
           "toolCalls": 15,
           "inputTokens": 48639,
+          "cachedInputTokens": 0,
           "outputTokens": 22160,
+          "reasoningTokens": 0,
           "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 19950,
           "evidencePath": "evidence/illustrative/fixtures/modernization-efficient-spec-r1"
         },
         {
           "runId": "modernization-efficient-spec-r2",
+          "dataKind": "illustrative",
           "laneId": "efficient-spec",
           "modelDisplayName": "MAI Code 1.1 Flash",
           "inputMode": "spec",
           "repetition": 2,
           "status": "completed",
           "qualityScore": 82.46,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            }
+          ],
           "hardGatesPassed": true,
           "scores": {
             "functionalCorrectness": 85.4,
@@ -182,20 +430,59 @@
             "scopeTraceability": 78.7
           },
           "elapsedSeconds": 1514,
+          "productiveSeconds": 1363,
+          "queueSeconds": 76,
           "toolCalls": 22,
           "inputTokens": 53906,
+          "cachedInputTokens": 0,
           "outputTokens": 16080,
+          "reasoningTokens": 0,
           "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 19950,
           "evidencePath": "evidence/illustrative/fixtures/modernization-efficient-spec-r2"
         },
         {
           "runId": "modernization-efficient-spec-r3",
+          "dataKind": "illustrative",
           "laneId": "efficient-spec",
           "modelDisplayName": "MAI Code 1.1 Flash",
           "inputMode": "spec",
           "repetition": 3,
           "status": "completed",
           "qualityScore": 83.15,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            }
+          ],
           "hardGatesPassed": false,
           "scores": {
             "functionalCorrectness": 84.8,
@@ -206,20 +493,59 @@
             "scopeTraceability": 80.2
           },
           "elapsedSeconds": 1329,
+          "productiveSeconds": 1196,
+          "queueSeconds": 66,
           "toolCalls": 18,
           "inputTokens": 36913,
+          "cachedInputTokens": 0,
           "outputTokens": 18212,
+          "reasoningTokens": 0,
           "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 19950,
           "evidencePath": "evidence/illustrative/fixtures/modernization-efficient-spec-r3"
         },
         {
           "runId": "modernization-frontier-raw-r1",
+          "dataKind": "illustrative",
           "laneId": "frontier-raw",
           "modelDisplayName": "Claude Opus 5",
           "inputMode": "raw",
           "repetition": 1,
           "status": "completed",
           "qualityScore": 80.8,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            }
+          ],
           "hardGatesPassed": false,
           "scores": {
             "functionalCorrectness": 81.3,
@@ -230,20 +556,59 @@
             "scopeTraceability": 75.6
           },
           "elapsedSeconds": 2240,
+          "productiveSeconds": 2016,
+          "queueSeconds": 112,
           "toolCalls": 15,
           "inputTokens": 51086,
+          "cachedInputTokens": 0,
           "outputTokens": 18136,
+          "reasoningTokens": 0,
           "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 0,
           "evidencePath": "evidence/illustrative/fixtures/modernization-frontier-raw-r1"
         },
         {
           "runId": "modernization-frontier-raw-r2",
+          "dataKind": "illustrative",
           "laneId": "frontier-raw",
           "modelDisplayName": "Claude Opus 5",
           "inputMode": "raw",
           "repetition": 2,
           "status": "completed",
           "qualityScore": 74.86,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            }
+          ],
           "hardGatesPassed": false,
           "scores": {
             "functionalCorrectness": 73.9,
@@ -254,20 +619,59 @@
             "scopeTraceability": 78.1
           },
           "elapsedSeconds": 2275,
+          "productiveSeconds": 2048,
+          "queueSeconds": 114,
           "toolCalls": 13,
           "inputTokens": 44529,
+          "cachedInputTokens": 0,
           "outputTokens": 8713,
+          "reasoningTokens": 0,
           "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 0,
           "evidencePath": "evidence/illustrative/fixtures/modernization-frontier-raw-r2"
         },
         {
           "runId": "modernization-frontier-raw-r3",
+          "dataKind": "illustrative",
           "laneId": "frontier-raw",
           "modelDisplayName": "Claude Opus 5",
           "inputMode": "raw",
           "repetition": 3,
           "status": "completed",
           "qualityScore": 82.24,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            }
+          ],
           "hardGatesPassed": true,
           "scores": {
             "functionalCorrectness": 83.7,
@@ -278,20 +682,59 @@
             "scopeTraceability": 83.1
           },
           "elapsedSeconds": 2107,
+          "productiveSeconds": 1896,
+          "queueSeconds": 105,
           "toolCalls": 20,
           "inputTokens": 35856,
+          "cachedInputTokens": 0,
           "outputTokens": 19698,
+          "reasoningTokens": 0,
           "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 0,
           "evidencePath": "evidence/illustrative/fixtures/modernization-frontier-raw-r3"
         },
         {
           "runId": "modernization-frontier-spec-r1",
+          "dataKind": "illustrative",
           "laneId": "frontier-spec",
           "modelDisplayName": "Claude Opus 5",
           "inputMode": "spec",
           "repetition": 1,
           "status": "completed",
           "qualityScore": 94.79,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            }
+          ],
           "hardGatesPassed": true,
           "scores": {
             "functionalCorrectness": 95.5,
@@ -302,20 +745,59 @@
             "scopeTraceability": 92.2
           },
           "elapsedSeconds": 2039,
+          "productiveSeconds": 1835,
+          "queueSeconds": 102,
           "toolCalls": 12,
           "inputTokens": 20168,
+          "cachedInputTokens": 0,
           "outputTokens": 10588,
+          "reasoningTokens": 0,
           "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 19950,
           "evidencePath": "evidence/illustrative/fixtures/modernization-frontier-spec-r1"
         },
         {
           "runId": "modernization-frontier-spec-r2",
+          "dataKind": "illustrative",
           "laneId": "frontier-spec",
           "modelDisplayName": "Claude Opus 5",
           "inputMode": "spec",
           "repetition": 2,
           "status": "completed",
           "qualityScore": 93.98,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            }
+          ],
           "hardGatesPassed": false,
           "scores": {
             "functionalCorrectness": 95.8,
@@ -326,20 +808,59 @@
             "scopeTraceability": 88.6
           },
           "elapsedSeconds": 2163,
+          "productiveSeconds": 1947,
+          "queueSeconds": 108,
           "toolCalls": 13,
           "inputTokens": 30432,
+          "cachedInputTokens": 0,
           "outputTokens": 8510,
+          "reasoningTokens": 0,
           "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 19950,
           "evidencePath": "evidence/illustrative/fixtures/modernization-frontier-spec-r2"
         },
         {
           "runId": "modernization-frontier-spec-r3",
+          "dataKind": "illustrative",
           "laneId": "frontier-spec",
           "modelDisplayName": "Claude Opus 5",
           "inputMode": "spec",
           "repetition": 3,
           "status": "completed",
           "qualityScore": 96.27,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            }
+          ],
           "hardGatesPassed": true,
           "scores": {
             "functionalCorrectness": 95.3,
@@ -350,10 +871,16 @@
             "scopeTraceability": 96.2
           },
           "elapsedSeconds": 2215,
+          "productiveSeconds": 1994,
+          "queueSeconds": 111,
           "toolCalls": 16,
           "inputTokens": 28399,
+          "cachedInputTokens": 0,
           "outputTokens": 21514,
+          "reasoningTokens": 0,
           "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 19950,
           "evidencePath": "evidence/illustrative/fixtures/modernization-frontier-spec-r3"
         }
       ]
@@ -361,6 +888,15 @@
     {
       "id": "audit-feature",
       "name": "Explainable audit feature",
+      "claim": {
+        "status": "not-evaluated",
+        "qualityVerdict": "indeterminate",
+        "efficiencyVerdict": "unavailable",
+        "drivingMetric": "unavailable",
+        "qualityDelta": null,
+        "costSavingPercent": null,
+        "message": "Illustrative data cannot support a benchmark claim."
+      },
       "laneSummaries": [
         {
           "laneId": "efficient-raw",
@@ -370,8 +906,11 @@
           "qualityMin": 60.28,
           "qualityMax": 72.27,
           "hardGatePassCount": 1,
+          "hardGateFailCount": 2,
           "runCount": 3,
           "elapsedMedianSeconds": 1199,
+          "productiveMedianSeconds": 1079,
+          "tokenMedian": 72486,
           "costMedianUsd": null
         },
         {
@@ -382,8 +921,11 @@
           "qualityMin": 82.99,
           "qualityMax": 91.32,
           "hardGatePassCount": 3,
+          "hardGateFailCount": 0,
           "runCount": 3,
           "elapsedMedianSeconds": 1484,
+          "productiveMedianSeconds": 1336,
+          "tokenMedian": 92590,
           "costMedianUsd": null
         },
         {
@@ -394,8 +936,11 @@
           "qualityMin": 0,
           "qualityMax": 86.44,
           "hardGatePassCount": 0,
+          "hardGateFailCount": 3,
           "runCount": 3,
           "elapsedMedianSeconds": 2257,
+          "productiveMedianSeconds": 2031,
+          "tokenMedian": 51482,
           "costMedianUsd": null
         },
         {
@@ -406,20 +951,56 @@
           "qualityMin": 93.39,
           "qualityMax": 96.85,
           "hardGatePassCount": 2,
+          "hardGateFailCount": 1,
           "runCount": 3,
           "elapsedMedianSeconds": 2097,
+          "productiveMedianSeconds": 1887,
+          "tokenMedian": 77579,
           "costMedianUsd": null
         }
       ],
       "runs": [
         {
           "runId": "audit-feature-efficient-raw-r1",
+          "dataKind": "illustrative",
           "laneId": "efficient-raw",
           "modelDisplayName": "MAI Code 1.1 Flash",
           "inputMode": "raw",
           "repetition": 1,
           "status": "completed",
           "qualityScore": 60.28,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            }
+          ],
           "hardGatesPassed": false,
           "scores": {
             "functionalCorrectness": 63.7,
@@ -430,20 +1011,59 @@
             "scopeTraceability": 62.1
           },
           "elapsedSeconds": 1199,
+          "productiveSeconds": 1079,
+          "queueSeconds": 60,
           "toolCalls": 13,
           "inputTokens": 45115,
+          "cachedInputTokens": 0,
           "outputTokens": 27371,
+          "reasoningTokens": 0,
           "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 0,
           "evidencePath": "evidence/illustrative/fixtures/audit-feature-efficient-raw-r1"
         },
         {
           "runId": "audit-feature-efficient-raw-r2",
+          "dataKind": "illustrative",
           "laneId": "efficient-raw",
           "modelDisplayName": "MAI Code 1.1 Flash",
           "inputMode": "raw",
           "repetition": 2,
           "status": "completed",
           "qualityScore": 67.37,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            }
+          ],
           "hardGatesPassed": false,
           "scores": {
             "functionalCorrectness": 68.1,
@@ -454,20 +1074,59 @@
             "scopeTraceability": 66
           },
           "elapsedSeconds": 1172,
+          "productiveSeconds": 1055,
+          "queueSeconds": 59,
           "toolCalls": 16,
           "inputTokens": 36522,
+          "cachedInputTokens": 0,
           "outputTokens": 24247,
+          "reasoningTokens": 0,
           "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 0,
           "evidencePath": "evidence/illustrative/fixtures/audit-feature-efficient-raw-r2"
         },
         {
           "runId": "audit-feature-efficient-raw-r3",
+          "dataKind": "illustrative",
           "laneId": "efficient-raw",
           "modelDisplayName": "MAI Code 1.1 Flash",
           "inputMode": "raw",
           "repetition": 3,
           "status": "completed",
           "qualityScore": 72.27,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            }
+          ],
           "hardGatesPassed": true,
           "scores": {
             "functionalCorrectness": 74.6,
@@ -478,20 +1137,59 @@
             "scopeTraceability": 76.8
           },
           "elapsedSeconds": 1481,
+          "productiveSeconds": 1333,
+          "queueSeconds": 74,
           "toolCalls": 9,
           "inputTokens": 54527,
+          "cachedInputTokens": 0,
           "outputTokens": 21198,
+          "reasoningTokens": 0,
           "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 0,
           "evidencePath": "evidence/illustrative/fixtures/audit-feature-efficient-raw-r3"
         },
         {
           "runId": "audit-feature-efficient-spec-r1",
+          "dataKind": "illustrative",
           "laneId": "efficient-spec",
           "modelDisplayName": "MAI Code 1.1 Flash",
           "inputMode": "spec",
           "repetition": 1,
           "status": "completed",
           "qualityScore": 85.87,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            }
+          ],
           "hardGatesPassed": true,
           "scores": {
             "functionalCorrectness": 83.9,
@@ -502,20 +1200,59 @@
             "scopeTraceability": 90.8
           },
           "elapsedSeconds": 1158,
+          "productiveSeconds": 1042,
+          "queueSeconds": 58,
           "toolCalls": 18,
           "inputTokens": 57981,
+          "cachedInputTokens": 0,
           "outputTokens": 8975,
+          "reasoningTokens": 0,
           "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 25634,
           "evidencePath": "evidence/illustrative/fixtures/audit-feature-efficient-spec-r1"
         },
         {
           "runId": "audit-feature-efficient-spec-r2",
+          "dataKind": "illustrative",
           "laneId": "efficient-spec",
           "modelDisplayName": "MAI Code 1.1 Flash",
           "inputMode": "spec",
           "repetition": 2,
           "status": "completed",
           "qualityScore": 82.99,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            }
+          ],
           "hardGatesPassed": true,
           "scores": {
             "functionalCorrectness": 82.6,
@@ -526,20 +1263,59 @@
             "scopeTraceability": 82.3
           },
           "elapsedSeconds": 1487,
+          "productiveSeconds": 1338,
+          "queueSeconds": 74,
           "toolCalls": 17,
           "inputTokens": 55352,
+          "cachedInputTokens": 0,
           "outputTokens": 27144,
+          "reasoningTokens": 0,
           "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 25633,
           "evidencePath": "evidence/illustrative/fixtures/audit-feature-efficient-spec-r2"
         },
         {
           "runId": "audit-feature-efficient-spec-r3",
+          "dataKind": "illustrative",
           "laneId": "efficient-spec",
           "modelDisplayName": "MAI Code 1.1 Flash",
           "inputMode": "spec",
           "repetition": 3,
           "status": "completed",
           "qualityScore": 91.32,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            }
+          ],
           "hardGatesPassed": true,
           "scores": {
             "functionalCorrectness": 95,
@@ -550,20 +1326,59 @@
             "scopeTraceability": 86.4
           },
           "elapsedSeconds": 1484,
+          "productiveSeconds": 1336,
+          "queueSeconds": 74,
           "toolCalls": 10,
           "inputTokens": 37267,
+          "cachedInputTokens": 0,
           "outputTokens": 27595,
+          "reasoningTokens": 0,
           "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 25633,
           "evidencePath": "evidence/illustrative/fixtures/audit-feature-efficient-spec-r3"
         },
         {
           "runId": "audit-feature-frontier-raw-r1",
+          "dataKind": "illustrative",
           "laneId": "frontier-raw",
           "modelDisplayName": "Claude Opus 5",
           "inputMode": "raw",
           "repetition": 1,
           "status": "completed",
           "qualityScore": 80.74,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            }
+          ],
           "hardGatesPassed": false,
           "scores": {
             "functionalCorrectness": 81.9,
@@ -574,20 +1389,59 @@
             "scopeTraceability": 78.3
           },
           "elapsedSeconds": 1960,
+          "productiveSeconds": 1764,
+          "queueSeconds": 98,
           "toolCalls": 10,
           "inputTokens": 49179,
+          "cachedInputTokens": 0,
           "outputTokens": 19568,
+          "reasoningTokens": 0,
           "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 0,
           "evidencePath": "evidence/illustrative/fixtures/audit-feature-frontier-raw-r1"
         },
         {
           "runId": "audit-feature-frontier-raw-r2",
+          "dataKind": "illustrative",
           "laneId": "frontier-raw",
           "modelDisplayName": "Claude Opus 5",
           "inputMode": "raw",
           "repetition": 2,
           "status": "completed",
           "qualityScore": 86.44,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            }
+          ],
           "hardGatesPassed": false,
           "scores": {
             "functionalCorrectness": 89.2,
@@ -598,20 +1452,59 @@
             "scopeTraceability": 80.8
           },
           "elapsedSeconds": 2257,
+          "productiveSeconds": 2031,
+          "queueSeconds": 113,
           "toolCalls": 11,
           "inputTokens": 23184,
+          "cachedInputTokens": 0,
           "outputTokens": 27740,
+          "reasoningTokens": 0,
           "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 0,
           "evidencePath": "evidence/illustrative/fixtures/audit-feature-frontier-raw-r2"
         },
         {
           "runId": "audit-feature-frontier-raw-r3",
+          "dataKind": "illustrative",
           "laneId": "frontier-raw",
           "modelDisplayName": "Claude Opus 5",
           "inputMode": "raw",
           "repetition": 3,
           "status": "timed-out",
           "qualityScore": 0,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            }
+          ],
           "hardGatesPassed": false,
           "scores": {
             "functionalCorrectness": 77.7,
@@ -622,20 +1515,59 @@
             "scopeTraceability": 75
           },
           "elapsedSeconds": 2285,
+          "productiveSeconds": 2057,
+          "queueSeconds": 114,
           "toolCalls": 16,
           "inputTokens": 39050,
+          "cachedInputTokens": 0,
           "outputTokens": 12432,
+          "reasoningTokens": 0,
           "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 0,
           "evidencePath": "evidence/illustrative/fixtures/audit-feature-frontier-raw-r3"
         },
         {
           "runId": "audit-feature-frontier-spec-r1",
+          "dataKind": "illustrative",
           "laneId": "frontier-spec",
           "modelDisplayName": "Claude Opus 5",
           "inputMode": "spec",
           "repetition": 1,
           "status": "completed",
           "qualityScore": 94.5,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            }
+          ],
           "hardGatesPassed": true,
           "scores": {
             "functionalCorrectness": 96.2,
@@ -646,20 +1578,59 @@
             "scopeTraceability": 88.3
           },
           "elapsedSeconds": 2097,
+          "productiveSeconds": 1887,
+          "queueSeconds": 105,
           "toolCalls": 17,
           "inputTokens": 27534,
+          "cachedInputTokens": 0,
           "outputTokens": 11069,
+          "reasoningTokens": 0,
           "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 25634,
           "evidencePath": "evidence/illustrative/fixtures/audit-feature-frontier-spec-r1"
         },
         {
           "runId": "audit-feature-frontier-spec-r2",
+          "dataKind": "illustrative",
           "laneId": "frontier-spec",
           "modelDisplayName": "Claude Opus 5",
           "inputMode": "spec",
           "repetition": 2,
           "status": "completed",
           "qualityScore": 96.85,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            }
+          ],
           "hardGatesPassed": true,
           "scores": {
             "functionalCorrectness": 97.3,
@@ -670,20 +1641,59 @@
             "scopeTraceability": 99.8
           },
           "elapsedSeconds": 2277,
+          "productiveSeconds": 2049,
+          "queueSeconds": 114,
           "toolCalls": 14,
           "inputTokens": 42556,
+          "cachedInputTokens": 0,
           "outputTokens": 26321,
+          "reasoningTokens": 0,
           "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 25633,
           "evidencePath": "evidence/illustrative/fixtures/audit-feature-frontier-spec-r2"
         },
         {
           "runId": "audit-feature-frontier-spec-r3",
+          "dataKind": "illustrative",
           "laneId": "frontier-spec",
           "modelDisplayName": "Claude Opus 5",
           "inputMode": "spec",
           "repetition": 3,
           "status": "completed",
           "qualityScore": 93.39,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            }
+          ],
           "hardGatesPassed": false,
           "scores": {
             "functionalCorrectness": 95.6,
@@ -694,10 +1704,16 @@
             "scopeTraceability": 90.8
           },
           "elapsedSeconds": 2069,
+          "productiveSeconds": 1862,
+          "queueSeconds": 103,
           "toolCalls": 12,
           "inputTokens": 34670,
+          "cachedInputTokens": 0,
           "outputTokens": 17276,
+          "reasoningTokens": 0,
           "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 25633,
           "evidencePath": "evidence/illustrative/fixtures/audit-feature-frontier-spec-r3"
         }
       ]

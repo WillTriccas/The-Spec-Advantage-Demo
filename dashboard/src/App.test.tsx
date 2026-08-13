@@ -10,14 +10,14 @@ describe('App', () => {
 
   it('renders overall claim status correctly', () => {
     render(<App />);
-    expect(screen.getByText('Overall Roll-up: INCONCLUSIVE')).toBeTruthy();
-    expect(screen.getByText('Overall results are inconclusive due to a weaker episode.')).toBeTruthy();
+    expect(screen.getByText('Overall Roll-up: NOT-EVALUATED')).toBeTruthy();
+    expect(screen.getAllByText(/illustrative data only/i).length).toBeGreaterThan(0);
   });
 
   it('renders episode claims correctly', () => {
     render(<App />);
-    expect(screen.getByText('Modernization Claim: SUPPORTED')).toBeTruthy();
-    expect(screen.getByText('Audit Feature Claim: INCONCLUSIVE')).toBeTruthy();
+    expect(screen.getByText('Platform modernization Claim: NOT-EVALUATED')).toBeTruthy();
+    expect(screen.getByText('Explainable audit feature Claim: NOT-EVALUATED')).toBeTruthy();
   });
 
   it('filters lanes when view mode changes or filters applied', () => {
@@ -32,9 +32,8 @@ describe('App', () => {
     
     // Test filter select
     const laneSelect = screen.getByLabelText('Lane');
-    fireEvent.change(laneSelect, { target: { value: 'spec' } });
+    fireEvent.change(laneSelect, { target: { value: 'efficient-spec' } });
     
-    // The "generate" lane shouldn't be visible anymore
-    expect(screen.queryByText('GENERATE')).toBeNull();
+    expect(screen.queryByText('FRONTIER-RAW')).toBeNull();
   });
 });

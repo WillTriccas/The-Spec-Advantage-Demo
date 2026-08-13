@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { Report, Run, ClaimDetail, HardGate } from './types';
-import fixtureData from './fixture.json';
+import fixtureData from '../../evidence/illustrative/report.json';
 import { AlertCircle, CheckCircle, HelpCircle, Info, ChevronDown, ChevronRight } from 'lucide-react';
 
 const formatCost = (cost: number | null | undefined) => {

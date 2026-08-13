@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "id": "modernization-approved",
-  "sha256": "0f22b48adfcd5a062faa0bd7291c9b3f15835274d8f8b9407ea4df4582d4ce68",
+  "sha256": "e2de5ac4031db60b2d3ea4993cadbd53c0d4145a78febb97a78093276f34ac69",
   "qualityScore": 100,
   "dimensions": {
     "completeness": 1,
@@ -10,47 +10,44 @@
     "traceabilityCoverage": 1,
     "riskCoverage": 1
   },
-  "approvedAt": "2024-02-14T17:30:00Z",
+  "approvedAt": "2026-08-12T12:00:00Z",
   "reviewers": [
     {
-      "name": "J. Alvarez",
-      "role": "Engineering Lead, Reconciliation Services",
+      "name": "Synthetic Persona - Alex Morgan",
+      "role": "Engineering Lead",
       "verdict": "approve"
     },
     {
-      "name": "P. Okafor",
-      "role": "Trade Operations Manager",
+      "name": "Synthetic Persona - Priya Shah",
+      "role": "Trade Operations",
       "verdict": "approve"
     },
     {
-      "name": "S. Meyer",
+      "name": "Synthetic Persona - Sam Rivera",
       "role": "Platform Engineering",
-      "verdict": "approve"
-    },
-    {
-      "name": "R. Chen",
-      "role": "Compliance",
       "verdict": "approve"
     }
   ],
   "authors": [
     {
-      "name": "M. Nakamura",
-      "role": "Domain Architect, Trade Reconciliation"
+      "name": "Synthetic Persona - Morgan Lee",
+      "role": "Domain Architect"
     },
     {
-      "name": "D. Ibarra",
-      "role": "Business Analyst, Trade Operations"
+      "name": "Synthetic Persona - Taylor Kim",
+      "role": "Business Analyst"
     }
   ],
   "blindnessAttestation": {
     "attested": true,
-    "statement": "M. Nakamura and D. Ibarra attest they authored this spec from the brownfield discovery notes and stakeholder interviews only. Neither had access to, nor any prior knowledge of, the benchmark's hidden evaluator rubric, evaluator JSON schema, or scoring weights (benchmark/config/scoring.json) at any point before or during authoring. Neither is listed as an evaluator author for this episode."
+    "statement": "These named identities are synthetic demonstrator personas. The illustrative spec-author role was separated from evaluator design and used only the checked-in legacy baseline, public adapter contract, and synthetic stakeholder requirements; it did not use hidden evaluator implementation or expected benchmark outcomes."
   },
   "authoringEffort": {
     "elapsedMinutes": 285,
     "inputTokens": 41200,
     "outputTokens": 18650,
-    "estimatedCostUsd": null
+    "estimatedCostUsd": null,
+    "costEvidenceRef": null,
+    "costMethod": null
   }
 }

@@ -55,7 +55,10 @@ public sealed class CsvReconciliationBatchSource : IReconciliationBatchSource
 
     private async Task<IReadOnlyList<Trade>> LoadTradesAsync(DateOnly date, CancellationToken ct)
     {
-        var rows = await ReadFileAsync("trades.csv", ct).ConfigureAwait(false);
+        var rows = await ReadFileAsync(
+            "trades.csv",
+            ["BusinessDate", "TradeId", "Account", "Instrument", "Quantity", "Direction", "SettlementDate", "Currency", "Amount"],
+            ct).ConfigureAwait(false);
         return rows
             .Where(r => CsvReader.Date(r, "BusinessDate") == date)
             .Select(r => new Trade
@@ -63,18 +66,21 @@ public sealed class CsvReconciliationBatchSource : IReconciliationBatchSource
                 TradeId = CsvReader.Text(r, "TradeId"),
                 Account = CsvReader.Text(r, "Account"),
                 Instrument = CsvReader.Text(r, "Instrument"),
-                Quantity = CsvReader.Decimal(r, "Quantity"),
+                Quantity = CsvReader.PositiveDecimal(r, "Quantity"),
                 Direction = ParseDirection(CsvReader.Text(r, "Direction")),
                 SettlementDate = CsvReader.Date(r, "SettlementDate"),
                 Currency = CsvReader.Text(r, "Currency").ToUpperInvariant(),
-                Amount = CsvReader.Decimal(r, "Amount")
+                Amount = CsvReader.PositiveDecimal(r, "Amount")
             })
             .ToList();
     }
 
     private async Task<IReadOnlyList<Settlement>> LoadSettlementsAsync(DateOnly date, CancellationToken ct)
     {
-        var rows = await ReadFileAsync("settlements.csv", ct).ConfigureAwait(false);
+        var rows = await ReadFileAsync(
+            "settlements.csv",
+            ["BusinessDate", "SettlementId", "TradeId", "Account", "Instrument", "Quantity", "Direction", "SettlementDate", "Currency", "Amount"],
+            ct).ConfigureAwait(false);
         return rows
             .Where(r => CsvReader.Date(r, "BusinessDate") == date)
             .Select(r => new Settlement
@@ -83,18 +89,21 @@ public sealed class CsvReconciliationBatchSource : IReconciliationBatchSource
                 TradeId = NullIfEmpty(CsvReader.Text(r, "TradeId")),
                 Account = CsvReader.Text(r, "Account"),
                 Instrument = CsvReader.Text(r, "Instrument"),
-                Quantity = CsvReader.Decimal(r, "Quantity"),
+                Quantity = CsvReader.PositiveDecimal(r, "Quantity"),
                 Direction = ParseDirection(CsvReader.Text(r, "Direction")),
                 SettlementDate = CsvReader.Date(r, "SettlementDate"),
                 Currency = CsvReader.Text(r, "Currency").ToUpperInvariant(),
-                Amount = CsvReader.Decimal(r, "Amount")
+                Amount = CsvReader.PositiveDecimal(r, "Amount")
             })
             .ToList();
     }
 
     private async Task<IReadOnlyList<Position>> LoadPositionsAsync(DateOnly date, CancellationToken ct)
     {
-        var rows = await ReadFileAsync("positions.csv", ct).ConfigureAwait(false);
+        var rows = await ReadFileAsync(
+            "positions.csv",
+            ["BusinessDate", "Account", "Instrument", "Currency", "NetQuantity"],
+            ct).ConfigureAwait(false);
         return rows
             .Where(r => CsvReader.Date(r, "BusinessDate") == date)
             .Select(r => new Position
@@ -109,6 +118,7 @@ public sealed class CsvReconciliationBatchSource : IReconciliationBatchSource
 
     private async Task<IReadOnlyList<IReadOnlyDictionary<string, string>>> ReadFileAsync(
         string fileName,
+        IReadOnlyCollection<string> requiredColumns,
         CancellationToken ct)
     {
         var path = Path.Combine(_options.FixturesDirectory, fileName);
@@ -118,7 +128,7 @@ public sealed class CsvReconciliationBatchSource : IReconciliationBatchSource
         }
 
         var content = await File.ReadAllTextAsync(path, ct).ConfigureAwait(false);
-        return CsvReader.Read(content);
+        return CsvReader.Read(content, requiredColumns);
     }
 
     private static TradeDirection ParseDirection(string value) => value.Trim().ToUpperInvariant() switch

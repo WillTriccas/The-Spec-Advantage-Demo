@@ -2,56 +2,56 @@
   "items": [
     {
       "id": "REQ-1",
-      "statement": "Every reconciliation exception must be addressable by a stable identity of (runId, tradeId, settlementDate, reason), scoped to that single run instance, so a resolution can be unambiguously attached to it.",
-      "rationale": "Resolves AMB-1: exceptions have no cross-run identity, so identity is scoped per-run.",
+      "statement": "The candidate must retain benchmark-adapter.json and add audit-adapter.json implementing initialize, propose, decide, and export command arrays with all documented placeholders.",
+      "rationale": "The evaluator must exercise the application and workflow without knowing internal architecture.",
       "testable": true
     },
     {
       "id": "REQ-2",
-      "statement": "A maker must be able to propose a resolution for an exception by submitting one reason code from a fixed enumerated set (FALSE_POSITIVE, MANUAL_MATCH_CONFIRMED, PENDING_CUSTODIAN_CORRECTION, WRITE_OFF_APPROVED, DUPLICATE_DATA_ENTRY) plus a free-text evidence note of at least 1 character.",
-      "rationale": "Core capability requested in intent.goals; the fixed set was confirmed with Compliance (AMB-5).",
+      "statement": "A valid proposal must durably record requestId, proposer identity, business date, non-empty reason, non-empty evidence, and an ordered PROPOSED-equivalent lifecycle action.",
+      "rationale": "The proposal must be explainable and attributable.",
       "testable": true
     },
     {
       "id": "REQ-3",
-      "statement": "A checker who is a different identity from the maker must approve or reject a proposed resolution before it is considered final; the system must reject an approval attempt where checker identity equals maker identity.",
-      "rationale": "Maker-checker separation is a hard requirement with no exception path (AMB-2).",
+      "statement": "A decide command may record APPROVED or REJECTED only when the checker identity differs from the proposal's durable proposer identity; self-approval must not create a final entry.",
+      "rationale": "Maker-checker separation is a hard control.",
       "testable": true
     },
     {
       "id": "REQ-4",
-      "statement": "Every lifecycle transition (PROPOSED, APPROVED, REJECTED) must be recorded as a new, immutable event in the audit event store; the store must provide no application-level operation that updates or deletes an existing event.",
-      "rationale": "Append-only history is a stated goal and a compliance requirement.",
+      "statement": "Lifecycle history must be append-only and expose a contiguous 1-based sequence plus a SHA-256 hash chain. Each entry's previousHash is null for sequence 1 or equals the prior entry's hash; hash is lowercase SHA-256 over canonical JSON of that entry without hash, with recursively sorted object keys.",
+      "rationale": "The exported history must prove order and make silent insertion, deletion, or rewriting detectable.",
       "testable": true
     },
     {
       "id": "REQ-5",
-      "statement": "Given the ordered sequence of events for a single exception identity, the system must be able to reconstruct its current state (no resolution attempted, pending approval, approved, or rejected) purely by replaying those events in order.",
-      "rationale": "An append-only history is only useful if current state is deterministically derivable from it; this also enables the export in REQ-8.",
+      "statement": "Repeating an already accepted identical final decision must be idempotently successful without writing a second final entry.",
+      "rationale": "Client retries must not duplicate approvals.",
       "testable": true
     },
     {
       "id": "REQ-6",
-      "statement": "If a proposal is submitted for an exception identity that already has a pending or resolved (approved/rejected) state, the system must reject the new proposal with a conflict response rather than creating a second concurrent pending state.",
-      "rationale": "Resolves AMB-3: first accepted proposal wins; prevents duplicate/conflicting final states under concurrency.",
+      "statement": "Concurrent conflicting approve and reject decisions for one proposed request must leave exactly one durable recognized final decision with a non-empty checker identity.",
+      "rationale": "The audit record cannot contain contradictory terminal states.",
       "testable": true
     },
     {
       "id": "REQ-7",
-      "statement": "A resubmission of the same proposal request (identical exception identity, maker, reason code and evidence, carrying the same client-supplied idempotency key) after a client-side timeout or retry must not create a second audit event; the system must return the original result.",
-      "rationale": "Idempotency requirement so retried network calls do not corrupt the audit trail or create duplicate pending proposals.",
+      "statement": "Export must produce parseable JSON for the inclusive fromDate/toDate range as an array or object with entries; the history must expose request identity, lifecycle action, proposer/checker identity, reason, evidence, and ordering metadata.",
+      "rationale": "Compliance needs portable, machine-readable evidence of both approved and rejected requests.",
       "testable": true
     },
     {
       "id": "REQ-8",
-      "statement": "Compliance must be able to export all audit events for exceptions whose most recent event falls within a given date range, in a CSV file containing exception identity, all lifecycle events with timestamps, actor identities, reason codes and evidence, ordered by exception identity then event time.",
-      "rationale": "Stated goal; CSV format confirmed sufficient with Compliance (AMB-4).",
+      "statement": "Logs, stderr/stdout diagnostics, telemetry, and exported history must not contain raw account identifiers or trade amount values supplied to the workflow.",
+      "rationale": "Auditability must not create a sensitive-data leakage path.",
       "testable": true
     },
     {
       "id": "REQ-9",
-      "statement": "Every lifecycle transition must emit a telemetry event containing only the event type, exception identity, actor role (maker/checker), reason code, and timestamp — never trade amounts, counterparty identifiers, settlement account numbers, or free-text evidence content.",
-      "rationale": "Telemetry goal combined with the no-sensitive-logs constraint from discovery.",
+      "statement": "The existing application must still build, pass its tests, and complete an evaluator-owned reconciliation through benchmark-adapter.json.",
+      "rationale": "The control feature must not regress the underlying service.",
       "testable": true
     }
   ]

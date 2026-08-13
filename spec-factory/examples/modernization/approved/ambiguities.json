@@ -2,30 +2,30 @@
   "items": [
     {
       "id": "AMB-1",
-      "description": "MSMQ has no direct .NET 8 equivalent. It is unclear whether the replacement input transport should be a file-drop adapter (matching the existing settlement file pattern) or a hosted queue service (e.g. a message broker), which would add new infrastructure dependencies.",
+      "description": "Whether modernization may replace the positional CLI and output file contract was unclear.",
       "severity": "critical",
-      "resolution": "Trade Operations and Platform Engineering agreed to a file-drop adapter: the upstream trade capture system will be changed (tracked in a separate, already-approved ticket) to write the same TradeMessage payload as newline-delimited JSON files into an inbound folder, mirroring the existing settlement file pattern. This avoids introducing new broker infrastructure and keeps the reconciliation app's operational model consistent (poll two folders, write two folders).",
+      "resolution": "The public CLI semantics and all four output paths are compatibility boundaries. Internal architecture may change, but benchmark-adapter.json must continue to invoke the candidate with evaluator-owned date/input/output values.",
       "status": "resolved"
     },
     {
       "id": "AMB-2",
-      "description": "It is unclear whether 'DUPLICATE_TRADE_KEY' trades should still be checked for amount tolerance against a settlement record, or immediately flagged without attempting a match.",
-      "severity": "major",
-      "resolution": "Confirmed with Trade Operations via the 2016 runbook example set: duplicate-keyed trades are flagged as DUPLICATE_TRADE_KEY without attempting tolerance matching, and this must be preserved exactly (see REQ-4).",
+      "description": "Whether duplicate override rows can be silently deduplicated was unclear.",
+      "severity": "critical",
+      "resolution": "They cannot. The first eligible override may apply; every later override targeting that trade must surface as a stale override.",
       "status": "resolved"
     },
     {
       "id": "AMB-3",
-      "description": "The App.config tolerance value's unit (currency units vs. basis points) is undocumented in the runbook.",
-      "severity": "minor",
-      "resolution": "Verified against the legacy source: the tolerance is an absolute currency-unit difference (System.Decimal), not a percentage or basis-point value. Confirmed with a passing golden-file regression at tolerance=0.01.",
+      "description": "Whether output equality means byte identity or semantic compatibility was unclear.",
+      "severity": "major",
+      "resolution": "CSV headers, row meaning, invariant formatting, summary values, and ledger idempotency are mandatory. Deterministic ordering is required so identical reruns are byte-identical.",
       "status": "resolved"
     },
     {
       "id": "AMB-4",
-      "description": "Whether the ported service should retain the 15-minute polling model or gain a push-based trigger was raised by Platform Engineering.",
+      "description": "Whether the separate audit-feature workflow should be included in this episode was unclear.",
       "severity": "minor",
-      "resolution": "Out of scope for this modernization: the polling model and cadence are preserved unchanged (see NFR-3). A push-based trigger is deferred to a future proposal.",
+      "resolution": "It is explicitly out of scope; the canonical .NET 8 baseline for that feature is independent of modernization outputs.",
       "status": "resolved"
     }
   ]

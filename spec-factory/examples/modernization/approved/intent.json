@@ -1,27 +1,28 @@
 {
-  "problemStatement": "The trade reconciliation batch job that settles daily equity and fixed-income trades runs as a single-file .NET Framework 4.8 console application (TradeReconciler.exe) on an out-of-support Windows Server 2012 R2 host. The framework is end-of-life for security patching, the host cannot be re-imaged without a hardware refresh, and no engineer on the current team has production experience with WCF or the legacy MSMQ input adapter it depends on. Operations wants the reconciliation behavior preserved exactly while the runtime moves onto a supported, cross-platform .NET 8 target that the team can operate and extend.",
+  "problemStatement": "The checked-in synthetic trade reconciliation batch is an old-style .NET Framework 4.6.2 console application with synchronous CSV I/O, static configuration, monolithic orchestration, and sparse characterization coverage. It must move to .NET 8 without changing the reconciliation behavior or file contracts that downstream operations depend on.",
   "goals": [
-    "Port TradeReconciler.exe to .NET 8 with feature parity for all currently exercised reconciliation paths.",
-    "Remove the WCF/MSMQ dependency in favor of a supported file-drop input adapter without changing the on-disk trade file format.",
-    "Make the reconciliation engine unit-testable (it is currently untested) without changing its externally observable matching behavior.",
-    "Restore engineering's ability to safely patch and deploy the service on supported infrastructure."
+    "Port LegacyTradeReconciliation.exe to .NET 8 while preserving observable results.",
+    "Preserve the business-date, input-directory, and output-directory command contract.",
+    "Preserve trade, position, settlement, override, duplicate, and idempotent-rerun behavior.",
+    "Introduce maintainable boundaries, meaningful automated tests, and operational diagnostics.",
+    "Expose a schema-valid benchmark adapter for black-box evaluation."
   ],
   "nonGoals": [
-    "Changing the trade matching algorithm's tolerances or business rules.",
-    "Migrating the settlement database schema.",
-    "Adding new reconciliation report types beyond the two currently produced (matched.csv, exceptions.csv).",
-    "Containerization or cloud migration of the host (tracked separately)."
+    "Changing reconciliation tolerances or business rules.",
+    "Changing synthetic CSV input schemas or the four output file schemas.",
+    "Adding the maker-checker audit feature from the separate audit episode.",
+    "Adding a database, UI, message broker, or cloud-hosting dependency."
   ],
   "successMetrics": [
-    "100% of the 12 golden regression trade files reproduce byte-identical matched.csv and exceptions.csv output versus the legacy binary.",
-    "Reconciliation engine reaches at least 90% branch coverage under automated unit tests (currently 0%).",
-    "Batch run completes within 110% of the legacy binary's wall-clock time for the 250k-row benchmark file.",
-    "Zero dependency on WCF, MSMQ, or .NET Framework-only APIs in the ported codebase."
+    "The hidden and public golden-master fixtures produce behaviorally equivalent outputs.",
+    "Every legacy business invariant documented in discovery has automated coverage.",
+    "The solution builds and tests on the pinned .NET 8 SDK.",
+    "benchmark-adapter.json validates and drives build, test, and run without shell commands.",
+    "No critical static or dependency security finding remains."
   ],
   "stakeholders": [
-    "Trade Operations (owns the daily reconciliation run and sign-off on output parity)",
-    "Platform Engineering (owns the hosting environment and patching cadence)",
-    "Compliance (requires evidence that settlement behavior did not change)",
-    "Engineering Lead for Reconciliation Services (technical approver)"
+    "Synthetic Trade Operations persona",
+    "Synthetic Platform Engineering persona",
+    "Synthetic Reconciliation Engineering persona"
   ]
 }

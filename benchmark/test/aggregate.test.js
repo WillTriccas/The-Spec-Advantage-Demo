@@ -72,6 +72,19 @@ test("aggregateLane computes a real costMedianUsd only when every run in the lan
   assert.strictEqual(summary.costMedianUsd, 2.0);
 });
 
+test("aggregateLane includes amortized spec-authoring tokens in token efficiency", () => {
+  const runs = [
+    makeRun({
+      inputTokens: 100,
+      cachedInputTokens: 0,
+      outputTokens: 50,
+      reasoningTokens: 0,
+      specAuthoringAmortizedTokens: 30
+    })
+  ];
+  assert.strictEqual(aggregateLane(runs).tokenMedian, 180);
+});
+
 test("aggregateLane throws on an empty run list", () => {
   assert.throws(() => aggregateLane([]), /empty/);
 });

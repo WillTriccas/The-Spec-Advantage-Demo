@@ -49,6 +49,7 @@ export async function evaluateModernization(candidateRoot, options) {
   const outputDirectory = path.join(tempRoot, 'output');
   await writeModernizationFixture(inputDirectory);
   await fs.mkdir(outputDirectory, { recursive: true });
+  const boundOutputDirectory = await fs.realpath(outputDirectory);
 
   const substitutions = {
     businessDate: MODERNIZATION_BUSINESS_DATE,
@@ -91,7 +92,11 @@ export async function evaluateModernization(candidateRoot, options) {
     });
     evidence.commands.push(run1);
 
-    const firstOutputs = await collectOutputs(outputDirectory, adapter.outputs);
+    const firstOutputs = await collectOutputs(
+      outputDirectory,
+      adapter.outputs,
+      boundOutputDirectory
+    );
     const run2 = await runAdapterCommand({
       id: 'run-hidden-fixture-2',
       command: adapter.run,
@@ -102,7 +107,11 @@ export async function evaluateModernization(candidateRoot, options) {
       timeoutMs: TIMEOUTS_MS.run
     });
     evidence.commands.push(run2);
-    const secondOutputs = await collectOutputs(outputDirectory, adapter.outputs);
+    const secondOutputs = await collectOutputs(
+      outputDirectory,
+      adapter.outputs,
+      boundOutputDirectory
+    );
 
     const checks = evaluateModernizationOutputs(firstOutputs, secondOutputs, run1, run2);
     if (!test.passed) {
@@ -138,39 +147,47 @@ export async function evaluateModernization(candidateRoot, options) {
   return finalizeEvidence(evidence);
 }
 
-export async function collectOutputs(outputDirectory, declaredOutputs) {
+export async function collectOutputs(
+  outputDirectory,
+  declaredOutputs,
+  boundOutputDirectory = null
+) {
   const files = {};
+  const outputStat = await fs.lstat(outputDirectory);
+  if (!outputStat.isDirectory() || outputStat.isSymbolicLink()) {
+    throw new Error('Evaluator output directory was replaced with a link or non-directory');
+  }
+  const realOutputDirectory = await fs.realpath(outputDirectory);
+  if (
+    boundOutputDirectory !== null &&
+    path.resolve(realOutputDirectory) !== path.resolve(boundOutputDirectory)
+  ) {
+    throw new Error('Evaluator output directory escaped its evaluator-owned location');
+  }
+  const containmentRoot = boundOutputDirectory ?? realOutputDirectory;
   for (const declared of declaredOutputs) {
     const relative = declared
       .replaceAll('{businessDate}', MODERNIZATION_BUSINESS_DATE)
       .replaceAll('\\', '/');
-    const resolved = path.resolve(outputDirectory, relative);
+    const resolved = resolveInside(outputDirectory, relative, `declared output "${relative}"`);
     try {
-      files[relative] = await fs.readFile(resolved, 'utf8');
-    } catch {
-      const basename = path.basename(relative);
-      const fallback = await findByName(outputDirectory, basename);
-      files[relative] = fallback ? await fs.readFile(fallback, 'utf8') : null;
-    }
-  }
-  return files;
-}
-
-async function findByName(directory, basename) {
-  const entries = await fs.readdir(directory, { withFileTypes: true });
-  for (const entry of entries) {
-    const fullPath = path.join(directory, entry.name);
-    if (entry.isFile() && entry.name === basename) {
-      return fullPath;
-    }
-    if (entry.isDirectory()) {
-      const nested = await findByName(fullPath, basename);
-      if (nested) {
-        return nested;
+      const realResolved = await fs.realpath(resolved);
+      resolveInside(
+        containmentRoot,
+        realResolved,
+        `declared output "${relative}" resolved path`
+      );
+      const fileStat = await fs.stat(realResolved);
+      files[relative] = fileStat.isFile() ? await fs.readFile(realResolved, 'utf8') : null;
+    } catch (error) {
+      if (error?.code === 'ENOENT') {
+        files[relative] = null;
+      } else {
+        throw error;
       }
     }
   }
-  return null;
+  return files;
 }
 
 export function evaluateModernizationOutputs(firstOutputs, secondOutputs, run1, run2) {

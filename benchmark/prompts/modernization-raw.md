@@ -1,18 +1,22 @@
 # Task: Modernize the trade reconciliation app
 
-We have a legacy trade reconciliation console app (`TradeReconciler.exe`)
-still running on .NET Framework 4.8 on an old Windows server. It reads
-trades off an MSMQ queue and a settlement file, matches them up, and writes
-out a couple of CSV reports. It works, but the framework version is out of
-support and nobody wants to touch the server anymore.
+Modernize the checked-in `LegacyTradeReconciliation.exe` batch application from
+.NET Framework 4.6.2 to .NET 8. Preserve its externally observable reconciliation
+behavior, command-line inputs, synthetic CSV input formats, and four output files:
+`matched-trades.csv`, `break-queue.csv`, `end-of-day-report.txt`, and
+`run-ledger.csv`.
 
-Please port this to .NET 8. Keep it working the same way — trade
-operations relies on the output. MSMQ isn't really an option going forward,
-so figure out a reasonable replacement for how trades come in. Try to leave
-the settlement file format and the CSV output alone since other things
-depend on them.
+The application accepts a business date, input directory, and output directory.
+It ingests trades, positions, settlements, and manual overrides from CSV files.
+Trade Operations depends on the current matching, tolerance, override, duplicate,
+and idempotent-rerun behavior, including stable output schemas.
 
-It'd also be nice if this had some actual tests, since right now it doesn't
-have any and nobody's totally sure what all the edge cases are.
+Improve the design, testability, security posture, and operability where practical,
+and add meaningful automated tests. Do not add unrelated product features.
 
-Go ahead and make the changes you think make sense.
+Keep a candidate-root `benchmark-adapter.json` that validates against
+`contracts/candidate-adapter.schema.json`. The adapter must expose shell-free
+build, test, and run command arrays; use the `{businessDate}`, `{inputDirectory}`,
+and `{outputDirectory}` placeholders; and declare every output file. External
+evaluation will interact with the candidate only through that adapter and the
+observable files it produces.

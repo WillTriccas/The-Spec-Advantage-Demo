@@ -3,73 +3,81 @@
     {
       "id": "AC-1",
       "requirementId": "REQ-1",
-      "given": "an inbound folder containing a valid newline-delimited JSON trade file with 3 trades",
-      "when": "the service runs a reconciliation cycle",
-      "then": "all 3 trades appear in the in-memory trade list with fields identical to the equivalent legacy MSMQ TradeMessage payload",
+      "given": "a clean candidate workspace with the pinned .NET 8 SDK",
+      "when": "the adapter build and test commands run",
+      "then": "both commands finish with declared allowed exit codes",
       "testable": true
     },
     {
       "id": "AC-2",
       "requirementId": "REQ-2",
-      "given": "a trade with SettlementDate 2024-01-10 and a settlement record with the same TradeId and SettlementDate within tolerance",
+      "given": "records whose account, instrument, and currency vary only by case or surrounding whitespace",
       "when": "reconciliation runs",
-      "then": "the trade is classified MATCHED",
+      "then": "the records are compared using trimmed uppercase values",
       "testable": true
     },
     {
       "id": "AC-3",
       "requirementId": "REQ-2",
-      "given": "a trade with no settlement record within 3 business days of its SettlementDate",
+      "given": "two trade rows with the same trade identifier",
       "when": "reconciliation runs",
-      "then": "the trade appears in exceptions.csv with reason UNSETTLED",
+      "then": "the first row is canonical and every later row is reported as a duplicate break",
       "testable": true
     },
     {
       "id": "AC-4",
-      "requirementId": "REQ-2",
-      "given": "a settlement record with no corresponding trade",
+      "requirementId": "REQ-3",
+      "given": "eligible counterpart records exactly on each configured tolerance boundary",
       "when": "reconciliation runs",
-      "then": "the settlement record appears in exceptions.csv with reason ORPHAN_SETTLEMENT",
+      "then": "the closed-interval comparisons accept the boundary values",
       "testable": true
     },
     {
       "id": "AC-5",
       "requirementId": "REQ-3",
-      "given": "a configured tolerance of 0.05 and a trade/settlement pair differing by exactly 0.05",
-      "when": "reconciliation runs",
-      "then": "the pair is classified MATCHED (closed-interval tolerance, see INV-3)",
+      "given": "a trade with non-positive quantity or net amount",
+      "when": "counterpart records otherwise appear compatible",
+      "then": "the trade remains a break",
       "testable": true
     },
     {
       "id": "AC-6",
       "requirementId": "REQ-4",
-      "given": "two trades sharing the same (TradeId, SettlementDate) and a settlement record that would otherwise match one of them within tolerance",
-      "when": "reconciliation runs",
-      "then": "both trades appear in exceptions.csv with reason DUPLICATE_TRADE_KEY, and neither consumes the settlement record",
+      "given": "an override targeting a break with no concrete counterpart",
+      "when": "the override is processed",
+      "then": "no match is manufactured and the break remains visible",
       "testable": true
     },
     {
       "id": "AC-7",
-      "requirementId": "REQ-5",
-      "given": "an input set that produces zero exceptions",
+      "requirementId": "REQ-4",
+      "given": "two override instructions target the same eligible trade",
       "when": "reconciliation runs",
-      "then": "exceptions.csv is written containing only the header row, and matched.csv contains the expected header and rows",
+      "then": "the first may apply and the later instruction appears as a stale override",
       "testable": true
     },
     {
       "id": "AC-8",
-      "requirementId": "REQ-6",
-      "given": "the same pair of inbound trade and settlement files",
-      "when": "reconciliation is run twice without modifying the inputs",
-      "then": "the two runs produce byte-identical matched.csv and exceptions.csv",
+      "requirementId": "REQ-5",
+      "given": "any valid evaluator-owned fixture directory",
+      "when": "the adapter run command completes",
+      "then": "all four declared output files exist with stable headers and deterministic ordering",
       "testable": true
     },
     {
       "id": "AC-9",
+      "requirementId": "REQ-6",
+      "given": "the same business date and byte-identical input files",
+      "when": "the candidate runs twice against the same output state",
+      "then": "result files are equivalent and run-ledger.csv contains no duplicate run entry",
+      "testable": true
+    },
+    {
+      "id": "AC-10",
       "requirementId": "REQ-7",
-      "given": "one of the 12 golden fixed-width settlement files from the historical regression set",
-      "when": "SettlementFileReader parses it",
-      "then": "the parsed settlement records are field-for-field identical to the legacy parser's output for the same file",
+      "given": "benchmark-adapter.json at the candidate root",
+      "when": "an external tool validates and invokes it",
+      "then": "the adapter needs no knowledge of the candidate's internal architecture",
       "testable": true
     }
   ]

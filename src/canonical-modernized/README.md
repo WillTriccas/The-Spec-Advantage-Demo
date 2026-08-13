@@ -228,4 +228,6 @@ BusinessDate,Account,Instrument,Currency,NetQuantity
 ```
 
 `Direction` is `BUY` or `SELL`. Dates are ISO `yyyy-MM-dd`. Amounts and quantities use the
-invariant culture (`.` decimal separator). The `TradeId` column on a settlement may be blank.
+invariant culture (`.` decimal separator). Trade and settlement quantities and amounts must
+be greater than zero; position net quantities may be zero or signed. The `TradeId` column on
+a settlement may be blank.

@@ -2,28 +2,28 @@
   "items": [
     {
       "id": "INV-1",
-      "statement": "The maker identity and checker identity for any single exception's resolution are never the same person, with no override path.",
-      "enforcementPoint": "ExceptionResolutionApi's approve/reject handler compares actor identity against the PROPOSED event's maker identity and rejects on equality before writing an event."
+      "statement": "A request's durable proposer and durable final checker are never the same identity.",
+      "enforcementPoint": "Decision validation against persisted proposal state before append."
     },
     {
       "id": "INV-2",
-      "statement": "An audit event, once written, is never updated or deleted through the application.",
-      "enforcementPoint": "AuditEventStore exposes only an append operation; enforced by an automated test that attempts a mutation/delete call against the store's public API and asserts it does not exist / is rejected."
+      "statement": "An accepted lifecycle entry is never updated or deleted; later state is represented only by later entries.",
+      "enforcementPoint": "Append-only persistence API and exported sequence/hash continuity."
     },
     {
       "id": "INV-3",
-      "statement": "An exception's resolvable state (derivable per REQ-5) has exactly one of: no resolution attempted, pending approval, approved, or rejected — never an ambiguous or contradictory combination.",
-      "enforcementPoint": "The state-derivation function that replays events for an exception identity; covered by a unit test per possible event-sequence permutation up to 3 events."
+      "statement": "A request has at most one durable terminal APPROVED or REJECTED decision.",
+      "enforcementPoint": "Atomic conditional append for terminal state."
     },
     {
       "id": "INV-4",
-      "statement": "At most one PROPOSED event without a terminal APPROVED/REJECTED event may exist for a given exception identity at any time.",
-      "enforcementPoint": "ExceptionResolutionApi's propose handler, which checks current derived state before accepting a new PROPOSED event and enforces this atomically via the store's conditional append (see REQ-6, REQ-7)."
+      "statement": "Retrying an accepted proposal or decision cannot increase the durable count for that same logical action.",
+      "enforcementPoint": "Idempotency lookup before append."
     },
     {
       "id": "INV-5",
-      "statement": "No audit event or telemetry event ever contains a trade amount, counterparty identifier, settlement account number, or free-text evidence content in a telemetry payload.",
-      "enforcementPoint": "Telemetry emission is restricted to a fixed, allow-listed field set (event type, exception identity, actor role, reason code, timestamp); enforced by a CI log-content scan test asserting telemetry payload keys are a subset of the allow-list."
+      "statement": "Account and amount values are absent from logs, command output, telemetry, and exported audit history.",
+      "enforcementPoint": "Allow-listed serialization and sentinel scanning."
     }
   ]
 }

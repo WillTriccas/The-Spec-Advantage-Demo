@@ -19,16 +19,16 @@ To regenerate: `node benchmark/scripts/generate-illustrative-evidence.js`.
 ## How to tell this isn't real
 
 - `metadata.dataKind` is `"illustrative"`.
-- `claim.status` is `"not-evaluated"` — and it always will be for
+- `overallClaim.status` is `"not-evaluated"` — and it always will be for
   illustrative data. `benchmark/src/claim.js` short-circuits to
   `not-evaluated` whenever `dataKind === "illustrative"`, before looking at
   any of the (fabricated) scores. This is a code-level guarantee, not just a
   label: illustrative data structurally cannot produce `"supported"`,
   `"not-supported"`, or `"inconclusive"`.
-- `claim.qualityDelta` and `claim.costSavingPercent` are `null`, and
-  `claim-detail.json`'s `episodeClaims`/`secondaryClaims` arrays are both
-  empty — illustrative data never gets a per-episode or secondary claim
-  breakdown either.
+- `overallClaim.qualityDelta` and `overallClaim.costSavingPercent` are `null`.
+  Each episode also has an explicit `not-evaluated` claim so the dashboard can
+  show that no episode-level conclusion is available. Secondary measured
+  analyses remain empty.
 - Every run's `estimatedCostUsd` is `null` — `benchmark/config/costs.json`
   has no dated pricing configured yet, so costs remain null throughout the
   engine (see `docs/decisions/0001-experiment-contract.md`).
@@ -38,12 +38,9 @@ To regenerate: `node benchmark/scripts/generate-illustrative-evidence.js`.
 ## `claim-detail.json`
 
 A supplementary, non-contract artifact (see `benchmark/src/report.js`'s
-`writeClaimDetail`) carrying the richer per-episode quality/efficiency
-verdict breakdown and pre-registered secondary within-model claim rules
-(contract corrections items 4 and 9) that `contracts/report.schema.json`'s
-flat `claim` object has no room for. For illustrative data both
-`episodeClaims` and `secondaryClaims` are empty arrays, consistent with
-`claim.status: "not-evaluated"`.
+`writeClaimDetail`) carrying the same episode verdicts plus pre-registered
+secondary within-model analyses. For illustrative data every episode verdict
+is `not-evaluated` and `secondaryClaims` is empty.
 
 ## What this is for
 

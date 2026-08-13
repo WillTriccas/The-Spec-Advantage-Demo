@@ -108,6 +108,8 @@
                 "inputTokens",
                 "outputTokens",
                 "estimatedCostUsd",
+                "costEvidenceRef",
+                "costMethod",
                 "amortizedAcrossRuns"
               ],
               "properties": {
@@ -118,6 +120,8 @@
                   "type": ["number", "null"],
                   "minimum": 0
                 },
+                "costEvidenceRef": { "type": ["string", "null"] },
+                "costMethod": { "type": ["string", "null"] },
                 "amortizedAcrossRuns": {
                   "type": "integer",
                   "minimum": 1
@@ -134,7 +138,13 @@
       "required": [
         "freezeRecordSha256",
         "evaluatorSha256",
-        "scoringConfigSha256"
+        "scoringConfigSha256",
+        "costsConfigSha256",
+        "benchmarkEngineSha256",
+        "promptSha256",
+        "experimentConfigSha256",
+        "runSchemaSha256",
+        "reportSchemaSha256"
       ],
       "properties": {
         "freezeRecordSha256": {
@@ -146,6 +156,30 @@
           "pattern": "^[a-f0-9]{64}$"
         },
         "scoringConfigSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "costsConfigSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "benchmarkEngineSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "promptSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "experimentConfigSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "runSchemaSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "reportSchemaSha256": {
           "type": "string",
           "pattern": "^[a-f0-9]{64}$"
         }
@@ -162,6 +196,8 @@
         "elapsedSeconds",
         "productiveSeconds",
         "queueSeconds",
+        "modelId",
+        "modelBuildId",
         "agentVersion",
         "agentBuildId",
         "reasoningEffort",
@@ -170,7 +206,12 @@
         "cachedInputTokens",
         "outputTokens",
         "reasoningTokens",
-        "estimatedCostUsd"
+        "estimatedCostUsd",
+        "specAuthoringCostUsd",
+        "firstGreenBuildSeconds",
+        "firstPassingSuiteSeconds",
+        "reworkCount",
+        "scopeChurnFiles"
       ],
       "properties": {
         "status": {
@@ -182,6 +223,8 @@
         "elapsedSeconds": { "type": "number", "minimum": 0 },
         "productiveSeconds": { "type": ["number", "null"], "minimum": 0 },
         "queueSeconds": { "type": ["number", "null"], "minimum": 0 },
+        "modelId": { "type": ["string", "null"] },
+        "modelBuildId": { "type": ["string", "null"] },
         "agentVersion": { "type": "string", "minLength": 1 },
         "agentBuildId": { "type": ["string", "null"] },
         "reasoningEffort": { "type": ["string", "null"] },
@@ -199,26 +242,75 @@
         "estimatedCostUsd": {
           "type": ["number", "null"],
           "minimum": 0
+        },
+        "specAuthoringCostUsd": {
+          "type": ["number", "null"],
+          "minimum": 0
+        },
+        "firstGreenBuildSeconds": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "firstPassingSuiteSeconds": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "reworkCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "scopeChurnFiles": {
+          "type": "integer",
+          "minimum": 0
         }
       }
     },
     "source": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["commit", "diffPath"],
+      "required": [
+        "commit",
+        "diffPath",
+        "diffSha256",
+        "bundlePath",
+        "bundleSha256"
+      ],
       "properties": {
         "commit": { "type": ["string", "null"] },
-        "diffPath": { "type": "string", "minLength": 1 }
+        "diffPath": { "type": "string", "minLength": 1 },
+        "diffSha256": {
+          "type": ["string", "null"],
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "bundlePath": { "type": "string", "minLength": 1 },
+        "bundleSha256": {
+          "type": ["string", "null"],
+          "pattern": "^[a-f0-9]{64}$"
+        }
       }
     },
     "evidence": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["directory", "transcriptPath", "evaluatorPath"],
+      "required": [
+        "directory",
+        "transcriptPath",
+        "transcriptSha256",
+        "evaluatorPath",
+        "evaluatorSha256"
+      ],
       "properties": {
         "directory": { "type": "string", "minLength": 1 },
         "transcriptPath": { "type": "string", "minLength": 1 },
-        "evaluatorPath": { "type": "string", "minLength": 1 }
+        "transcriptSha256": {
+          "type": ["string", "null"],
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "evaluatorPath": { "type": "string", "minLength": 1 },
+        "evaluatorSha256": {
+          "type": ["string", "null"],
+          "pattern": "^[a-f0-9]{64}$"
+        }
       }
     }
   },
@@ -241,7 +333,34 @@
           },
           "execution": {
             "properties": {
+              "modelId": { "type": "string", "minLength": 1 },
+              "modelBuildId": { "type": "string", "minLength": 1 },
               "agentBuildId": { "type": "string", "minLength": 1 }
+            }
+          },
+          "source": {
+            "properties": {
+              "commit": { "type": "string", "minLength": 1 },
+              "diffSha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "bundleSha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            }
+          },
+          "evidence": {
+            "properties": {
+              "transcriptSha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "evaluatorSha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
             }
           }
         }

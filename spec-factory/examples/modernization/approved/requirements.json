@@ -2,44 +2,44 @@
   "items": [
     {
       "id": "REQ-1",
-      "statement": "The ported service must read trade records from newline-delimited JSON files dropped into a configurable inbound folder, replacing the MSMQ input adapter, while producing an in-memory trade list identical in content to what MsmqTradeSource previously produced.",
-      "rationale": "MSMQ is unavailable on .NET 8 (see AMB-1); the file-drop adapter is the agreed replacement transport.",
+      "statement": "The candidate must target .NET 8 and provide shell-free build and test commands through benchmark-adapter.json.",
+      "rationale": "Runtime modernization and repeatable black-box evaluation are the episode objectives.",
       "testable": true
     },
     {
       "id": "REQ-2",
-      "statement": "The ported service must match trades to settlement records by (TradeId, SettlementDate) and classify each trade as MATCHED, or as an exception with reason UNSETTLED, ORPHAN_SETTLEMENT, AMOUNT_MISMATCH, or DUPLICATE_TRADE_KEY, using the exact classification rules documented in discovery.knownBehaviors.",
-      "rationale": "Preserves the reconciliation behavior Trade Operations currently depends on.",
+      "statement": "The candidate must preserve trimmed-uppercase account, instrument, and currency matching and treat only the first occurrence of a trade identifier as canonical.",
+      "rationale": "These normalization and duplicate rules affect which records may match.",
       "testable": true
     },
     {
       "id": "REQ-3",
-      "statement": "The reconciliation tolerance must remain externally configurable as an absolute decimal currency-unit value, sourced from configuration (e.g. appsettings.json) rather than App.config, defaulting to 0.01.",
-      "rationale": "Preserves current operational configurability while moving off App.config, which is not supported on .NET 8 in the same form.",
+      "statement": "The candidate must preserve counterpart eligibility, separate inclusive tolerances for position quantity, settlement quantity, and settlement amount, and unconditional breaks for non-positive trade quantity or net amount.",
+      "rationale": "These are load-bearing reconciliation invariants.",
       "testable": true
     },
     {
       "id": "REQ-4",
-      "statement": "Trades sharing a duplicate (TradeId, SettlementDate) key must be classified as DUPLICATE_TRADE_KEY without first attempting amount-tolerance matching against a settlement record.",
-      "rationale": "Confirmed legacy behavior per AMB-2; changing this would silently alter exception counts Trade Operations relies on.",
+      "statement": "Manual overrides may resolve only a break with concrete counterpart candidates; an applied override must remain evidenced, and later duplicate override instructions must be emitted as stale overrides.",
+      "rationale": "Overrides must never manufacture a match or disappear without evidence.",
       "testable": true
     },
     {
       "id": "REQ-5",
-      "statement": "matched.csv and exceptions.csv must be written to the configured outbound folder on every run, including header-only files when there are zero matches or zero exceptions, using the same column order, headers, and invariant-culture 2-decimal-place number formatting as the legacy output.",
-      "rationale": "The downstream reporting job depends on both files always existing with a stable schema (see discovery.constraints).",
+      "statement": "Every run must write matched-trades.csv, break-queue.csv, end-of-day-report.txt, and run-ledger.csv with stable schemas, invariant formatting, and deterministic ordering.",
+      "rationale": "These files are the application compatibility boundary.",
       "testable": true
     },
     {
       "id": "REQ-6",
-      "statement": "Re-running the service against an unchanged pair of inbound trade and settlement files must produce byte-identical matched.csv and exceptions.csv output (idempotent by rerun).",
-      "rationale": "Operations relies on safe reruns after a failed downstream step; this is an existing implicit behavior that must not regress.",
+      "statement": "An exact-input rerun for the same business date must reproduce the same result files without duplicating output rows or adding a duplicate ledger entry.",
+      "rationale": "Operations relies on safe recovery reruns.",
       "testable": true
     },
     {
       "id": "REQ-7",
-      "statement": "The settlement file parser must continue to accept the existing fixed-width custodian bank file format unchanged.",
-      "rationale": "The file format is owned by an external party and cannot change (see discovery.constraints).",
+      "statement": "benchmark-adapter.json must validate against contracts/candidate-adapter.schema.json, substitute evaluator-owned business date/input/output paths, declare all four outputs, and accept the candidate's documented successful exit codes.",
+      "rationale": "The sealed evaluator must not depend on internal project structure.",
       "testable": true
     }
   ]

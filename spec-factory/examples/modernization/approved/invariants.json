@@ -2,23 +2,23 @@
   "items": [
     {
       "id": "INV-1",
-      "statement": "Every trade in the input set appears in exactly one of: the matched set, or the exceptions set — never both, and never dropped silently.",
-      "enforcementPoint": "TradeReconciliationEngine's classification loop; enforced by a unit test asserting matched.Count + exceptions.Count == inputTrades.Count for every fixture."
+      "statement": "Each canonical trade is accounted for as matched or broken, and each later duplicate trade identifier is broken rather than silently dropped.",
+      "enforcementPoint": "Matching classification and golden-master tests."
     },
     {
       "id": "INV-2",
-      "statement": "A settlement record is never matched to more than one trade.",
-      "enforcementPoint": "TradeReconciliationEngine's matching index, which removes a settlement record from the candidate pool once consumed by a match."
+      "statement": "A counterpart is eligible only after normalized account, instrument, settlement date, and currency agree; tolerance checks cannot bypass identity compatibility.",
+      "enforcementPoint": "Candidate selection before tolerance evaluation."
     },
     {
       "id": "INV-3",
-      "statement": "The tolerance comparison is a closed interval: an amount difference exactly equal to the configured tolerance is a MATCH, not AMOUNT_MISMATCH.",
-      "enforcementPoint": "TradeReconciliationEngine.IsWithinTolerance, covered by a boundary-value unit test at exactly the tolerance value."
+      "statement": "An override cannot create a match when no concrete position or settlement candidate exists.",
+      "enforcementPoint": "Override eligibility validation before matched output is written."
     },
     {
       "id": "INV-4",
-      "statement": "Monetary values written to output files never lose precision relative to the decimal values read from input (no float/double coercion anywhere in the pipeline).",
-      "enforcementPoint": "All trade/settlement amount fields are typed as System.Decimal end-to-end; enforced by static analysis rule banning double/float on amount-named fields in the reconciliation namespace."
+      "statement": "An identical rerun cannot create duplicate business output or duplicate ledger history.",
+      "enforcementPoint": "Run fingerprinting, deterministic report generation, and rerun tests."
     }
   ]
 }

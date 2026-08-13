@@ -11,7 +11,7 @@ public sealed record Trade
     public required string Account { get; init; }
     public required string Instrument { get; init; }
 
-    /// <summary>Absolute traded quantity. Always non-negative.</summary>
+    /// <summary>Absolute traded quantity. Must be greater than zero.</summary>
     public required decimal Quantity { get; init; }
 
     public required TradeDirection Direction { get; init; }
@@ -22,7 +22,7 @@ public sealed record Trade
     /// <summary>ISO 4217 currency code, upper-cased.</summary>
     public required string Currency { get; init; }
 
-    /// <summary>Gross settlement amount in <see cref="Currency"/>. Always non-negative.</summary>
+    /// <summary>Gross settlement amount in <see cref="Currency"/>. Must be greater than zero.</summary>
     public required decimal Amount { get; init; }
 
     /// <summary>Signed quantity where Sell reduces and Buy increases the position.</summary>

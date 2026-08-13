@@ -6,9 +6,9 @@ import { test } from 'node:test';
 import { spawnCommand } from '../src/commands.js';
 import { main } from '../src/cli.js';
 import { evaluateAuditFeature } from '../src/audit.js';
-import { evaluateModernization } from '../src/modernization.js';
+import { collectOutputs, evaluateModernization } from '../src/modernization.js';
 import { validateModernizationAdapter } from '../src/schema.js';
-import { parseDotnetVulnerabilityFindings, parseNpmAuditFindings } from '../src/static-checks.js';
+import { parseDependencyFindings, parseDotnetVulnerabilityFindings, parseNpmAuditFindings, runStaticChecks } from '../src/static-checks.js';
 
 test('modernization evaluator passes a schema-valid candidate that preserves hidden invariants', async () => {
   const candidate = await makeCandidate('modernization-pass');
@@ -51,7 +51,7 @@ test('modernization evaluator passes a schema-valid candidate that preserves hid
   `);
 
   const evidence = await evaluateModernization(candidate, {});
-  assert.equal(evidence.outcome, 'passed');
+  assert.equal(evidence.outcome, 'passed', JSON.stringify(evidence.gates, null, 2));
   assert.equal(evidence.gates['essential-business-invariants'].passed, true);
   assert.equal(evidence.commands.length, 4);
 });
@@ -110,6 +110,35 @@ test('safe path validation fails an escaping working directory', async () => {
   assert(evidence.adapterValidation.errors.some((error) => error.includes('escapes')));
 });
 
+test('declared modernization outputs cannot escape the evaluator output directory', async () => {
+  const outputDirectory = await makeCandidate('output-containment');
+  await assert.rejects(
+    () => collectOutputs(outputDirectory, ['..\\outside.txt']),
+    /escapes the candidate directory/
+  );
+});
+
+test('declared outputs reject replacement of the evaluator-owned output directory', async () => {
+  const root = await makeCandidate('output-directory-replacement');
+  const outputDirectory = path.join(root, 'output');
+  const externalDirectory = path.join(root, 'external');
+  await fs.mkdir(outputDirectory);
+  await fs.mkdir(externalDirectory);
+  await fs.writeFile(path.join(externalDirectory, 'result.txt'), 'external');
+  const boundOutputDirectory = await fs.realpath(outputDirectory);
+  await fs.rm(outputDirectory, { recursive: true });
+  await fs.symlink(
+    externalDirectory,
+    outputDirectory,
+    process.platform === 'win32' ? 'junction' : 'dir'
+  );
+
+  await assert.rejects(
+    () => collectOutputs(outputDirectory, ['result.txt'], boundOutputDirectory),
+    /replaced with a link|escaped its evaluator-owned location/
+  );
+});
+
 test('audit evaluator passes maker-checker, idempotency, conflict, export, and sentinel checks', async () => {
   const candidate = await makeCandidate('audit-pass');
   await writeBenchmarkAdapter(candidate);
@@ -124,18 +153,29 @@ test('audit evaluator passes maker-checker, idempotency, conflict, export, and s
   await fs.writeFile(path.join(candidate, 'audit-runner.mjs'), `
     import fs from 'node:fs';
     import path from 'node:path';
+    import { createHash } from 'node:crypto';
     const [mode, stateDir, requestId, actor, arg4, arg5, arg6] = process.argv.slice(2);
     fs.mkdirSync(stateDir, { recursive: true });
     const dbPath = path.join(stateDir, 'history.json');
     const read = () => fs.existsSync(dbPath) ? JSON.parse(fs.readFileSync(dbPath, 'utf8')) : [];
     const write = entries => fs.writeFileSync(dbPath, JSON.stringify(entries, null, 2));
     const emit = value => console.log(JSON.stringify(value));
+    const canonicalize = value => Array.isArray(value)
+      ? '[' + value.map(canonicalize).join(',') + ']'
+      : value && typeof value === 'object'
+        ? '{' + Object.keys(value).sort().map(key => JSON.stringify(key) + ':' + canonicalize(value[key])).join(',') + '}'
+        : JSON.stringify(value);
+    const append = (entries, value) => {
+      const entry = { ...value, sequence: entries.length + 1, previousHash: entries.length ? entries.at(-1).hash : null };
+      entry.hash = createHash('sha256').update(canonicalize(entry)).digest('hex');
+      entries.push(entry);
+    };
     if (mode === 'initialize') { write(read()); emit({ status: 'initialized' }); process.exit(0); }
     if (mode === 'propose') {
       const reason = process.argv[6], evidence = process.argv[7];
       if (!reason || !evidence) { emit({ status: 'invalid' }); process.exit(2); }
       const entries = read();
-      entries.push({ sequence: entries.length + 1, previousHash: entries.length ? 'hash-' + entries.length : null, requestId, action: 'proposed', proposer: actor, date: arg4 });
+      append(entries, { requestId, action: 'proposed', proposer: actor, date: arg4 });
       write(entries);
       emit({ requestId, status: 'proposed' });
       process.exit(0);
@@ -148,7 +188,7 @@ test('audit evaluator passes maker-checker, idempotency, conflict, export, and s
       if (requestId === 'REQ-C' && arg4 === 'reject') { emit({ requestId, status: 'conflict' }); process.exit(2); }
       const final = entries.find(entry => entry.requestId === requestId && (entry.action === 'approved' || entry.action === 'rejected'));
       if (!final) {
-        entries.push({ sequence: entries.length + 1, previousHash: 'hash-' + entries.length, requestId, action: arg4 === 'reject' ? 'rejected' : 'approved', actor });
+        append(entries, { requestId, action: arg4 === 'reject' ? 'rejected' : 'approved', actor });
         write(entries);
       }
       emit({ requestId, status: arg4 === 'reject' ? 'rejected' : 'approved' });
@@ -163,7 +203,7 @@ test('audit evaluator passes maker-checker, idempotency, conflict, export, and s
   `);
 
   const evidence = await evaluateAuditFeature(candidate, {});
-  assert.equal(evidence.outcome, 'passed');
+  assert.equal(evidence.outcome, 'passed', JSON.stringify(evidence.gates, null, 2));
   assert.equal(evidence.gates['maker-checker-separation'].passed, true);
   assert.equal(evidence.gates['audit-integrity'].passed, true);
 });
@@ -212,6 +252,20 @@ test('audit evaluator fails when a crashing conflict command is the only conflic
   assert.match(evidence.gates['audit-integrity'].findings.join('\n'), /conflict commands did not complete/);
 });
 
+test('audit evaluator fails when an invalid proposal is silently ignored', async () => {
+  const candidate = await makeCandidate('audit-ignored-invalid-proposal');
+  await writeAuditAdapter(candidate);
+  await writeAuditRunner(candidate, { ignoreInvalidProposal: true });
+
+  const evidence = await evaluateAuditFeature(candidate, {});
+  assert.equal(evidence.outcome, 'failed');
+  assert.equal(evidence.gates['essential-business-invariants'].passed, false);
+  assert.match(
+    evidence.gates['essential-business-invariants'].findings.join('\n'),
+    /not explicitly rejected/
+  );
+});
+
 test('audit evaluator sets build gate from the real benchmark build command', async () => {
   const candidate = await makeCandidate('audit-build-fails');
   await writeAuditAdapter(candidate, { benchmark: { buildArguments: ['-e', 'process.exit(7)'] } });
@@ -235,6 +289,32 @@ test('audit evaluator folds benchmark test failures into essential-business-inva
   assert.match(evidence.gates['essential-business-invariants'].findings.join('\n'), /application test command failed/);
 });
 
+test('audit evaluator detects sentinel disclosure before evidence redaction', async () => {
+  const candidate = await makeCandidate('audit-sentinel-leak');
+  await writeAuditAdapter(candidate);
+  await writeAuditRunner(candidate, { leakSentinel: true });
+  const evidence = await evaluateAuditFeature(candidate, {});
+  assert.equal(evidence.gates['audit-integrity'].passed, false);
+  assert.match(evidence.gates['audit-integrity'].findings.join('\n'), /exposed synthetic sentinel/);
+  assert.doesNotMatch(JSON.stringify(evidence), /ACCT-SENTINEL-9f6e3a21/);
+});
+
+test('audit evaluator requires a successful export command and ordered history', async () => {
+  const exportFailure = await makeCandidate('audit-export-failure');
+  await writeAuditAdapter(exportFailure);
+  await writeAuditRunner(exportFailure, { exportFailure: true });
+  const failedExportEvidence = await evaluateAuditFeature(exportFailure, {});
+  assert.equal(failedExportEvidence.gates['audit-integrity'].passed, false);
+  assert.match(failedExportEvidence.gates['audit-integrity'].findings.join('\n'), /export command failed/);
+
+  const invalidSequence = await makeCandidate('audit-invalid-sequence');
+  await writeAuditAdapter(invalidSequence);
+  await writeAuditRunner(invalidSequence, { invalidSequence: true });
+  const invalidSequenceEvidence = await evaluateAuditFeature(invalidSequence, {});
+  assert.equal(invalidSequenceEvidence.gates['audit-integrity'].passed, false);
+  assert.match(invalidSequenceEvidence.gates['audit-integrity'].findings.join('\n'), /append-only/);
+});
+
 test('dependency vulnerability parsers promote high and critical findings', () => {
   const npmFindings = parseNpmAuditFindings(JSON.stringify({
     vulnerabilities: {
@@ -253,6 +333,80 @@ test('dependency vulnerability parsers promote high and critical findings', () =
   assert.equal(npmFindings[0].severity, 'high');
   assert.equal(dotnetFindings.length, 1);
   assert.equal(dotnetFindings[0].severity, 'critical');
+});
+
+test('dependency scanner failures are blocking findings', () => {
+  for (const command of [
+    { id: 'npm-audit-json', kind: 'npm', exitCode: null, timedOut: false, stdout: '' },
+    { id: 'npm-audit-json', kind: 'npm', exitCode: 0, timedOut: true, stdout: '{}' },
+    { id: 'npm-audit-json', kind: 'npm', exitCode: 0, timedOut: false, stdout: 'not-json' },
+    { id: 'npm-audit-json', kind: 'npm', exitCode: 1, timedOut: false, stdout: '{"error":{"code":"ENOTFOUND"}}' },
+    { id: 'npm-audit-json', kind: 'npm', exitCode: 0, timedOut: false, stdout: '{}' },
+    { id: 'dotnet-restore-for-audit', kind: 'dotnet-restore', exitCode: 1, timedOut: false, stdout: '' }
+  ]) {
+    const findings = parseDependencyFindings(command);
+    assert.equal(findings.length, 1);
+    assert.equal(findings[0].severity, 'critical');
+    assert.equal(findings[0].ruleId, 'dependency-audit-failed');
+  }
+});
+
+test('dependency scanning audits every package lock instead of the first match', async () => {
+  const candidate = await makeCandidate('all-package-locks');
+  for (const directory of ['a', 'b']) {
+    const packageDirectory = path.join(candidate, directory);
+    await fs.mkdir(packageDirectory);
+    await fs.writeFile(
+      path.join(packageDirectory, 'package-lock.json'),
+      JSON.stringify({
+        name: directory,
+        version: '1.0.0',
+        lockfileVersion: 3,
+        requires: true,
+        packages: { '': { name: directory, version: '1.0.0' } }
+      })
+    );
+  }
+  const result = await runStaticChecks(candidate);
+  assert.equal(
+    result.dependencyAuditCommands.filter((entry) => entry.id === 'npm-audit-json').length,
+    2
+  );
+});
+
+test('dependency scanning audits standalone projects even when a solution exists', async () => {
+  const candidate = await makeCandidate('all-dotnet-projects');
+  await fs.writeFile(path.join(candidate, 'Example.sln'), '');
+  await fs.writeFile(path.join(candidate, 'Referenced.csproj'), '<Project />');
+  const unreferencedDirectory = path.join(candidate, 'detached');
+  await fs.mkdir(unreferencedDirectory);
+  await fs.writeFile(path.join(unreferencedDirectory, 'Unreferenced.CSPROJ'), '<Project />');
+
+  const result = await runStaticChecks(candidate, path.join(candidate, 'missing-dotnet'));
+  const expectedTargets = ['Example.sln', 'Referenced.csproj', 'detached/Unreferenced.CSPROJ'];
+  for (const commandId of ['dotnet-restore-for-audit', 'dotnet-list-package-vulnerable']) {
+    assert.deepEqual(
+      result.dependencyAuditCommands
+        .filter((entry) => entry.id === commandId)
+        .map((entry) => entry.target),
+      expectedTargets
+    );
+  }
+});
+
+test('sentinel detection scans untruncated output', async () => {
+  const sentinel = 'ACCT-SENTINEL-AFTER-CAP';
+  const result = await spawnCommand(
+    process.execPath,
+    ['-e', `process.stdout.write('x'.repeat(25000) + '${sentinel}')`],
+    {
+      timeoutMs: 5000,
+      sensitiveValues: [sentinel],
+      scrubbers: [sentinel]
+    }
+  );
+  assert.equal(result.sensitiveOutputDetected, true);
+  assert.doesNotMatch(result.stdout, /ACCT-SENTINEL-AFTER-CAP/);
 });
 
 test('spawnCommand timeout terminates descendant process tree', async () => {
@@ -375,6 +529,7 @@ async function writeAuditRunner(candidate, options = {}) {
   await fs.writeFile(path.join(candidate, 'audit-runner.mjs'), `
     import fs from 'node:fs';
     import path from 'node:path';
+    import { createHash } from 'node:crypto';
     const [mode, stateDir, requestId, actor, arg4] = process.argv.slice(2);
     fs.mkdirSync(stateDir, { recursive: true });
     const dbPath = path.join(stateDir, 'history.json');
@@ -382,12 +537,26 @@ async function writeAuditRunner(candidate, options = {}) {
     const write = entries => fs.writeFileSync(dbPath, JSON.stringify(entries, null, 2));
     const emit = value => console.log(JSON.stringify(value));
     const options = ${JSON.stringify(options)};
+    const canonicalize = value => Array.isArray(value)
+      ? '[' + value.map(canonicalize).join(',') + ']'
+      : value && typeof value === 'object'
+        ? '{' + Object.keys(value).sort().map(key => JSON.stringify(key) + ':' + canonicalize(value[key])).join(',') + '}'
+        : JSON.stringify(value);
+    const append = (entries, value) => {
+      const entry = { ...value, sequence: entries.length + 1, previousHash: entries.length ? entries.at(-1).hash : null };
+      entry.hash = createHash('sha256').update(canonicalize(entry)).digest('hex');
+      entries.push(entry);
+    };
     if (mode === 'initialize') { write(read()); emit({ status: 'initialized' }); process.exit(0); }
     if (mode === 'propose') {
       const reason = process.argv[6], evidence = process.argv[7];
-      if (!reason || !evidence) { emit({ status: 'invalid' }); process.exit(2); }
+      if (!reason || !evidence) {
+        emit({ status: options.ignoreInvalidProposal ? 'ok' : 'invalid' });
+        process.exit(options.ignoreInvalidProposal ? 0 : 2);
+      }
+      if (options.leakSentinel) { console.log(process.argv[9]); }
       const entries = read();
-      entries.push({ sequence: entries.length + 1, previousHash: entries.length ? 'hash-' + entries.length : null, requestId, action: 'proposed', proposer: actor, date: arg4 });
+      append(entries, { requestId, action: 'proposed', proposer: actor, date: arg4 });
       write(entries);
       emit({ requestId, status: 'proposed' });
       process.exit(0);
@@ -411,7 +580,7 @@ async function writeAuditRunner(candidate, options = {}) {
       }
       const final = entries.find(entry => entry.requestId === requestId && (entry.action === 'approved' || entry.action === 'rejected'));
       if (!final || options.allowTwoConflictFinals) {
-        entries.push({ sequence: entries.length + 1, previousHash: 'hash-' + entries.length, requestId, action: arg4 === 'reject' ? 'rejected' : 'approved', actor });
+        append(entries, { requestId, action: arg4 === 'reject' ? 'rejected' : 'approved', actor });
         write(entries);
       }
       emit({ requestId, status: actor === proposed.proposer ? 'forbidden' : (arg4 === 'reject' ? 'rejected' : 'approved') });
@@ -422,9 +591,13 @@ async function writeAuditRunner(candidate, options = {}) {
       const extras = fs.readdirSync(stateDir)
         .filter(name => (name.startsWith('conflict-') || name.startsWith('extra-')) && name.endsWith('.json'))
         .map(name => JSON.parse(fs.readFileSync(path.join(stateDir, name), 'utf8')));
-      fs.writeFileSync(exportPath, JSON.stringify({ entries: [...read(), ...extras] }, null, 2));
+      const exportedEntries = [...read(), ...extras];
+      if (options.invalidSequence) {
+        exportedEntries.forEach(entry => { entry.sequence = 1; });
+      }
+      fs.writeFileSync(exportPath, JSON.stringify({ entries: exportedEntries }, null, 2));
       emit({ status: 'exported' });
-      process.exit(0);
+      process.exit(options.exportFailure ? 3 : 0);
     }
   `);
 }

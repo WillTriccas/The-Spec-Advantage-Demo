@@ -6,7 +6,7 @@ import { importRun } from "./import.js";
 import { scoreRun } from "./scoring.js";
 import { aggregateLane, groupByLane } from "./aggregate.js";
 import { buildReport, writeReport, writeClaimDetail } from "./report.js";
-import { benchmarkContractVersion } from "./index.js";
+import { createFreezeReadiness, writeFreezeReadiness } from "./freeze.js";
 
 function printUsage() {
   console.log(`benchmark <command> [options]
@@ -23,6 +23,7 @@ Commands:
   aggregate --runs <file>                     Aggregate scored runs (JSON array) into lane summaries
   report --runs <file> --data-kind <illustrative|measured> --out <file>
                                                Build and write a full evidence report plus claim-detail.json
+  freeze --out <file>                           Write machine-readable freeze readiness; exits 2 while blocked
 `);
 }
 
@@ -73,7 +74,7 @@ export function cmdPrepare(options) {
     console.error("Usage: benchmark prepare --run <id> --baseline <dir> --out <dir>");
     return 1;
   }
-  const runs = buildPlannedRuns();
+  const runs = assignRandomizedOrder(buildPlannedRuns());
   const run = runs.find((r) => r.runId === runId);
   if (!run) {
     console.error(`Unknown run id: ${runId}`);
@@ -90,7 +91,7 @@ export function cmdImport(options) {
     console.error("Usage: benchmark import --run-dir <dir> --execution <file> [--benchmark-version <v>] [--skip-frozen-check]");
     return 1;
   }
-  const resolvedBenchmarkVersion = benchmarkVersion ?? benchmarkContractVersion;
+  const resolvedBenchmarkVersion = benchmarkVersion ?? loadExperimentConfig().benchmarkVersion;
   // Per correction item 8, measured data (any benchmarkVersion other than
   // "unfrozen") must come from a clean, committed working tree. Allow an
   // explicit opt-out for exceptional/manual scenarios.
@@ -101,6 +102,9 @@ export function cmdImport(options) {
   const { run, provenancePath } = importRun({
     runDir,
     benchmarkVersion: resolvedBenchmarkVersion,
+    dataKind: executionInput.dataKind ?? (resolvedBenchmarkVersion === "unfrozen" ? "illustrative" : "measured"),
+    freezeRecordSha256: executionInput.freezeRecordSha256 ?? null,
+    freezeRecordPath: executionInput.freezeRecordPath ?? null,
     baselineCommit: executionInput.baselineCommit,
     execution: executionInput.execution,
     source: executionInput.source,
@@ -144,25 +148,44 @@ export function cmdAggregate(options) {
 }
 
 export function cmdReport(options) {
-  const { runs: runsPath, "data-kind": dataKind, out, "pricing-as-of": pricingAsOf } = options;
+  const { runs: runsPath, "data-kind": dataKind, out, "pricing-as-of": pricingAsOf, "freeze-record": freezeRecordPath } = options;
   if (!runsPath || !dataKind || !out) {
-    console.error("Usage: benchmark report --runs <file> --data-kind <illustrative|measured> --out <file>");
+    console.error("Usage: benchmark report --runs <file> --data-kind <illustrative|measured> --out <file> [--freeze-record <file>]");
     return 1;
   }
+
   const runs = JSON.parse(readFileSync(runsPath, "utf8"));
   const experimentConfig = loadExperimentConfig();
+  if (dataKind === "measured") {
+    assertFrozenForMeasuredData(experimentConfig.benchmarkVersion);
+  }
   const { report, claimDetail } = buildReport({
     runs,
     benchmarkVersion: experimentConfig.benchmarkVersion,
     repetitionsPerLane: experimentConfig.repetitionsPerLane,
     dataKind,
-    pricingAsOf: pricingAsOf ?? null
+    pricingAsOf: pricingAsOf ?? null,
+    freezeRecordPath: freezeRecordPath ?? null
   });
   writeReport(report, out);
   const claimDetailPath = out.replace(/\.json$/i, "") + ".claim-detail.json";
   writeClaimDetail(claimDetail, claimDetailPath);
-  console.log(`Wrote report to ${out} (claim: ${report.claim.status}) and claim detail to ${claimDetailPath}`);
+  console.log(`Wrote report to ${out} (claim: ${report.overallClaim.status}) and claim detail to ${claimDetailPath}`);
   return 0;
+}
+
+export function cmdFreeze(options) {
+  const { out } = options;
+  if (!out) {
+    console.error("Usage: benchmark freeze --out <file>");
+    return 1;
+  }
+  const readiness = createFreezeReadiness();
+  writeFreezeReadiness(readiness, out);
+  console.log(
+    `Wrote freeze readiness to ${out} (ready: ${readiness.ready}; blockers: ${readiness.blockers.length})`
+  );
+  return readiness.ready ? 0 : 2;
 }
 
 export function run(argv) {
@@ -181,9 +204,10 @@ export function run(argv) {
       return cmdAggregate(options);
     case "report":
       return cmdReport(options);
+    case "freeze":
+      return cmdFreeze(options);
     default:
       printUsage();
       return command ? 1 : 0;
   }
 }
-

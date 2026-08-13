@@ -34,7 +34,8 @@ export function computeCostUsd({
   cachedInputTokens = 0,
   reasoningOutputTokens = 0,
   costsConfig,
-  specAuthoringShareUsd = null
+  specAuthoringShareUsd = null,
+  requiresSpecAuthoringCost = false
 }) {
   const model = costsConfig?.models?.[modelId];
   if (!model) return null;
@@ -67,6 +68,9 @@ export function computeCostUsd({
     total += model.flatChargeUsd;
   }
 
+  if (requiresSpecAuthoringCost && typeof specAuthoringShareUsd !== "number") {
+    return null;
+  }
   if (specAuthoringShareUsd != null) {
     if (typeof specAuthoringShareUsd !== "number") return null;
     total += specAuthoringShareUsd;
@@ -85,6 +89,17 @@ export function computeCostUsd({
  */
 export function amortizedSpecAuthoringShareUsd(authoringEffort, repetitionsPerLane) {
   if (!authoringEffort || typeof authoringEffort.estimatedCostUsd !== "number") return null;
+  const meteredTokens =
+    (authoringEffort.inputTokens ?? 0) + (authoringEffort.outputTokens ?? 0);
+  if (meteredTokens > 0 && authoringEffort.estimatedCostUsd <= 0) return null;
+  if (
+    typeof authoringEffort.costEvidenceRef !== "string" ||
+    authoringEffort.costEvidenceRef.length === 0 ||
+    typeof authoringEffort.costMethod !== "string" ||
+    authoringEffort.costMethod.length === 0
+  ) {
+    return null;
+  }
   if (!Number.isInteger(repetitionsPerLane) || repetitionsPerLane <= 0) return null;
   return Math.round((authoringEffort.estimatedCostUsd / repetitionsPerLane) * 1_000_000) / 1_000_000;
 }

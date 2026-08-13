@@ -36,6 +36,12 @@
             "freezeRecordSha256",
             "evaluatorSha256",
             "scoringConfigSha256",
+            "costsConfigSha256",
+            "benchmarkEngineSha256",
+            "promptSha256s",
+            "experimentConfigSha256",
+            "runSchemaSha256",
+            "reportSchemaSha256",
             "claimRule"
           ],
           "properties": {
@@ -45,6 +51,35 @@
               "pattern": "^[a-f0-9]{64}$"
             },
             "scoringConfigSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "costsConfigSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "benchmarkEngineSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "promptSha256s": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "uniqueItems": true
+            },
+            "experimentConfigSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "runSchemaSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "reportSchemaSha256": {
               "type": "string",
               "pattern": "^[a-f0-9]{64}$"
             },
@@ -195,6 +230,7 @@
         "reasoningTokens",
         "estimatedCostUsd",
         "specAuthoringAmortizedCostUsd",
+        "specAuthoringAmortizedTokens",
         "evidencePath"
       ],
       "properties": {
@@ -239,6 +275,10 @@
         },
         "specAuthoringAmortizedCostUsd": {
           "type": ["number", "null"],
+          "minimum": 0
+        },
+        "specAuthoringAmortizedTokens": {
+          "type": "integer",
           "minimum": 0
         },
         "evidencePath": { "type": "string", "minLength": 1 }
@@ -357,6 +397,19 @@
                 }
               },
               "frozenVersions": { "minItems": 1 }
+            }
+          },
+          "episodes": {
+            "items": {
+              "properties": {
+                "runs": {
+                  "items": {
+                    "properties": {
+                      "dataKind": { "const": "measured" }
+                    }
+                  }
+                }
+              }
             }
           }
         }

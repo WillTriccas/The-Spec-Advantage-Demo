@@ -172,6 +172,24 @@ test("approve refuses when signoff.decision is not approved", () => {
   });
 });
 
+test("failed re-approval invalidates an existing manifest", () => {
+  withTempDir((dir) => {
+    cpSync(MODERNIZATION_DIR, dir, { recursive: true });
+    assert.ok(existsSync(path.join(dir, "manifest.json")));
+    const signoffPath = path.join(dir, "signoff.json");
+    const signoff = JSON.parse(readFileSync(signoffPath, "utf8"));
+    signoff.decision = "rejected";
+    writeFileSync(signoffPath, JSON.stringify(signoff), "utf8");
+    const capture = captureConsole();
+    try {
+      assert.strictEqual(cmdApprove(dir, {}), 1);
+    } finally {
+      capture.restore();
+    }
+    assert.ok(!existsSync(path.join(dir, "manifest.json")));
+  });
+});
+
 test("approve refuses when a critical ambiguity is unresolved", () => {
   withTempDir((dir) => {
     cpSync(MODERNIZATION_DIR, dir, { recursive: true });

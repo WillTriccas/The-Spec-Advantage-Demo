@@ -16,6 +16,7 @@ Measured agent runs must not begin until each area below has an identified revie
 - Approved bundles pass the quality threshold.
 - No critical ambiguity remains.
 - Requirements map to acceptance evidence.
+- Every acceptance-evidence identifier exists and belongs to the linked requirement.
 - Reviewer identity, approval time, and bundle hash are recorded.
 - Spec author and reviewer attest they had no access to hidden evaluator source or expected results.
 - Spec-authoring elapsed time, model usage, and human review effort are recorded.
@@ -42,6 +43,7 @@ Measured agent runs must not begin until each area below has an identified revie
 - Failed and incomplete runs receive deterministic treatment.
 - A blind reviewer rubric has examples and tie-breaking guidance.
 - Security scanner version, ruleset, and severity mapping are pinned.
+- Scanner failure, timeout, or malformed output blocks the security gate.
 - Failed, timed-out, and cancelled runs deterministically score zero and fail applicable gates.
 
 ## Evidence and presentation
@@ -54,6 +56,8 @@ Measured agent runs must not begin until each area below has an identified revie
 - The facilitator guide states limitations and prohibited claims.
 - Episode claims and the weaker-episode roll-up are reproduced independently from report data.
 - Spec-authoring effort is included in the efficiency view.
+- Source patch, sealed source Git bundle, execution transcript, and evaluator output are content-hashed and rechecked at report time.
+- A monetary spec-authoring cost has a positive metered value plus an independently reviewable evidence reference and calculation method.
 
 ## Freeze record
 
@@ -61,14 +65,35 @@ The freeze command must produce:
 
 - Benchmark version.
 - Git commit and dirty-state check.
-- Baseline refs, commits, and archive hashes.
-- Task-brief and spec-bundle hashes.
-- Evaluator and scoring hashes.
+- Baseline refs, commits, directory-content hashes, and archive hashes.
+- Task-brief, exact rendered raw/spec prompt, and spec-bundle hashes.
+- Evaluator, scoring, and benchmark-adjudication-engine hashes.
 - Model IDs, repetitions, and execution policy.
 - Pricing source date or an explicit unavailable state.
 - Independent scenario, spec, evaluator, and claim-adjudicator approvals.
 - Every earlier frozen version that has produced a measured run.
 
 Any post-freeze change invalidates the record and requires a new benchmark version before measured runs continue.
+
+Each measured import must reference the committed freeze record by path and by
+its `recordSha256`. Import fails unless the record is ready, clean, and
+self-consistent and the prepared inputs plus actual model ID/build, agent,
+reasoning settings, randomized order, timeout, and tool-call usage match it.
+Report generation then requires the full 24-run matrix
+(every episode, lane, and repetition exactly once) and rejects mixed frozen
+versions or changed evaluator, scoring, cost configuration, adjudication code,
+or baseline bytes. It re-scores evaluator evidence and recomputes cost rather
+than trusting supplied outcome fields.
+
+Run a readiness check with:
+
+```powershell
+node benchmark\bin\benchmark.js freeze --out evidence\freeze-readiness.json
+```
+
+The command fails closed with exit code `2` while any blocker remains. Independent
+approvals are read from `benchmark\config\approvals.json`; the checked-in values are
+intentionally unapproved until named human reviewers complete the corresponding
+reviews. Synthetic personas in the worked spec bundles do not satisfy this gate.
 
 If an evaluator defect is discovered after runs begin, all affected runs are rescored under a new evaluator hash. Partial correction of only selected runs is prohibited.

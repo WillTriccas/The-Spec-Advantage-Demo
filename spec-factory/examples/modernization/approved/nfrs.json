@@ -3,32 +3,32 @@
     {
       "id": "NFR-1",
       "category": "performance",
-      "statement": "Batch reconciliation throughput must not regress versus the legacy binary.",
-      "target": "The 250,000-row benchmark fixture completes in no more than 110% of the legacy binary's measured wall-clock time on the same reference hardware."
+      "statement": "Modernization must not introduce an obvious batch-throughput regression.",
+      "target": "The evaluator fixture completes within the configured evaluator timeout on the same host."
     },
     {
       "id": "NFR-2",
       "category": "maintainability",
-      "statement": "The reconciliation engine must be covered by automated unit tests, replacing the current manual-replay validation process.",
-      "target": "At least 90% branch coverage on TradeReconciliationEngine and its adapters, measured in CI."
+      "statement": "Business rules must be testable without relying exclusively on end-to-end file execution.",
+      "target": "Automated tests cover normalization, tolerances, duplicates, overrides, and reruns."
     },
     {
       "id": "NFR-3",
       "category": "operability",
-      "statement": "The service must be operable by the current on-call rotation without WCF/MSMQ-specific expertise, and must preserve the existing 15-minute polling cadence.",
-      "target": "Zero references to System.ServiceModel or System.Messaging in the ported codebase; the file-drop poll interval remains configurable, defaulting to 15 minutes."
+      "statement": "Failures must produce a non-success outcome and actionable diagnostics.",
+      "target": "Missing or malformed inputs do not produce success-shaped output."
     },
     {
       "id": "NFR-4",
       "category": "security",
-      "statement": "The service must run on a runtime that receives security patches.",
-      "target": ".NET 8 LTS, with no dependency on any package that only supports .NET Framework."
+      "statement": "The candidate must use supported dependencies and avoid committed secrets or unsafe execution/deserialization patterns.",
+      "target": "No critical static or dependency finding."
     },
     {
       "id": "NFR-5",
       "category": "observability",
-      "statement": "Each run must emit structured, machine-parseable logs indicating counts of matched, exception (by reason), input trades and input settlements, to support operational monitoring that does not exist today.",
-      "target": "One structured log entry per run summarizing counts; no sensitive trade or settlement content (see AUD-* pattern reused in audit-feature) is required to be redacted here since this log is counts-only, not per-record."
+      "statement": "Each run should expose operational counts without logging full trade, position, settlement, or override payloads.",
+      "target": "Diagnostics contain dates, identifiers, and counts only."
     }
   ]
 }

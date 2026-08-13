@@ -1,33 +1,36 @@
 {
-  "systemSummary": "TradeReconciler.exe is a single-project .NET Framework 4.8 console application. On each invocation it (1) drains a legacy MSMQ private queue of serialized trade messages, (2) reads a matching settlement file dropped by the custodian bank into an inbound folder, (3) matches trades to settlement records using a deterministic key + tolerance algorithm implemented in TradeReconciliationEngine.cs, and (4) writes matched.csv and exceptions.csv to an outbound folder that a downstream reporting job polls. There are no automated tests; behavior is documented only in a 2016 operations runbook and validated manually each release by Trade Operations replaying a fixed set of sample files.",
+  "systemSummary": "LegacyTradeReconciliation.exe is a synthetic .NET Framework 4.6.2 batch application. It loads trades.csv, positions.csv, settlements.csv, and manual-overrides.csv for a business date; normalizes and reconciles the records; then writes matched-trades.csv, break-queue.csv, end-of-day-report.txt, and run-ledger.csv. Public characterization tests cover the baseline and override/idempotency paths.",
   "components": [
-    "Program.cs — entry point; wires up MSMQ listener, file readers/writers, and invokes TradeReconciliationEngine.Run().",
-    "TradeReconciliationEngine.cs — core matching logic: keys trades by (TradeId, SettlementDate), matches within a configurable amount tolerance, and classifies unmatched trades by reason.",
-    "MsmqTradeSource.cs — WCF/MSMQ adapter that deserializes binary-formatted trade messages from a private queue.",
-    "SettlementFileReader.cs — fixed-width settlement file parser tied to the custodian bank's legacy format.",
-    "ReconciliationReportWriter.cs — writes matched.csv and exceptions.csv using culture-invariant formatting.",
-    "App.config — holds the tolerance, queue name, and folder path configuration currently only editable via XML on the host."
+    "Program.cs and RunRequest.cs parse the positional business-date, input-directory, and output-directory contract.",
+    "ReconciliationBatch.cs synchronously orchestrates loading, matching, overrides, reports, and ledger updates.",
+    "CsvFileGateway.cs parses and writes all CSV data using legacy schemas.",
+    "MatchingEngine.cs implements normalization, duplicate detection, candidate selection, and tolerances.",
+    "EndOfDayReporter.cs produces matched, break, and summary outputs.",
+    "RunLedgerStore.cs implements same-date exact-input rerun detection.",
+    "BatchConfiguration.cs reads externally configurable position, quantity, and settlement amount tolerances."
   ],
   "dataFlows": [
-    "Upstream trade capture system → MSMQ private queue (binary serialized TradeMessage) → MsmqTradeSource → in-memory trade list.",
-    "Custodian bank SFTP drop → local inbound folder → SettlementFileReader → in-memory settlement list.",
-    "TradeReconciliationEngine matches trade list against settlement list → MatchResult collection.",
-    "ReconciliationReportWriter → matched.csv / exceptions.csv → outbound folder polled by the downstream reporting job every 15 minutes."
+    "trades.csv, positions.csv, settlements.csv, and manual-overrides.csv flow through CsvFileGateway into ReconciliationBatch.",
+    "MatchingEngine emits matched rows and breaks; override handling may convert eligible breaks into matched rows while retaining override evidence.",
+    "EndOfDayReporter writes three result files and RunLedgerStore writes run-ledger.csv.",
+    "benchmark-adapter.json supplies evaluator-owned input and output directories through command placeholders."
   ],
   "constraints": [
-    "The on-disk settlement file format is owned by the custodian bank and cannot change.",
-    "The output CSV schema (column order, headers, culture-invariant number formatting) is consumed by a downstream reporting job that cannot be changed in this effort.",
-    "MSMQ is Windows-only and unsupported on the target runtime; a like-for-like transport is not available on .NET 8, so the input transport must change even though the message payload/semantics must not.",
-    "The reconciliation tolerance (currently 0.01 currency units, configurable in App.config) must remain externally configurable.",
-    "No database is involved; all state is file-based and the job is expected to be idempotent-by-rerun (rerunning against the same inputs reproduces the same outputs)."
+    "Target runtime is .NET 8.",
+    "The three positional CLI arguments and four declared output paths must remain externally usable.",
+    "Input and output CSV schemas must remain compatible with the legacy characterization fixtures.",
+    "All data is synthetic and file-based; no database or network service is required.",
+    "A raw lane and a spec lane are both evaluated only through the public benchmark adapter."
   ],
   "knownBehaviors": [
-    "Trades are matched to settlement records by (TradeId, SettlementDate); an amount difference within tolerance is still a match.",
-    "A trade with no settlement record within 3 business days of its SettlementDate is classified as exception reason 'UNSETTLED'.",
-    "A settlement record with no corresponding trade is classified as exception reason 'ORPHAN_SETTLEMENT'.",
-    "A trade matched but outside tolerance is classified as exception reason 'AMOUNT_MISMATCH' and reports the signed difference.",
-    "Duplicate TradeId+SettlementDate pairs in the input are both retained and both flagged exception reason 'DUPLICATE_TRADE_KEY' rather than silently deduplicated.",
-    "matched.csv and exceptions.csv are always written even when empty (headers only), because the downstream job expects both files to exist every run.",
-    "All monetary values are formatted with invariant culture and exactly 2 decimal places regardless of host locale."
+    "Account, instrument, and currency comparisons use trimmed uppercase values.",
+    "The first occurrence of a trade identifier is canonical; later duplicates become breaks.",
+    "Position and settlement candidates must agree on account, instrument, settlement date, and currency before tolerance checks.",
+    "Position quantity, settlement quantity, and settlement amount use separate inclusive tolerances.",
+    "Non-positive trade quantities and net amounts are always breaks.",
+    "Manual overrides can resolve only breaks with concrete counterpart candidates.",
+    "Suppressed breaks remain evidenced in matched-trades.csv.",
+    "Exact-input same-date reruns are idempotent and do not duplicate ledger entries.",
+    "Only the first override for a trade may apply; later duplicate instructions become stale-override breaks."
   ]
 }

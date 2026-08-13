@@ -1,4 +1,4 @@
-export const benchmarkContractVersion = "1.0.0";
+export const benchmarkContractVersion = "1.1.0";
 
 export { loadExperimentConfig, loadScoringConfig, loadCostsConfig, loadRunSchema, loadReportSchema } from "./config.js";
 export { buildPlannedRuns, plannedRunCount, assignRandomizedOrder } from "./runs.js";
@@ -9,5 +9,5 @@ export { computeCostUsd, amortizedSpecAuthoringShareUsd } from "./cost.js";
 export { aggregateLane, aggregateEpisode, groupByLane, median } from "./aggregate.js";
 export { determineClaim, computeEpisodeClaim, weakestStatus } from "./claim.js";
 export { buildReport, writeReport, writeClaimDetail } from "./report.js";
+export { createFreezeReadiness, writeFreezeReadiness } from "./freeze.js";
 export { validateAgainstSchema, assertValidAgainstSchema } from "./schema-lite.js";
-

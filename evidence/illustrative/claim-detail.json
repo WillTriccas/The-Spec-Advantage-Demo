@@ -1,8 +1,41 @@
 {
-  "schemaVersion": "1.0.0",
-  "generatedAt": "2024-01-01T00:00:00.000Z",
+  "schemaVersion": "1.1.0",
+  "generatedAt": "2026-08-12T13:00:00.000Z",
   "dataKind": "illustrative",
-  "note": "Supplementary, non-contract artifact. contracts/report.schema.json's claim object only allows {status, qualityDelta, costSavingPercent, message}, so the richer per-episode quality/efficiency verdict breakdown and pre-registered secondary claim rules (design-review corrections items 4 and 9) live here instead.",
-  "episodeClaims": [],
+  "overall": {
+    "status": "not-evaluated",
+    "qualityVerdict": "indeterminate",
+    "efficiencyVerdict": "unavailable",
+    "drivingMetric": "unavailable",
+    "qualityDelta": null,
+    "costSavingPercent": null,
+    "message": "This report contains illustrative data only, generated to exercise the dashboard. No real benchmark runs have been evaluated, so the pre-registered claim cannot be assessed. This data must not be interpreted as evidence for or against the benchmark claim."
+  },
+  "episodeClaims": [
+    {
+      "episodeId": "modernization",
+      "status": "not-evaluated",
+      "qualityVerdict": "indeterminate",
+      "efficiencyVerdict": "unavailable",
+      "drivingMetric": "unavailable",
+      "qualityDelta": null,
+      "costSavingPercent": null,
+      "comparisonGatesPassed": null,
+      "controlGatesPassed": null,
+      "message": "Illustrative data cannot support a benchmark claim."
+    },
+    {
+      "episodeId": "audit-feature",
+      "status": "not-evaluated",
+      "qualityVerdict": "indeterminate",
+      "efficiencyVerdict": "unavailable",
+      "drivingMetric": "unavailable",
+      "qualityDelta": null,
+      "costSavingPercent": null,
+      "comparisonGatesPassed": null,
+      "controlGatesPassed": null,
+      "message": "Illustrative data cannot support a benchmark claim."
+    }
+  ],
   "secondaryClaims": []
 }

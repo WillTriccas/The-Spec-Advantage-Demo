@@ -3,81 +3,89 @@
     {
       "id": "AC-1",
       "requirementId": "REQ-1",
-      "given": "a reconciliation run that produced an exception with reason AMOUNT_MISMATCH for a given trade",
-      "when": "the exception is looked up by (runId, tradeId, settlementDate, reason)",
-      "then": "exactly one exception record is returned, uniquely identified",
+      "given": "both candidate-root adapter files",
+      "when": "they are validated and invoked using evaluator-owned paths",
+      "then": "application and audit commands run without shell strings or internal-project assumptions",
       "testable": true
     },
     {
       "id": "AC-2",
       "requirementId": "REQ-2",
-      "given": "an analyst viewing an open exception",
-      "when": "they submit a proposal with reason code MANUAL_MATCH_CONFIRMED and evidence text 'Confirmed via custodian phone call ref #4471'",
-      "then": "a PROPOSED event is recorded containing the maker identity, reason code, and evidence text",
+      "given": "a request with proposer maker-a and non-empty reason and evidence",
+      "when": "propose runs",
+      "then": "export proves one durable proposal for the same requestId by maker-a",
       "testable": true
     },
     {
       "id": "AC-3",
-      "requirementId": "REQ-3",
-      "given": "a PROPOSED event created by maker 'analyst.jones'",
-      "when": "'analyst.jones' attempts to submit an approve decision for that same proposal",
-      "then": "the request is rejected because checker identity equals maker identity, and no APPROVED event is written",
+      "requirementId": "REQ-2",
+      "given": "a request with empty reason and evidence",
+      "when": "propose runs",
+      "then": "no durable history exists for that request",
       "testable": true
     },
     {
       "id": "AC-4",
       "requirementId": "REQ-3",
-      "given": "a PROPOSED event created by maker 'analyst.jones'",
-      "when": "checker 'analyst.patel' submits an approve decision",
-      "then": "an APPROVED event is recorded and the exception's derived state becomes 'approved'",
+      "given": "a proposal created by maker-a",
+      "when": "maker-a attempts to approve it",
+      "then": "export contains no final decision by maker-a",
       "testable": true
     },
     {
       "id": "AC-5",
-      "requirementId": "REQ-4",
-      "given": "an existing APPROVED event in the audit event store",
-      "when": "any code path attempts to call an update or delete operation against that event through the store's public API",
-      "then": "no such operation exists / the call is rejected, and the event's original content is unchanged",
+      "requirementId": "REQ-3",
+      "given": "a proposal created by maker-a",
+      "when": "checker-b approves it",
+      "then": "export proves exactly one approved final entry by checker-b",
       "testable": true
     },
     {
       "id": "AC-6",
-      "requirementId": "REQ-5",
-      "given": "a sequence of exactly one PROPOSED event and one REJECTED event for an exception identity",
-      "when": "the state-derivation function replays those events",
-      "then": "the derived state is 'rejected'",
+      "requirementId": "REQ-4",
+      "given": "a proposal and final decision",
+      "when": "history is exported",
+      "then": "entries retain both events in contiguous sequence order and every SHA-256 hash plus previousHash link recomputes successfully from canonical JSON",
       "testable": true
     },
     {
       "id": "AC-7",
-      "requirementId": "REQ-6",
-      "given": "an exception identity with an existing pending PROPOSED event",
-      "when": "a second, different maker submits a new proposal for the same exception identity",
-      "then": "the request is rejected with a conflict response and no second PROPOSED event is written",
+      "requirementId": "REQ-5",
+      "given": "an accepted approval",
+      "when": "the identical checker repeats the approval",
+      "then": "the command is idempotently handled and export still has one final decision",
       "testable": true
     },
     {
       "id": "AC-8",
-      "requirementId": "REQ-7",
-      "given": "a proposal request submitted with idempotency key 'k-1001' that succeeds and writes one PROPOSED event",
-      "when": "the identical request (same idempotency key, maker, exception identity, reason, evidence) is submitted again due to a client retry",
-      "then": "no second PROPOSED event is written and the original event's result is returned",
+      "requirementId": "REQ-6",
+      "given": "one pending proposal",
+      "when": "different checkers concurrently approve and reject",
+      "then": "both commands complete through declared outcomes and export has exactly one actor-attributed final decision",
       "testable": true
     },
     {
       "id": "AC-9",
-      "requirementId": "REQ-8",
-      "given": "audit events for 3 exceptions with lifecycle events across a 5-day window",
-      "when": "Compliance exports the 5-day date range",
-      "then": "the resulting CSV contains all events for those 3 exceptions, ordered by exception identity then event time, with actor identities, reason codes, evidence and timestamps present",
+      "requirementId": "REQ-7",
+      "given": "approved and rejected request history in the requested date range",
+      "when": "export runs",
+      "then": "the JSON array or entries array contains the complete history for both requests",
       "testable": true
     },
     {
       "id": "AC-10",
+      "requirementId": "REQ-8",
+      "given": "synthetic account and amount sentinels supplied during evaluation",
+      "when": "all command output and export JSON are scanned",
+      "then": "neither sentinel appears",
+      "testable": true
+    },
+    {
+      "id": "AC-11",
       "requirementId": "REQ-9",
-      "given": "a PROPOSED event is written containing a trade amount and evidence text referencing an account number",
-      "when": "the corresponding telemetry event is emitted",
-      "then": "the telemetry payload contains only event type, exception identity, actor role, reason code and timestamp — the trade amount and account number do not appear anywhere in the payload",
+      "given": "the canonical application plus audit feature",
+      "when": "benchmark-adapter build, test, and run execute",
+      "then": "the application remains healthy and produces its declared reconciliation outputs",
       "testable": true
     }
   ]

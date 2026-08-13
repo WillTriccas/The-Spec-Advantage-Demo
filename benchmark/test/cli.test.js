@@ -134,14 +134,18 @@ test("cmdAggregate requires --runs and aggregates a JSON array of scored runs in
 function makeScoredRun(overrides = {}) {
   return {
     runId: "modernization-efficient-spec-r1",
+    dataKind: "illustrative",
+    benchmarkVersion: "unfrozen",
     episodeId: "modernization",
     laneId: "efficient-spec",
+    modelId: "mai-code-1.1-flash",
     modelDisplayName: "MAI Code 1.1 Flash",
     inputMode: "spec",
     repetition: 1,
     status: "completed",
     qualityScore: 88,
     hardGatesPassed: true,
+    hardGates: [{ id: "build", applicable: true, passed: true }],
     scores: {
       functionalCorrectness: 90,
       behaviorPreservation: 85,
@@ -151,11 +155,45 @@ function makeScoredRun(overrides = {}) {
       scopeTraceability: 92
     },
     elapsedSeconds: 1200,
+    productiveDurationSeconds: 1100,
+    queueDurationSeconds: 10,
+    agentVersion: "agent-1",
     toolCalls: 10,
     inputTokens: 100,
+    cachedInputTokens: 0,
     outputTokens: 50,
+    reasoningOutputTokens: 0,
     estimatedCostUsd: null,
-    evidencePath: "evidence/x",
+    specAuthoringCostUsd: null,
+    firstGreenBuildSeconds: null,
+    firstPassingSuiteSeconds: null,
+    reworkCount: 0,
+    scopeChurnFiles: 0,
+    baselineRef: "refs/tags/benchmark-legacy-v1",
+    spec: {
+      id: "modernization-approved",
+      sha256: "a".repeat(64),
+      qualityScore: 100,
+      authoringEffort: {
+        elapsedSeconds: 120,
+        inputTokens: 20,
+        outputTokens: 10,
+        estimatedCostUsd: null,
+        amortizedAcrossRuns: 3
+      }
+    },
+    evidenceDirectory: "evidence/x",
+    frozenInputs: {
+      freezeRecordSha256: null,
+      evaluatorSha256: "b".repeat(64),
+      scoringConfigSha256: "c".repeat(64),
+      costsConfigSha256: "d".repeat(64),
+      benchmarkEngineSha256: "9".repeat(64),
+      promptSha256: "e".repeat(64),
+      experimentConfigSha256: "f".repeat(64),
+      runSchemaSha256: "1".repeat(64),
+      reportSchemaSha256: "2".repeat(64)
+    },
     ...overrides
   };
 }
@@ -177,8 +215,7 @@ test("cmdReport requires --runs, --data-kind and --out, and writes both report.j
     assert.ok(existsSync(claimDetailPath));
 
     const report = JSON.parse(readFileSync(outPath, "utf8"));
-    assert.strictEqual(report.claim.status, "not-evaluated");
-    assert.deepStrictEqual(Object.keys(report.claim).sort(), ["costSavingPercent", "message", "qualityDelta", "status"]);
+    assert.strictEqual(report.overallClaim.status, "not-evaluated");
 
     const claimDetail = JSON.parse(readFileSync(claimDetailPath, "utf8"));
     assert.strictEqual(claimDetail.dataKind, "illustrative");

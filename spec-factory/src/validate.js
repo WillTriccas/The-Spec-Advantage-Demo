@@ -60,6 +60,9 @@ export function validateBundle(bundle) {
 
   // Every requirement must trace to at least one acceptance criterion.
   const requirementIds = new Set((bundle.requirements.items ?? []).map((r) => r.id));
+  const acceptanceCriteriaById = new Map(
+    (bundle.acceptanceCriteria.items ?? []).map((criterion) => [criterion.id, criterion])
+  );
   const tracedRequirementIds = new Set(
     (bundle.traceability.links ?? []).map((link) => link.requirementId)
   );
@@ -75,11 +78,58 @@ export function validateBundle(bundle) {
     if (!(link.acceptanceCriteriaIds ?? []).length) {
       errors.push(`Requirement "${link.requirementId}" has no linked acceptance criteria`);
     }
+    for (const criterionId of link.acceptanceCriteriaIds ?? []) {
+      const criterion = acceptanceCriteriaById.get(criterionId);
+      if (!criterion) {
+        errors.push(
+          `Traceability link for requirement "${link.requirementId}" references unknown acceptance criterion "${criterionId}"`
+        );
+      } else if (criterion.requirementId !== link.requirementId) {
+        errors.push(
+          `Acceptance criterion "${criterionId}" belongs to requirement "${criterion.requirementId}", not "${link.requirementId}"`
+        );
+      }
+    }
+  }
+  for (const criterion of acceptanceCriteriaById.values()) {
+    if (!requirementIds.has(criterion.requirementId)) {
+      errors.push(
+        `Acceptance criterion "${criterion.id}" references unknown requirement "${criterion.requirementId}"`
+      );
+    }
   }
 
   // Sign-off decision must be explicit.
   if (!["approved", "rejected"].includes(bundle.signoff.decision)) {
     errors.push('Sign-off "decision" must be "approved" or "rejected"');
+  }
+  if (!Number.isFinite(Date.parse(bundle.signoff.decidedAt))) {
+    errors.push('Sign-off "decidedAt" must be a valid timestamp');
+  }
+  const reviewers = bundle.signoff.reviewers ?? [];
+  if (reviewers.length === 0) {
+    errors.push('Sign-off "reviewers" must list at least one reviewer');
+  }
+  for (const [index, reviewer] of reviewers.entries()) {
+    if (
+      typeof reviewer?.name !== "string" ||
+      reviewer.name.trim().length === 0 ||
+      typeof reviewer?.role !== "string" ||
+      reviewer.role.trim().length === 0
+    ) {
+      errors.push(`Sign-off reviewer at index ${index} must have a name and role`);
+    }
+    if (!["approve", "reject"].includes(reviewer?.verdict)) {
+      errors.push(`Sign-off reviewer at index ${index} must have an approve or reject verdict`);
+    }
+  }
+  if (
+    bundle.signoff.decision === "approved" &&
+    reviewers.some((reviewer) => reviewer.verdict !== "approve")
+  ) {
+    criticalBlocks.push(
+      'An approved sign-off requires every listed reviewer to have an "approve" verdict'
+    );
   }
 
   // Spec authors must be identified separately from the benchmark's hidden
@@ -87,6 +137,24 @@ export function validateBundle(bundle) {
   // person wrote both the spec and the rubric that later scores it.
   if (!(bundle.signoff.authors ?? []).length) {
     errors.push('Sign-off "authors" must list at least one spec author');
+  }
+  const authoringEffort = bundle.signoff.authoringEffort;
+  if (typeof authoringEffort?.estimatedCostUsd === "number") {
+    const meteredTokens =
+      (authoringEffort.inputTokens ?? 0) + (authoringEffort.outputTokens ?? 0);
+    if (meteredTokens > 0 && authoringEffort.estimatedCostUsd <= 0) {
+      errors.push("Authoring effort with metered tokens must have a positive estimatedCostUsd");
+    }
+    if (
+      typeof authoringEffort.costEvidenceRef !== "string" ||
+      authoringEffort.costEvidenceRef.length === 0 ||
+      typeof authoringEffort.costMethod !== "string" ||
+      authoringEffort.costMethod.length === 0
+    ) {
+      errors.push(
+        "Priced authoring effort must record costEvidenceRef and costMethod"
+      );
+    }
   }
 
   // Blindness attestation gate: approval must record that the spec authors

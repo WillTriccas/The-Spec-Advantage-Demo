@@ -96,9 +96,26 @@ async function walk(directory, result) {
 
 async function runDependencyAuditCommands(candidateRoot, dotnetPath) {
   const commands = [];
-  const solutionOrProject = await findFirst(candidateRoot, (name) => name.endsWith('.sln') || name.endsWith('.csproj'));
-  if (solutionOrProject) {
+  const solutions = await findAll(candidateRoot, (name) => name.toLowerCase().endsWith('.sln'));
+  const projects = await findAll(candidateRoot, (name) => name.toLowerCase().endsWith('.csproj'));
+  for (const solutionOrProject of [...solutions, ...projects]) {
     const executable = dotnetPath || 'dotnet';
+    const target = toPosixRelative(candidateRoot, solutionOrProject);
+    const restore = await spawnCommand(executable, ['restore', solutionOrProject, '--nologo', '--verbosity', 'quiet'], {
+      cwd: candidateRoot,
+      timeoutMs: TIMEOUTS_MS.restore,
+      scrubbers: [candidateRoot]
+    });
+    commands.push({
+      id: 'dotnet-restore-for-audit',
+      target,
+      exitCode: restore.exitCode,
+      timedOut: restore.timedOut,
+      kind: 'dotnet-restore',
+      stdout: restore.stdout,
+      stderr: restore.stderr
+    });
+
     const result = await spawnCommand(executable, ['list', solutionOrProject, 'package', '--vulnerable', '--include-transitive'], {
       cwd: candidateRoot,
       timeoutMs: TIMEOUTS_MS.scanner,
@@ -106,6 +123,7 @@ async function runDependencyAuditCommands(candidateRoot, dotnetPath) {
     });
     commands.push({
       id: 'dotnet-list-package-vulnerable',
+      target,
       exitCode: result.exitCode,
       timedOut: result.timedOut,
       kind: 'dotnet',
@@ -114,8 +132,8 @@ async function runDependencyAuditCommands(candidateRoot, dotnetPath) {
     });
   }
 
-  const packageLock = await findFirst(candidateRoot, (name) => name === 'package-lock.json');
-  if (packageLock) {
+  const packageLocks = await findAll(candidateRoot, (name) => name === 'package-lock.json');
+  for (const packageLock of packageLocks) {
     const result = await spawnCommand('npm', ['audit', '--json'], {
       cwd: path.dirname(packageLock),
       timeoutMs: TIMEOUTS_MS.scanner,
@@ -123,6 +141,7 @@ async function runDependencyAuditCommands(candidateRoot, dotnetPath) {
     });
     commands.push({
       id: 'npm-audit-json',
+      target: toPosixRelative(candidateRoot, packageLock),
       exitCode: result.exitCode,
       timedOut: result.timedOut,
       kind: 'npm',
@@ -135,16 +154,61 @@ async function runDependencyAuditCommands(candidateRoot, dotnetPath) {
 }
 
 export function parseDependencyFindings(command) {
-  if (!command || command.timedOut) {
-    return [];
+  if (!command) {
+    return [scannerFailure('unknown', 'dependency scanner produced no result')];
+  }
+  if (command.timedOut) {
+    return [scannerFailure(command.id, 'dependency scanner timed out')];
+  }
+  if (command.exitCode == null) {
+    return [scannerFailure(command.id, 'dependency scanner failed to start or return an exit code')];
+  }
+  if (command.kind === 'dotnet-restore' || command.id === 'dotnet-restore-for-audit') {
+    return command.exitCode === 0
+      ? []
+      : [scannerFailure(command.id, `dependency audit restore exited with code ${command.exitCode}`)];
   }
   if (command.kind === 'npm' || command.id === 'npm-audit-json') {
+    if (![0, 1].includes(command.exitCode)) {
+      return [scannerFailure(command.id, `npm audit exited with code ${command.exitCode}`)];
+    }
+    const parsed = tryParseJson(command.stdout);
+    if (!parsed || typeof parsed !== 'object') {
+      return [scannerFailure(command.id, 'npm audit returned malformed JSON')];
+    }
+    const hasAuditReport =
+      parsed.error == null &&
+      (
+        parsed.vulnerabilities != null ||
+        parsed.advisories != null ||
+        parsed.metadata?.vulnerabilities != null
+      );
+    if (!hasAuditReport) {
+      return [scannerFailure(command.id, 'npm audit did not produce an audit report')];
+    }
     return parseNpmAuditFindings(command.stdout);
   }
   if (command.kind === 'dotnet' || command.id === 'dotnet-list-package-vulnerable') {
+    if (command.exitCode !== 0) {
+      return [scannerFailure(command.id, `dotnet package audit exited with code ${command.exitCode}`)];
+    }
+    if (typeof command.stdout !== 'string' || command.stdout.trim().length === 0) {
+      return [scannerFailure(command.id, 'dotnet package audit returned no output')];
+    }
     return parseDotnetVulnerabilityFindings(command.stdout);
   }
-  return [];
+  return [scannerFailure(command.id, 'unknown dependency scanner result')];
+}
+
+function scannerFailure(scannerId, reason) {
+  return {
+    ruleId: 'dependency-audit-failed',
+    severity: 'critical',
+    source: 'dependency-audit',
+    scannerId,
+    path: '.',
+    reason
+  };
 }
 
 export function parseNpmAuditFindings(stdout) {
@@ -232,7 +296,7 @@ function dedupeFindings(findings) {
   });
 }
 
-async function findFirst(directory, predicate) {
+async function findAll(directory, predicate, result = []) {
   const entries = await fs.readdir(directory, { withFileTypes: true });
   for (const entry of entries) {
     if (entry.name === '.git' || entry.name === 'bin' || entry.name === 'obj' || entry.name === 'node_modules') {
@@ -240,14 +304,11 @@ async function findFirst(directory, predicate) {
     }
     const fullPath = path.join(directory, entry.name);
     if (entry.isFile() && predicate(entry.name)) {
-      return fullPath;
+      result.push(fullPath);
     }
     if (entry.isDirectory()) {
-      const nested = await findFirst(fullPath, predicate);
-      if (nested) {
-        return nested;
-      }
+      await findAll(fullPath, predicate, result);
     }
   }
-  return null;
+  return result.sort();
 }

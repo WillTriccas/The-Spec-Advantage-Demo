@@ -28,6 +28,19 @@ export function aggregateLane(runs) {
 
   const qualityScores = runs.map((r) => r.qualityScore);
   const elapsedSeconds = runs.map((r) => r.elapsedSeconds);
+  const productiveSeconds = runs.map((r) => r.productiveSeconds ?? r.productiveDurationSeconds ?? null);
+  const tokenTotals = runs.map((r) => {
+    const categories = [
+      r.inputTokens,
+      r.cachedInputTokens,
+      r.outputTokens,
+      r.reasoningTokens ?? r.reasoningOutputTokens,
+      r.specAuthoringAmortizedTokens ?? 0
+    ];
+    return categories.every((value) => value !== null && value !== undefined)
+      ? categories.reduce((sum, value) => sum + value, 0)
+      : null;
+  });
   const hardGatePassCount = runs.filter((r) => r.hardGatesPassed).length;
 
   const costs = runs.map((r) => r.estimatedCostUsd);
@@ -41,8 +54,15 @@ export function aggregateLane(runs) {
     qualityMin: Math.min(...qualityScores),
     qualityMax: Math.max(...qualityScores),
     hardGatePassCount,
+    hardGateFailCount: runs.length - hardGatePassCount,
     runCount: runs.length,
     elapsedMedianSeconds: median(elapsedSeconds),
+    productiveMedianSeconds: productiveSeconds.every((value) => typeof value === "number")
+      ? median(productiveSeconds)
+      : null,
+    tokenMedian: tokenTotals.every((value) => typeof value === "number")
+      ? median(tokenTotals)
+      : null,
     costMedianUsd
   };
 }

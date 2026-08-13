@@ -16,6 +16,8 @@
     "elapsedMinutes": 0,
     "inputTokens": null,
     "outputTokens": null,
-    "estimatedCostUsd": null
+    "estimatedCostUsd": null,
+    "costEvidenceRef": null,
+    "costMethod": null
   }
 }

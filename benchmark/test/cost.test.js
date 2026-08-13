@@ -101,16 +101,66 @@ test("an amortized spec-authoring share is added for spec lanes when provided", 
   assert.strictEqual(cost, 3.5); // 1 + 2.5
 });
 
+test("a priced spec-lane run stays unpriced when authoring cost is unavailable", () => {
+  const costsConfig = { models: { m: fullyPricedModel() } };
+  const cost = computeCostUsd({
+    modelId: "m",
+    inputTokens: 1_000_000,
+    outputTokens: 0,
+    costsConfig,
+    specAuthoringShareUsd: null,
+    requiresSpecAuthoringCost: true
+  });
+  assert.strictEqual(cost, null);
+});
+
 test("amortizedSpecAuthoringShareUsd is null unless authoringEffort.estimatedCostUsd is a number", () => {
   assert.strictEqual(amortizedSpecAuthoringShareUsd({ estimatedCostUsd: null }, 3), null);
   assert.strictEqual(amortizedSpecAuthoringShareUsd(null, 3), null);
-  assert.strictEqual(amortizedSpecAuthoringShareUsd({ estimatedCostUsd: 30 }, 3), 10);
+  assert.strictEqual(
+    amortizedSpecAuthoringShareUsd({
+      estimatedCostUsd: 30,
+      inputTokens: 100,
+      outputTokens: 50,
+      costEvidenceRef: "billing/authoring.json",
+      costMethod: "metered-provider-usage"
+    }, 3),
+    10
+  );
 });
 
 test("amortizedSpecAuthoringShareUsd is null for a non-positive or non-integer repetitionsPerLane", () => {
-  assert.strictEqual(amortizedSpecAuthoringShareUsd({ estimatedCostUsd: 30 }, 0), null);
-  assert.strictEqual(amortizedSpecAuthoringShareUsd({ estimatedCostUsd: 30 }, -1), null);
-  assert.strictEqual(amortizedSpecAuthoringShareUsd({ estimatedCostUsd: 30 }, 1.5), null);
+  const effort = {
+    estimatedCostUsd: 30,
+    inputTokens: 100,
+    outputTokens: 50,
+    costEvidenceRef: "billing/authoring.json",
+    costMethod: "metered-provider-usage"
+  };
+  assert.strictEqual(amortizedSpecAuthoringShareUsd(effort, 0), null);
+  assert.strictEqual(amortizedSpecAuthoringShareUsd(effort, -1), null);
+  assert.strictEqual(amortizedSpecAuthoringShareUsd(effort, 1.5), null);
+});
+
+test("authoring cost is unavailable without positive independently referenced evidence", () => {
+  assert.strictEqual(
+    amortizedSpecAuthoringShareUsd({
+      estimatedCostUsd: 0,
+      inputTokens: 100,
+      outputTokens: 50,
+      costEvidenceRef: "billing/authoring.json",
+      costMethod: "metered-provider-usage"
+    }, 3),
+    null
+  );
+  assert.strictEqual(
+    amortizedSpecAuthoringShareUsd({
+      estimatedCostUsd: 30,
+      inputTokens: 100,
+      outputTokens: 50
+    }, 3),
+    null
+  );
 });
 
 test("returns null when inputTokens or outputTokens are missing", () => {

@@ -27,9 +27,12 @@ export async function runAdapterCommand({
   const result = await spawnCommand(executable, argumentsList, {
     cwd,
     timeoutMs,
-    scrubbers
+    scrubbers,
+    sensitiveValues: [
+      substitutions.accountSentinel,
+      substitutions.amountSentinel
+    ].filter(Boolean)
   });
-
   const passed = command.allowedExitCodes.includes(result.exitCode) && !result.timedOut;
   return {
     ...result,
@@ -38,17 +41,33 @@ export async function runAdapterCommand({
     cwd: toPosixRelative(candidateRoot, cwd) || '.',
     executable: scrub(executable, candidateRoot),
     id,
-    passed
+    passed,
+    sensitiveOutputDetected: result.sensitiveOutputDetected
   };
 }
 
 export async function spawnCommand(executable, argumentsList, options = {}) {
-  const { cwd, timeoutMs, scrubbers = [] } = options;
+  const { cwd, timeoutMs, scrubbers = [], sensitiveValues = [] } = options;
   return await new Promise((resolve) => {
     let stdout = '';
     let stderr = '';
     let settled = false;
     let timedOut = false;
+    let sensitiveOutputDetected = false;
+    let stdoutScanTail = '';
+    let stderrScanTail = '';
+    const longestSensitiveValue = Math.max(0, ...sensitiveValues.map((value) => value.length));
+    const scanSensitive = (text, stream) => {
+      const tail = stream === 'stdout' ? stdoutScanTail : stderrScanTail;
+      const combined = `${tail}${text}`;
+      sensitiveOutputDetected ||= sensitiveValues.some((value) => combined.includes(value));
+      const nextTail =
+        longestSensitiveValue > 1
+          ? combined.slice(-(longestSensitiveValue - 1))
+          : '';
+      if (stream === 'stdout') stdoutScanTail = nextTail;
+      else stderrScanTail = nextTail;
+    };
     const child = spawn(executable, argumentsList, {
       cwd,
       detached: process.platform !== 'win32',
@@ -63,10 +82,14 @@ export async function spawnCommand(executable, argumentsList, options = {}) {
     }, timeoutMs);
 
     child.stdout.on('data', (chunk) => {
-      stdout = limit(`${stdout}${chunk.toString('utf8')}`);
+      const text = chunk.toString('utf8');
+      scanSensitive(text, 'stdout');
+      stdout = limit(`${stdout}${text}`);
     });
     child.stderr.on('data', (chunk) => {
-      stderr = limit(`${stderr}${chunk.toString('utf8')}`);
+      const text = chunk.toString('utf8');
+      scanSensitive(text, 'stderr');
+      stderr = limit(`${stderr}${text}`);
     });
     child.on('error', (error) => {
       if (settled) {
@@ -78,6 +101,7 @@ export async function spawnCommand(executable, argumentsList, options = {}) {
         exitCode: null,
         signal: null,
         timedOut,
+        sensitiveOutputDetected,
         stdout: '',
         stderr: scrubMany(error.message, scrubbers)
       });
@@ -92,6 +116,7 @@ export async function spawnCommand(executable, argumentsList, options = {}) {
         exitCode: code,
         signal,
         timedOut,
+        sensitiveOutputDetected,
         stdout: scrubMany(normalizeOutput(stdout), scrubbers),
         stderr: scrubMany(normalizeOutput(stderr), scrubbers)
       });

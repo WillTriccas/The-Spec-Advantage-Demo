@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 import { TIMEOUTS_MS } from './constants.js';
@@ -66,6 +67,7 @@ export async function evaluateAuditFeature(candidateRoot, options) {
   await writeModernizationFixture(inputDirectory);
   await fs.mkdir(outputDirectory, { recursive: true });
   await fs.mkdir(stateDirectory, { recursive: true });
+  const boundOutputDirectory = await fs.realpath(outputDirectory);
 
   const baseSubstitutions = {
     businessDate: MODERNIZATION_BUSINESS_DATE,
@@ -121,7 +123,11 @@ export async function evaluateAuditFeature(candidateRoot, options) {
       timeoutMs: TIMEOUTS_MS.run
     });
     evidence.commands.push(applicationRun);
-    const applicationOutputs = await collectOutputs(outputDirectory, benchmarkAdapter.outputs);
+    const applicationOutputs = await collectOutputs(
+      outputDirectory,
+      benchmarkAdapter.outputs,
+      boundOutputDirectory
+    );
     const applicationChecks = evaluateModernizationOutputs(applicationOutputs, applicationOutputs, applicationRun, applicationRun);
     if (!applicationTest.passed) {
       applicationChecks.failed.push('application test command failed or timed out');
@@ -238,14 +244,20 @@ function evaluateAuditResults(commands, exported) {
   require(makerChecker, proposerFor(entries, 'REQ-A') === AUDIT_SYNTHETIC_VALUES.proposer, 'export did not prove the proposer identity for REQ-A');
   requireSingleFinalDecision(makerChecker, entries, 'REQ-A', 'approved', AUDIT_SYNTHETIC_VALUES.approver, AUDIT_SYNTHETIC_VALUES.proposer);
   requireSingleFinalDecision(makerChecker, entries, 'REQ-B', 'rejected', AUDIT_SYNTHETIC_VALUES.otherApprover, AUDIT_SYNTHETIC_VALUES.proposer);
-  require(essential, command(commands, 'propose-missing-reason')?.exitCode !== null && !command(commands, 'propose-missing-reason')?.timedOut && !exportHasHistory(exported, 'REQ-MISSING'), 'missing reason/evidence proposal was durably accepted');
+  require(
+    essential,
+    commandExplicitlyRejected(command(commands, 'propose-missing-reason')) &&
+      !exportHasHistory(exported, 'REQ-MISSING'),
+    'missing reason/evidence proposal was not explicitly rejected without durable history'
+  );
   require(essential, command(commands, 'checker-approve-idempotent')?.passed, 'duplicate decision was not idempotently handled');
   require(integrity, conflictCommandsCompleted(command(commands, 'conflict-approve'), command(commands, 'conflict-reject')), 'concurrent conflict commands did not complete through declared adapter outcomes');
   require(integrity, finalDecisions(entries, 'REQ-C').length === 1, 'export did not prove exactly one durable final decision for REQ-C concurrent conflict');
   require(integrity, finalDecisions(entries, 'REQ-C').every((decision) => decision.actor), 'export contained a final decision for REQ-C without a recognized actor identity');
+  require(integrity, command(commands, 'export-date-range')?.passed, 'date-range export command failed');
   require(integrity, Array.isArray(exported) || (exported && Array.isArray(exported.entries)), 'date-range export did not produce JSON history');
   require(integrity, exportHasHistory(exported, 'REQ-A') && exportHasHistory(exported, 'REQ-B'), 'export missing approved/rejected request history');
-  require(integrity, !`${allOutput}\n${exportedText}`.includes(AUDIT_SYNTHETIC_VALUES.accountSentinel) && !`${allOutput}\n${exportedText}`.includes(AUDIT_SYNTHETIC_VALUES.amountSentinel), 'logs, command output, or export exposed synthetic sentinel account/amount');
+  require(integrity, !commands.some((entry) => entry.sensitiveOutputDetected === true) && !`${allOutput}\n${exportedText}`.includes(AUDIT_SYNTHETIC_VALUES.accountSentinel) && !`${allOutput}\n${exportedText}`.includes(AUDIT_SYNTHETIC_VALUES.amountSentinel), 'logs, command output, or export exposed synthetic sentinel account/amount');
   require(integrity, exportLooksAppendOnly(exported), 'export lacks append-only or tamper-evident history metadata');
 
   return {
@@ -258,6 +270,18 @@ function evaluateAuditResults(commands, exported) {
 
 function command(commands, id) {
   return commands.find((entry) => entry.id === id);
+}
+
+function commandExplicitlyRejected(result) {
+  if (!result || result.exitCode === null || result.timedOut || result.signal) {
+    return false;
+  }
+  if (result.exitCode !== 0) {
+    return true;
+  }
+  const parsed = tryParseJson(result.stdout);
+  const status = typeof parsed?.status === 'string' ? parsed.status.toLowerCase() : '';
+  return ['invalid', 'rejected', 'forbidden', 'error', 'failed'].includes(status);
 }
 
 function conflictCommandsCompleted(left, right) {
@@ -343,8 +367,50 @@ function stringField(entry, keys) {
 }
 
 function exportLooksAppendOnly(exported) {
-  const text = JSON.stringify(exported ?? {});
-  return /hash|previous|append|sequence|version|timestamp|created/i.test(text);
+  const entries = exportEntries(exported);
+  if (entries.length === 0) {
+    return false;
+  }
+
+  for (let index = 0; index < entries.length; index += 1) {
+    const entry = entries[index];
+    if (entry?.sequence !== index + 1) {
+      return false;
+    }
+    const expectedPreviousHash = index === 0 ? null : entries[index - 1].hash;
+    if (entry.previousHash !== expectedPreviousHash) {
+      return false;
+    }
+    const unsignedEntry = { ...entry };
+    delete unsignedEntry.hash;
+    const expectedHash = createHash('sha256')
+      .update(canonicalize(unsignedEntry))
+      .digest('hex');
+    if (entry.hash !== expectedHash) {
+      return false;
+    }
+  }
+
+  for (const requestId of ['REQ-A', 'REQ-B', 'REQ-C']) {
+    const history = entries.filter((entry) => requestIdFor(entry) === requestId);
+    const proposalIndex = history.findIndex((entry) => actionFor(entry).startsWith('propos'));
+    const finalIndex = history.findIndex((entry) => finalActionFor(entry));
+    if (proposalIndex < 0 || finalIndex <= proposalIndex) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function canonicalize(value) {
+  if (Array.isArray(value)) {
+    return `[${value.map(canonicalize).join(',')}]`;
+  }
+  if (value && typeof value === 'object') {
+    return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonicalize(value[key])}`).join(',')}}`;
+  }
+  return JSON.stringify(value);
 }
 
 function require(collection, condition, message) {

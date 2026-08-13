@@ -51,6 +51,7 @@ export type Run = {
   reasoningTokens: number | null;
   estimatedCostUsd: number | null;
   specAuthoringAmortizedCostUsd: number | null;
+  specAuthoringAmortizedTokens: number;
   evidencePath: string;
 };
 
@@ -91,6 +92,12 @@ export type Report = {
       freezeRecordSha256: string | null;
       evaluatorSha256: string;
       scoringConfigSha256: string;
+      costsConfigSha256: string;
+      benchmarkEngineSha256: string;
+      promptSha256s: string[];
+      experimentConfigSha256: string;
+      runSchemaSha256: string;
+      reportSchemaSha256: string;
       claimRule: Record<string, unknown>;
     };
     frozenVersions: string[];

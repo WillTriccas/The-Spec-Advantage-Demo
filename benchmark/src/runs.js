@@ -22,10 +22,12 @@ export function buildPlannedRuns(experimentConfig = loadExperimentConfig()) {
           modelDisplayName: model.displayName,
           modelBuildId: model.buildId ?? null,
           modelAgentVersion: model.agentVersion ?? null,
+          modelAgentBuildId: model.agentBuildId ?? null,
           modelEffortParams: model.effortParams ?? null,
           inputMode: lane.inputMode,
           repetition,
           baselineRef: episode.baselineRef,
+          baselinePath: episode.baselinePath,
           taskBrief: episode.taskBrief,
           specBundle: episode.specBundle
         });
@@ -89,4 +91,3 @@ export function assignRandomizedOrder(runs, seed = "benchmark-execution-order") 
   }
   return shuffled.map((run, index) => ({ ...run, executionOrder: index + 1 }));
 }
-

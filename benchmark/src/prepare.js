@@ -1,9 +1,14 @@
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, statSync, cpSync, existsSync } from "node:fs";
 import { createHash } from "node:crypto";
-import { execSync } from "node:child_process";
+import { execFileSync, execSync } from "node:child_process";
 import path from "node:path";
-import { REPO_ROOT, CONFIG_DIR, loadExperimentConfig } from "./config.js";
-import { loadBundle, renderSpecMarkdown } from "../../spec-factory/src/bundle.js";
+import { REPO_ROOT, CONFIG_DIR, CONTRACTS_DIR, loadExperimentConfig } from "./config.js";
+import {
+  assembleSpec,
+  loadBundle,
+  renderSpecMarkdown
+} from "../../spec-factory/src/bundle.js";
+import { hashBundle } from "../../spec-factory/src/hashing.js";
 
 /**
  * Deterministically hash a directory tree: sha256 over the sorted list of
@@ -15,6 +20,7 @@ export function hashDirectory(dir) {
   const files = [];
   (function walk(current, relative) {
     for (const entry of readdirSync(current).sort()) {
+      if (entry === ".git") continue;
       const abs = path.join(current, entry);
       const rel = relative ? `${relative}/${entry}` : entry;
       const stat = statSync(abs);
@@ -36,6 +42,73 @@ export function hashDirectory(dir) {
   return hash.digest("hex");
 }
 
+function gitFilesAtRef(ref, baselinePath, repoRoot) {
+  const normalizedPath = baselinePath.replaceAll("\\", "/").replace(/\/+$/, "");
+  const listing = execFileSync(
+    "git",
+    ["ls-tree", "-r", "-z", "--name-only", ref, "--", normalizedPath],
+    { cwd: repoRoot }
+  );
+  const files = listing
+    .toString("utf8")
+    .split("\0")
+    .filter(Boolean)
+    .sort();
+  if (files.length === 0) {
+    throw new Error(`No tracked baseline files found at ${ref}:${normalizedPath}`);
+  }
+  return { normalizedPath, files };
+}
+
+export function hashDirectoryAtRef(ref, baselinePath, repoRoot = REPO_ROOT) {
+  const { normalizedPath, files } = gitFilesAtRef(ref, baselinePath, repoRoot);
+  const hash = createHash("sha256");
+  for (const file of files) {
+    const relativePath = file.slice(normalizedPath.length + 1);
+    const content = execFileSync("git", ["show", `${ref}:${file}`], { cwd: repoRoot });
+    hash.update(relativePath, "utf8");
+    hash.update("\0");
+    hash.update(content);
+    hash.update("\0");
+  }
+  return hash.digest("hex");
+}
+
+export function materializeDirectoryAtRef(
+  ref,
+  baselinePath,
+  destination,
+  repoRoot = REPO_ROOT
+) {
+  const { normalizedPath, files } = gitFilesAtRef(ref, baselinePath, repoRoot);
+  for (const file of files) {
+    const relativePath = file.slice(normalizedPath.length + 1);
+    const destinationPath = path.join(destination, relativePath);
+    mkdirSync(path.dirname(destinationPath), { recursive: true });
+    const content = execFileSync("git", ["show", `${ref}:${file}`], { cwd: repoRoot });
+    writeFileSync(destinationPath, content);
+  }
+
+}
+
+function initializeWorkspaceRepository(workspaceDir) {
+  execFileSync("git", ["init", "--quiet"], { cwd: workspaceDir });
+  execFileSync("git", ["config", "core.autocrlf", "false"], { cwd: workspaceDir });
+  execFileSync("git", ["config", "user.name", "SpecForge Benchmark"], { cwd: workspaceDir });
+  execFileSync(
+    "git",
+    ["config", "user.email", "benchmark@specforge.invalid"],
+    { cwd: workspaceDir }
+  );
+  execFileSync("git", ["add", "--all"], { cwd: workspaceDir });
+  execFileSync("git", ["commit", "--quiet", "-m", "Frozen benchmark baseline"], {
+    cwd: workspaceDir
+  });
+  return execFileSync("git", ["rev-parse", "HEAD"], { cwd: workspaceDir })
+    .toString("utf8")
+    .trim();
+}
+
 /**
  * sha256 of a single file's bytes, or null if the file does not exist.
  * Used to record hash provenance (task brief / scoring config / experiment
@@ -47,6 +120,18 @@ export function hashFile(filePath) {
   const hash = createHash("sha256");
   hash.update(readFileSync(filePath));
   return hash.digest("hex");
+}
+
+export function hashText(text) {
+  return createHash("sha256").update(text, "utf8").digest("hex");
+}
+
+export function assemblePromptText({ briefText, inputMode, renderedSpec = null }) {
+  if (inputMode === "raw") return briefText;
+  if (inputMode === "spec" && typeof renderedSpec === "string") {
+    return `${briefText.trimEnd()}\n\n---\n\n# Approved specification\n\n${renderedSpec}`;
+  }
+  throw new Error(`Cannot assemble prompt for inputMode "${inputMode}"`);
 }
 
 /**
@@ -105,19 +190,28 @@ export function prepareRunWorkspace(run, { baselineDir, outputRoot, repoRoot = R
   const runDir = path.join(outputRoot, run.runId);
   const workspaceDir = path.join(runDir, "workspace");
   mkdirSync(workspaceDir, { recursive: true });
-  cpSync(baselineDir, workspaceDir, { recursive: true });
+  if (experimentConfig.benchmarkVersion === "unfrozen") {
+    cpSync(baselineDir, workspaceDir, { recursive: true });
+  } else {
+    materializeDirectoryAtRef(
+      run.baselineRef,
+      run.baselinePath,
+      workspaceDir,
+      repoRoot
+    );
+  }
 
-  const baselineSha256 = hashDirectory(baselineDir);
+  const baselineSha256 = hashDirectory(workspaceDir);
+  const workspaceBaselineCommit = initializeWorkspaceRepository(workspaceDir);
 
-  let promptText;
+  const briefPath = path.join(repoRoot, run.taskBrief);
+  const briefText = readFileSync(briefPath, "utf8");
+  const taskBriefSha256 = hashFile(briefPath);
+  let promptText = assemblePromptText({ briefText, inputMode: "raw" });
   let specInfo = null;
-  let taskBriefSha256 = null;
   let specManifestSha256 = null;
 
   if (run.inputMode === "raw") {
-    const briefPath = path.join(repoRoot, run.taskBrief);
-    promptText = readFileSync(briefPath, "utf8");
-    taskBriefSha256 = hashFile(briefPath);
     // Guard: raw lanes must not receive specs. Fail loudly if a future
     // change accidentally wires a specBundle into a raw-mode run.
     if (run.specBundle) {
@@ -135,8 +229,28 @@ export function prepareRunWorkspace(run, { baselineDir, outputRoot, repoRoot = R
     }
     const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
     const bundle = loadBundle(specDir);
-    promptText = renderSpecMarkdown(bundle, { id: manifest.id, title: run.episodeName });
-    specInfo = { id: manifest.id, sha256: manifest.sha256, qualityScore: manifest.qualityScore };
+    const assembledSpecSha256 = hashBundle(assembleSpec(bundle, { id: manifest.id }));
+    if (assembledSpecSha256 !== manifest.sha256) {
+      throw new Error(
+        `Spec bundle at ${specDir} no longer matches its approved manifest; approve it again before preparing runs.`
+      );
+    }
+    const renderedSpec = renderSpecMarkdown(bundle, { id: manifest.id, title: run.episodeName });
+    promptText = assemblePromptText({ briefText, inputMode: "spec", renderedSpec });
+    specInfo = {
+      id: manifest.id,
+      sha256: manifest.sha256,
+      qualityScore: manifest.qualityScore,
+      authoringEffort: {
+        elapsedSeconds: Math.round((manifest.authoringEffort?.elapsedMinutes ?? 0) * 60),
+        inputTokens: manifest.authoringEffort?.inputTokens ?? 0,
+        outputTokens: manifest.authoringEffort?.outputTokens ?? 0,
+        estimatedCostUsd: manifest.authoringEffort?.estimatedCostUsd ?? null,
+        costEvidenceRef: manifest.authoringEffort?.costEvidenceRef ?? null,
+        costMethod: manifest.authoringEffort?.costMethod ?? null,
+        amortizedAcrossRuns: experimentConfig.repetitionsPerLane
+      }
+    };
     specManifestSha256 = hashFile(manifestPath);
   } else {
     throw new Error(`Unknown inputMode: ${run.inputMode}`);
@@ -146,7 +260,7 @@ export function prepareRunWorkspace(run, { baselineDir, outputRoot, repoRoot = R
   writeFileSync(promptPath, promptText, "utf8");
 
   const plan = {
-    schemaVersion: "1.0.0",
+    schemaVersion: "1.1.0",
     runId: run.runId,
     episodeId: run.episodeId,
     laneId: run.laneId,
@@ -156,13 +270,19 @@ export function prepareRunWorkspace(run, { baselineDir, outputRoot, repoRoot = R
       tier: run.modelTier,
       buildId: run.modelBuildId ?? null,
       agentVersion: run.modelAgentVersion ?? null,
+      agentBuildId: run.modelAgentBuildId ?? null,
       effortParams: run.modelEffortParams ?? null
     },
     inputMode: run.inputMode,
     repetition: run.repetition,
     baseline: { ref: run.baselineRef, sha256: baselineSha256 },
+    brief: { path: run.taskBrief, sha256: taskBriefSha256 },
+    promptSha256: hashText(promptText),
     spec: specInfo,
+    executionOrder: run.executionOrder ?? 1,
+    executionPolicySnapshot: experimentConfig.executionPolicy ?? null,
     workspaceDir,
+    workspaceBaselineCommit,
     promptPath
   };
 
@@ -170,15 +290,23 @@ export function prepareRunWorkspace(run, { baselineDir, outputRoot, repoRoot = R
   writeFileSync(planPath, `${JSON.stringify(plan, null, 2)}\n`, "utf8");
 
   const provenance = {
-    schemaVersion: "1.0.0",
+    schemaVersion: "1.1.0",
     runId: run.runId,
     preparedAt: new Date().toISOString(),
     hashes: {
       taskBriefSha256,
+      promptSha256: hashText(promptText),
       specManifestSha256,
       scoringConfigSha256: hashFile(path.join(CONFIG_DIR, "scoring.json")),
       experimentConfigSha256: hashFile(path.join(CONFIG_DIR, "experiment.json")),
-      baselineSha256
+      costsConfigSha256: hashFile(path.join(CONFIG_DIR, "costs.json")),
+      benchmarkEngineSha256: hashDirectory(path.join(repoRoot, "benchmark", "src")),
+      runSchemaSha256: hashFile(path.join(CONTRACTS_DIR, "run.schema.json")),
+      reportSchemaSha256: hashFile(path.join(CONTRACTS_DIR, "report.schema.json")),
+      baselineSha256,
+      planSha256: hashFile(planPath),
+      evaluatorSha256: hashDirectory(path.join(repoRoot, "evaluator")),
+      freezeRecordSha256: null
     },
     executionPolicySnapshot: experimentConfig.executionPolicy ?? null
   };
@@ -230,4 +358,3 @@ export function assertFrozenForMeasuredData(benchmarkVersion, { repoRoot = REPO_
   }
   return { enforced: true, clean: true };
 }
-

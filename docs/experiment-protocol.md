@@ -18,7 +18,7 @@ Goal: migrate to .NET 8 while preserving domain behavior and improving architect
 
 Starting point: frozen canonical .NET 8 baseline.
 
-Goal: add reason-coded exception resolution, maker-checker separation, append-only evidence, concurrency and idempotency safeguards, audit export, telemetry, and sensitive-log protection.
+Goal: add reason-coded exception resolution, maker-checker separation, append-only evidence with a verifiable SHA-256 chain, concurrency and idempotency safeguards, audit export, telemetry, and sensitive-log protection.
 
 ## Run matrix
 
@@ -52,8 +52,12 @@ Spec lanes receive the same brief plus the approved, hashed bundle. Approval req
 - Security, operational, migration, and rollback constraints.
 - Recorded review identity and timestamp.
 - A blindness attestation confirming that authors and reviewers did not access hidden evaluator source or expected results.
+- Every linked acceptance-criterion ID exists and belongs to the linked requirement.
 
 Spec-authoring elapsed time, model usage, and human review effort are recorded. The report shows both per-run execution efficiency and a transparent amortized view of the spec investment.
+Approval writes a content-bound manifest. A failed re-approval removes any
+previous manifest, and preparation/freeze independently recompute the bundle
+hash so changed stage files cannot reuse stale approval.
 
 ## Evaluation
 
@@ -81,7 +85,7 @@ The audit-feature episode adds:
 - Maker-checker separation holds.
 - Audit integrity holds.
 
-Each gate is recorded as passed, failed, or not applicable. A skipped gate is never treated as passed. Scanner, ruleset, and severity mapping are pinned in the freeze record.
+Each gate is recorded as passed, failed, or not applicable. A skipped gate is never treated as passed. Scanner, ruleset, and severity mapping are pinned in the freeze record. Scanner launch failures, timeouts, non-audit exit codes, and malformed output are blocking security findings.
 
 A high aggregate score cannot compensate for a failed hard gate.
 
@@ -114,21 +118,25 @@ Token counts and elapsed time may be reported as observed. Monetary cost is calc
 
 Unknown cost is displayed as unavailable, never as zero.
 
-Pricing captures standard, cached, reasoning, and output token classes plus flat charges where applicable. The rate source, effective date, and rate type are required before any monetary comparison.
+Pricing captures standard, cached, reasoning, and output token classes plus flat charges where applicable. The rate source, effective date, and rate type are required before any monetary comparison. A spec lane is not assigned an execution-only monetary cost when specification-authoring cost is unavailable. Priced authoring effort must be positive when tokens were consumed and must reference independently reviewable cost evidence and its calculation method.
 
 ## Run evidence
 
 Every imported run retains:
 
 - Run manifest and hashes.
-- Model and agent/runtime versions.
+- Planned and executed model IDs/builds plus agent/runtime versions.
 - Start, end, and elapsed times.
-- Transcript or session export where available.
+- Transcript or session export and its content hash.
 - Tool and token usage where available.
-- Final source commit and patch.
+- Final source commit, canonical patch, patch content hash, and sealed Git bundle proving the commit exists.
 - Build and public-test logs.
-- Hidden evaluator output.
+- Hidden evaluator output and its content hash.
 - Score calculation and hard-gate state.
+
+Measured import reconstructs the registered plan, verifies the prepared plan hash and
+isolated baseline Git tree, and rejects source or evidence paths that escape the run
+directory.
 
 The report generator includes all eligible runs and does not select a preferred repetition.
 

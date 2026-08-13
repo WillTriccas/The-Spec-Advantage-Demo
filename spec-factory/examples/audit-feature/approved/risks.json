@@ -2,31 +2,31 @@
   "items": [
     {
       "id": "RISK-1",
-      "description": "A developer under deadline pressure could add a convenience 'admin override' or 'update' path to the audit store that violates append-only guarantees.",
+      "description": "A persistence implementation may overwrite a current-state record and lose lifecycle history.",
       "likelihood": "medium",
       "impact": "high",
-      "mitigation": "Enforce append-only at the schema/permission layer in addition to the application layer (e.g. database-level revoke of UPDATE/DELETE grants for the application's service account on the audit event table), not solely via application code review."
+      "mitigation": "Persist immutable entries and verify multi-entry history plus order/hash metadata through export."
     },
     {
       "id": "RISK-2",
-      "description": "Maker-checker separation could be bypassed by an analyst holding two accounts or sharing credentials.",
-      "likelihood": "low",
+      "description": "Maker-checker validation may trust the current command actor instead of the durable proposer.",
+      "likelihood": "medium",
       "impact": "high",
-      "mitigation": "Out of scope for this feature's technical controls (identity/account governance is owned by IAM), but flagged to Security as a process control dependency; the system enforces identity-level separation given the identities it is told about."
+      "mitigation": "Compare the checker to proposer identity loaded from persisted proposal history."
     },
     {
       "id": "RISK-3",
-      "description": "Sensitive data could leak into logs indirectly through unhandled exception stack traces that include exception objects carrying trade data.",
+      "description": "Non-atomic file or database writes may allow simultaneous approve and reject decisions.",
       "likelihood": "medium",
       "impact": "high",
-      "mitigation": "Exception handling middleware must serialize only a fixed error code and correlation id to logs, never the raw exception object's message or data properties when it originates from the resolution or export path."
+      "mitigation": "Use an atomic conditional append/transaction and test true concurrent processes."
     },
     {
       "id": "RISK-4",
-      "description": "The CI log-content scan (NFR-1 verification) could produce false negatives if new fields are added to telemetry payloads without updating the scan's allow-list check.",
-      "likelihood": "low",
-      "impact": "medium",
-      "mitigation": "Implement the scan as an allow-list (fail on any unrecognized field) rather than a deny-list (fail only on known-bad fields), so new fields must be explicitly allow-listed before they can ship."
+      "description": "Generic object serialization or exception logging may leak synthetic account or amount fields.",
+      "likelihood": "medium",
+      "impact": "high",
+      "mitigation": "Use explicit allow-listed DTOs and scan all command output and export for sentinels."
     }
   ]
 }

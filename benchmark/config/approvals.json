@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0.0",
+  "scenario": {
+    "approved": false,
+    "reviewer": null,
+    "approvedAt": null,
+    "evidenceRef": null
+  },
+  "specifications": {
+    "approved": false,
+    "reviewer": null,
+    "approvedAt": null,
+    "evidenceRef": null
+  },
+  "evaluator": {
+    "approved": false,
+    "reviewer": null,
+    "approvedAt": null,
+    "evidenceRef": null
+  },
+  "claimAdjudication": {
+    "approved": false,
+    "reviewer": null,
+    "approvedAt": null,
+    "evidenceRef": null
+  }
+}

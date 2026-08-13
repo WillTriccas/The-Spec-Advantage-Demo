@@ -57,13 +57,14 @@ test("model tier assignment matches configured lanes", () => {
   }
 });
 
-test("each planned run carries the configured model's buildId, agentVersion and effortParams (null until pinned for a frozen measurement)", () => {
+test("each planned run carries the configured model and agent pins (null until frozen)", () => {
   const config = loadExperimentConfig();
   const runs = buildPlannedRuns(config);
   for (const run of runs) {
     const model = config.models[run.modelTier];
     assert.strictEqual(run.modelBuildId, model.buildId ?? null);
     assert.strictEqual(run.modelAgentVersion, model.agentVersion ?? null);
+    assert.strictEqual(run.modelAgentBuildId, model.agentBuildId ?? null);
     assert.deepStrictEqual(run.modelEffortParams, model.effortParams ?? null);
   }
 });
@@ -106,4 +107,3 @@ test("assignRandomizedOrder produces a different order for a different seed", ()
     orderedB.map((r) => r.runId)
   );
 });
-

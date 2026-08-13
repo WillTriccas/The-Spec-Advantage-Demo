@@ -3,32 +3,32 @@
     {
       "id": "NFR-1",
       "category": "security",
-      "statement": "No sensitive trade or settlement data may appear in application logs or telemetry emitted by this feature.",
-      "target": "Zero occurrences of amount, counterparty identifier, or account number field values in logs/telemetry, verified by an automated log-content scan in CI on every build."
+      "statement": "Audit functionality must not expose raw account or amount data in operational or exported evidence.",
+      "target": "Zero sentinel matches across stdout, stderr, logs, and export."
     },
     {
       "id": "NFR-2",
       "category": "reliability",
-      "statement": "Concurrent and retried resolution requests must not corrupt the audit trail.",
-      "target": "A load test issuing 50 concurrent proposal attempts for the same exception identity results in exactly one accepted PROPOSED event and 49 conflict responses; a retried identical request with the same idempotency key never produces a second event."
+      "statement": "Separate command processes, retries, and concurrent decisions must not corrupt state.",
+      "target": "All workflow commands finish within adapter timeouts and every request has at most one terminal entry."
     },
     {
       "id": "NFR-3",
       "category": "performance",
-      "statement": "Compliance export must complete quickly enough to be usable interactively for typical regulatory response windows.",
-      "target": "Export of a 100,000-event date range completes in under 30 seconds on reference hardware."
+      "statement": "Date-range export must remain suitable for an interactive demonstration.",
+      "target": "The evaluator-owned export completes within the configured audit-command timeout."
     },
     {
       "id": "NFR-4",
       "category": "maintainability",
-      "statement": "The resolution workflow's state derivation and conflict rules must be covered by automated tests, not manual QA, given their compliance sensitivity.",
-      "target": "At least 95% branch coverage on the state-derivation function and the maker-checker enforcement path."
+      "statement": "Workflow lifecycle and persistence behavior must have automated tests.",
+      "target": "Tests cover proposal validation, self-approval, approval, rejection, retry, concurrency, and export."
     },
     {
       "id": "NFR-5",
-      "category": "observability",
-      "statement": "Every lifecycle transition must be observable in telemetry to support operational monitoring of the approval backlog.",
-      "target": "A telemetry event is emitted for every PROPOSED, APPROVED and REJECTED transition, with a metric tracking count of exceptions currently in PENDING state."
+      "category": "operability",
+      "statement": "Every command must return a deterministic machine-readable outcome.",
+      "target": "JSON stdout or JSON export file is parseable for every declared allowed exit code."
     }
   ]
 }

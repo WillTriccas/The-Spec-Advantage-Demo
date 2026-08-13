@@ -20,6 +20,10 @@ function run(laneId, overrides = {}) {
     hardGatesPassed: true,
     elapsedSeconds: 1000,
     estimatedCostUsd: null,
+    inputTokens: 100,
+    cachedInputTokens: 0,
+    outputTokens: 50,
+    reasoningOutputTokens: 0,
     ...overrides
   };
 }
@@ -71,14 +75,16 @@ test("inconclusive when quality is non-inferior but no cost/time efficiency is d
   assert.strictEqual(claim.status, "inconclusive");
 });
 
-test("supported (non-inferior to) when quality is within margin and elapsed time is lower", () => {
+test("supported (non-inferior to) when quality is within margin and token use is lower", () => {
   const runs = [
-    run("efficient-spec", { qualityScore: 89, elapsedSeconds: 500 }),
-    run("frontier-raw", { qualityScore: 90, elapsedSeconds: 1000 })
+    run("efficient-spec", { qualityScore: 89, inputTokens: 50 }),
+    run("frontier-raw", { qualityScore: 90, inputTokens: 500 })
   ];
   const claim = determineClaim(runs, { claimRule, dataKind: "measured" });
   assert.strictEqual(claim.status, "supported");
   assert.match(claim.message, /non-inferior to/);
+  assert.match(claim.message, /median total token consumption/);
+  assert.doesNotMatch(claim.message, /elapsed-time-only/);
 });
 
 test("supported (better than) when comparison quality clearly exceeds control and cost is lower", () => {
@@ -143,6 +149,26 @@ test("overall status across two episodes is the weaker of the two, never an aver
   assert.deepStrictEqual(statuses, ["not-supported", "supported"]);
 });
 
+test("headline episode tie-breaking follows the registered episode order, not run order", () => {
+  const runs = [
+    run("efficient-spec", { episodeId: "audit-feature", qualityScore: 94, estimatedCostUsd: 1 }),
+    run("frontier-raw", { episodeId: "audit-feature", qualityScore: 90, estimatedCostUsd: 3 }),
+    run("efficient-spec", { episodeId: "modernization", qualityScore: 100, estimatedCostUsd: 1 }),
+    run("frontier-raw", { episodeId: "modernization", qualityScore: 90, estimatedCostUsd: 5 })
+  ];
+  const options = {
+    claimRule,
+    dataKind: "measured",
+    episodeOrder: ["modernization", "audit-feature"]
+  };
+  const forward = determineClaim(runs, options);
+  const reversed = determineClaim([...runs].reverse(), options);
+  assert.strictEqual(forward.qualityDelta, 10);
+  assert.strictEqual(reversed.qualityDelta, 10);
+  assert.match(forward.message, /Driving episode.*modernization/);
+  assert.match(reversed.message, /Driving episode.*modernization/);
+});
+
 test("worse is defined as strictly below the -equivalentWithinPoints margin, not merely outside a symmetric band", () => {
   // Exactly at -3 (the margin) should NOT be "worse" -- only strictly below -3 is worse.
   const atMargin = [
@@ -164,16 +190,16 @@ test("worse is defined as strictly below the -equivalentWithinPoints margin, not
   assert.strictEqual(claimBelowMargin.episodeClaims[0].qualityVerdict, "worse");
 });
 
-test("efficiency verdict is labeled elapsed-only when cost is unavailable, and is never silently treated as a cost comparison", () => {
+test("elapsed time alone cannot support the lower-cost efficiency claim", () => {
   const runs = [
-    run("efficient-spec", { episodeId: "modernization", qualityScore: 95, elapsedSeconds: 400, estimatedCostUsd: null }),
-    run("frontier-raw", { episodeId: "modernization", qualityScore: 85, elapsedSeconds: 1000, estimatedCostUsd: null })
+    run("efficient-spec", { episodeId: "modernization", qualityScore: 95, elapsedSeconds: 400, estimatedCostUsd: null, inputTokens: null }),
+    run("frontier-raw", { episodeId: "modernization", qualityScore: 85, elapsedSeconds: 1000, estimatedCostUsd: null, inputTokens: null })
   ];
   const claim = determineClaim(runs, { claimRule, dataKind: "measured" });
   const episodeClaim = claim.episodeClaims[0];
-  assert.strictEqual(episodeClaim.efficiencyVerdict, "better");
-  assert.match(episodeClaim.drivingMetric, /elapsed-time-only/);
-  assert.match(episodeClaim.message, /must not be read as a cost comparison/);
+  assert.strictEqual(episodeClaim.status, "inconclusive");
+  assert.strictEqual(episodeClaim.efficiencyVerdict, "unavailable");
+  assert.strictEqual(episodeClaim.drivingMetric, "unavailable");
 });
 
 test("a control-lane hard gate failure is visible but does not block a supported (better) quality result", () => {
@@ -215,4 +241,3 @@ test("weakestStatus ranks not-supported as weakest and supported as strongest", 
   assert.strictEqual(weakestStatus(["inconclusive", "not-evaluated"]), "not-evaluated");
   assert.strictEqual(weakestStatus(["supported", "supported"]), "supported");
 });
-

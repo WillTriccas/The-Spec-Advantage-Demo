@@ -4,7 +4,15 @@ import { mkdtempSync, rmSync, writeFileSync, mkdirSync, existsSync, readFileSync
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { prepareRunWorkspace, hashDirectory, assertNoSpecLeakage, assertFrozenForMeasuredData } from "../src/prepare.js";
+import {
+  prepareRunWorkspace,
+  hashDirectory,
+  hashDirectoryAtRef,
+  hashFile,
+  materializeDirectoryAtRef,
+  assertNoSpecLeakage,
+  assertFrozenForMeasuredData
+} from "../src/prepare.js";
 import { buildPlannedRuns } from "../src/runs.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -41,6 +49,17 @@ test("hashDirectory changes when file content changes", () => {
   });
 });
 
+test("materialized Git baseline bytes match the frozen ref hash", () => {
+  withTempDir((destination) => {
+    const baselinePath = "src/legacy-trade-reconciliation";
+    materializeDirectoryAtRef("HEAD", baselinePath, destination, REPO_ROOT);
+    assert.strictEqual(
+      hashDirectory(destination),
+      hashDirectoryAtRef("HEAD", baselinePath, REPO_ROOT)
+    );
+  });
+});
+
 test("prepareRunWorkspace for a raw lane copies only the baseline and the raw brief prompt", () => {
   withTempDir((baselineDir) => {
     writeFileSync(path.join(baselineDir, "Program.cs"), "// legacy code", "utf8");
@@ -59,6 +78,21 @@ test("prepareRunWorkspace for a raw lane copies only the baseline and the raw br
       const plan = JSON.parse(readFileSync(result.planPath, "utf8"));
       assert.strictEqual(plan.spec, null);
       assert.strictEqual(plan.inputMode, "raw");
+      assert.strictEqual(plan.promptSha256, hashFile(result.promptPath));
+      assert.deepStrictEqual(plan.executionPolicySnapshot, {
+        freshWorkspacePerRun: true,
+        crossRunMemory: false,
+        humanRemediation: false,
+        preserveFailedRuns: true,
+        failedRunTreatment: "score-zero-and-fail-applicable-gates",
+        timeoutSeconds: 5400,
+        toolCallCap: 200,
+        toolPermissionProfile: "standard-coding",
+        runOrder: "randomized-interleaved",
+        runOrderNotes: "Execute the seeded order across lanes rather than grouping by model or treatment.",
+        captureQueueAndThrottleTime: true,
+        queueAndThrottleNotes: "Record queue and throttle time separately from productive execution time."
+      });
     });
   });
 });
@@ -79,6 +113,7 @@ test("prepareRunWorkspace for a spec lane renders the approved spec as the promp
       assert.match(plan.spec.sha256, /^[a-f0-9]{64}$/);
       assert.strictEqual(plan.spec.qualityScore, 100);
       assert.strictEqual(plan.inputMode, "spec");
+      assert.strictEqual(plan.promptSha256, hashFile(result.promptPath));
     });
   });
 });
@@ -141,31 +176,33 @@ test("prepareRunWorkspace writes a provenance.json with task-brief and config ha
       assert.strictEqual(provenance.hashes.specManifestSha256, null);
       assert.match(provenance.hashes.scoringConfigSha256, /^[a-f0-9]{64}$/);
       assert.match(provenance.hashes.experimentConfigSha256, /^[a-f0-9]{64}$/);
+      assert.strictEqual(provenance.hashes.planSha256, hashFile(result.planPath));
     });
   });
 });
 
-test("prepareRunWorkspace writes a provenance.json with a spec-manifest hash (not a task-brief hash) for a spec lane", () => {
+test("prepareRunWorkspace writes both the shared task-brief hash and the spec-manifest hash for a spec lane", () => {
   withTempDir((baselineDir) => {
     writeFileSync(path.join(baselineDir, "Program.cs"), "// legacy code", "utf8");
     withTempDir((outputRoot) => {
       const run = buildPlannedRuns().find((r) => r.runId === "modernization-efficient-spec-r1");
       const result = prepareRunWorkspace(run, { baselineDir, outputRoot, repoRoot: REPO_ROOT });
       const provenance = JSON.parse(readFileSync(result.provenancePath, "utf8"));
-      assert.strictEqual(provenance.hashes.taskBriefSha256, null);
+      assert.match(provenance.hashes.taskBriefSha256, /^[a-f0-9]{64}$/);
       assert.match(provenance.hashes.specManifestSha256, /^[a-f0-9]{64}$/);
     });
   });
 });
 
-test("plan.json's model object carries buildId/agentVersion/effortParams through from the run descriptor", () => {
+test("plan.json's model object carries frozen model and agent pins through from the run descriptor", () => {
   withTempDir((baselineDir) => {
     writeFileSync(path.join(baselineDir, "Program.cs"), "// legacy code", "utf8");
     withTempDir((outputRoot) => {
-      const run = { ...buildPlannedRuns().find((r) => r.runId === "modernization-efficient-raw-r1"), modelBuildId: "build-123", modelAgentVersion: "agent-9", modelEffortParams: { reasoningEffort: "high" } };
+      const run = { ...buildPlannedRuns().find((r) => r.runId === "modernization-efficient-raw-r1"), modelBuildId: "build-123", modelAgentVersion: "agent-9", modelAgentBuildId: "agent-build-9", modelEffortParams: { reasoningEffort: "high" } };
       const result = prepareRunWorkspace(run, { baselineDir, outputRoot, repoRoot: REPO_ROOT });
       assert.strictEqual(result.plan.model.buildId, "build-123");
       assert.strictEqual(result.plan.model.agentVersion, "agent-9");
+      assert.strictEqual(result.plan.model.agentBuildId, "agent-build-9");
       assert.deepStrictEqual(result.plan.model.effortParams, { reasoningEffort: "high" });
     });
   });
@@ -195,4 +232,3 @@ test("assertFrozenForMeasuredData is a no-op for an unfrozen benchmarkVersion", 
   const result = assertFrozenForMeasuredData("unfrozen");
   assert.strictEqual(result.enforced, false);
 });
-
