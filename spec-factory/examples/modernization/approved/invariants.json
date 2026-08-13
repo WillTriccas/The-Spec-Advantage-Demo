@@ -1,0 +1,24 @@
+{
+  "items": [
+    {
+      "id": "INV-1",
+      "statement": "Each canonical trade is accounted for as matched or broken, and each later duplicate trade identifier is broken rather than silently dropped.",
+      "enforcementPoint": "Matching classification and golden-master tests."
+    },
+    {
+      "id": "INV-2",
+      "statement": "A counterpart is eligible only after normalized account, instrument, settlement date, and currency agree; tolerance checks cannot bypass identity compatibility.",
+      "enforcementPoint": "Candidate selection before tolerance evaluation."
+    },
+    {
+      "id": "INV-3",
+      "statement": "An override cannot create a match when no concrete position or settlement candidate exists.",
+      "enforcementPoint": "Override eligibility validation before matched output is written."
+    },
+    {
+      "id": "INV-4",
+      "statement": "An identical rerun cannot create duplicate business output or duplicate ledger history.",
+      "enforcementPoint": "Run fingerprinting, deterministic report generation, and rerun tests."
+    }
+  ]
+}

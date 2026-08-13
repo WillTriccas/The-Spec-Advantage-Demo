@@ -1,0 +1,32 @@
+{
+  "items": [
+    {
+      "id": "RISK-1",
+      "description": "A clean redesign may omit undocumented legacy edge behavior.",
+      "likelihood": "medium",
+      "impact": "high",
+      "mitigation": "Run public characterization and evaluator-owned golden fixtures against observable outputs."
+    },
+    {
+      "id": "RISK-2",
+      "description": "Duplicate trades or overrides may be silently deduplicated by modern collection choices.",
+      "likelihood": "medium",
+      "impact": "high",
+      "mitigation": "Preserve input order and test every duplicate row as separately accounted evidence."
+    },
+    {
+      "id": "RISK-3",
+      "description": "A changed CLI or output path can pass unit tests while breaking external operation.",
+      "likelihood": "medium",
+      "impact": "high",
+      "mitigation": "Treat benchmark-adapter.json and its declared outputs as acceptance-test boundaries."
+    },
+    {
+      "id": "RISK-4",
+      "description": "Rerun handling may append duplicate ledger rows or stale prior output.",
+      "likelihood": "medium",
+      "impact": "medium",
+      "mitigation": "Execute same-date exact-input reruns and compare every declared output."
+    }
+  ]
+}

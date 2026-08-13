@@ -1,0 +1,32 @@
+{
+  "problemStatement": "The checked-in canonical .NET 8 reconciliation baseline supports direct manual break overrides but intentionally has no maker-checker workflow, durable resolution history, or compliance export. A synthetic Financial Services control feature is needed without changing core reconciliation results.",
+  "goals": [
+    "Allow a maker to propose a break resolution with a reason and evidence.",
+    "Require a distinct checker to approve or reject each proposal.",
+    "Persist an append-only, ordered, tamper-evident lifecycle history.",
+    "Handle retries and concurrent conflicting decisions deterministically.",
+    "Export durable JSON history for an inclusive business-date range.",
+    "Prevent account and amount data from appearing in logs, command output, or exports.",
+    "Expose the workflow through the public audit adapter contract."
+  ],
+  "nonGoals": [
+    "Changing reconciliation matching, tolerance, break identity, or EOD report behavior.",
+    "Claiming regulatory certification or production readiness.",
+    "Building a user interface, identity provider, notification system, or general workflow engine.",
+    "Permitting an emergency self-approval bypass."
+  ],
+  "successMetrics": [
+    "Self-approval produces no durable final decision.",
+    "A distinct checker can create exactly one approved or rejected final decision.",
+    "Duplicate decisions are idempotent and concurrent conflicting decisions leave exactly one final outcome.",
+    "Date-range export contains parseable ordered JSON lifecycle entries with recognized actors.",
+    "Synthetic account and amount sentinel values never appear in logs, command output, or export.",
+    "Existing application build, tests, and reconciliation run remain successful."
+  ],
+  "stakeholders": [
+    "Synthetic Compliance persona",
+    "Synthetic Trade Operations persona",
+    "Synthetic Security persona",
+    "Synthetic Reconciliation Engineering persona"
+  ]
+}

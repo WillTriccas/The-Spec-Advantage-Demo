@@ -1,0 +1,34 @@
+{
+  "items": [
+    {
+      "id": "NFR-1",
+      "category": "performance",
+      "statement": "Modernization must not introduce an obvious batch-throughput regression.",
+      "target": "The evaluator fixture completes within the configured evaluator timeout on the same host."
+    },
+    {
+      "id": "NFR-2",
+      "category": "maintainability",
+      "statement": "Business rules must be testable without relying exclusively on end-to-end file execution.",
+      "target": "Automated tests cover normalization, tolerances, duplicates, overrides, and reruns."
+    },
+    {
+      "id": "NFR-3",
+      "category": "operability",
+      "statement": "Failures must produce a non-success outcome and actionable diagnostics.",
+      "target": "Missing or malformed inputs do not produce success-shaped output."
+    },
+    {
+      "id": "NFR-4",
+      "category": "security",
+      "statement": "The candidate must use supported dependencies and avoid committed secrets or unsafe execution/deserialization patterns.",
+      "target": "No critical static or dependency finding."
+    },
+    {
+      "id": "NFR-5",
+      "category": "observability",
+      "statement": "Each run should expose operational counts without logging full trade, position, settlement, or override payloads.",
+      "target": "Diagnostics contain dates, identifiers, and counts only."
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "items": [
+    {
+      "id": "REQ-1",
+      "statement": "The candidate must retain benchmark-adapter.json and add audit-adapter.json implementing initialize, propose, decide, and export command arrays with all documented placeholders.",
+      "rationale": "The evaluator must exercise the application and workflow without knowing internal architecture.",
+      "testable": true
+    },
+    {
+      "id": "REQ-2",
+      "statement": "A valid proposal must durably record requestId, proposer identity, business date, non-empty reason, non-empty evidence, and an ordered PROPOSED-equivalent lifecycle action.",
+      "rationale": "The proposal must be explainable and attributable.",
+      "testable": true
+    },
+    {
+      "id": "REQ-3",
+      "statement": "A decide command may record APPROVED or REJECTED only when the checker identity differs from the proposal's durable proposer identity; self-approval must not create a final entry.",
+      "rationale": "Maker-checker separation is a hard control.",
+      "testable": true
+    },
+    {
+      "id": "REQ-4",
+      "statement": "Lifecycle history must be append-only and expose a contiguous 1-based sequence plus a SHA-256 hash chain. Each entry's previousHash is null for sequence 1 or equals the prior entry's hash; hash is lowercase SHA-256 over canonical JSON of that entry without hash, with recursively sorted object keys.",
+      "rationale": "The exported history must prove order and make silent insertion, deletion, or rewriting detectable.",
+      "testable": true
+    },
+    {
+      "id": "REQ-5",
+      "statement": "Repeating an already accepted identical final decision must be idempotently successful without writing a second final entry.",
+      "rationale": "Client retries must not duplicate approvals.",
+      "testable": true
+    },
+    {
+      "id": "REQ-6",
+      "statement": "Concurrent conflicting approve and reject decisions for one proposed request must leave exactly one durable recognized final decision with a non-empty checker identity.",
+      "rationale": "The audit record cannot contain contradictory terminal states.",
+      "testable": true
+    },
+    {
+      "id": "REQ-7",
+      "statement": "Export must produce parseable JSON for the inclusive fromDate/toDate range as an array or object with entries; the history must expose request identity, lifecycle action, proposer/checker identity, reason, evidence, and ordering metadata.",
+      "rationale": "Compliance needs portable, machine-readable evidence of both approved and rejected requests.",
+      "testable": true
+    },
+    {
+      "id": "REQ-8",
+      "statement": "Logs, stderr/stdout diagnostics, telemetry, and exported history must not contain raw account identifiers or trade amount values supplied to the workflow.",
+      "rationale": "Auditability must not create a sensitive-data leakage path.",
+      "testable": true
+    },
+    {
+      "id": "REQ-9",
+      "statement": "The existing application must still build, pass its tests, and complete an evaluator-owned reconciliation through benchmark-adapter.json.",
+      "rationale": "The control feature must not regress the underlying service.",
+      "testable": true
+    }
+  ]
+}

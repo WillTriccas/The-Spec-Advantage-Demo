@@ -1,0 +1,39 @@
+{
+  "items": [
+    {
+      "id": "AMB-1",
+      "description": "Whether the workflow should key requests directly by BreakKey or accept an external request identifier was unclear.",
+      "severity": "critical",
+      "resolution": "The black-box command boundary uses caller-supplied requestId. Implementations may associate it with BreakKey internally, but exported history must preserve requestId exactly.",
+      "status": "resolved"
+    },
+    {
+      "id": "AMB-2",
+      "description": "Whether self-approval is ever permitted was unclear.",
+      "severity": "critical",
+      "resolution": "It is never permitted. A checker identity equal to the durable proposer identity cannot create an approved or rejected terminal entry.",
+      "status": "resolved"
+    },
+    {
+      "id": "AMB-3",
+      "description": "The outcome of simultaneous approve and reject commands was unspecified.",
+      "severity": "critical",
+      "resolution": "Both commands must complete through declared adapter outcomes, but durable history must contain exactly one recognized final decision for the request.",
+      "status": "resolved"
+    },
+    {
+      "id": "AMB-4",
+      "description": "The audit export shape and actor field names were not specified.",
+      "severity": "major",
+      "resolution": "Export is JSON: either an array or an object with entries. Entries expose requestId (or a documented equivalent), action/eventType/status, proposer or checker identity, contiguous 1-based sequence, previousHash, and a lowercase SHA-256 hash over canonical JSON with recursively sorted keys.",
+      "status": "resolved"
+    },
+    {
+      "id": "AMB-5",
+      "description": "Whether evidence may appear in operational telemetry was unclear.",
+      "severity": "major",
+      "resolution": "Evidence may be stored in durable audit state but must not be emitted in logs or telemetry. Account and amount values must not appear in the export either.",
+      "status": "resolved"
+    }
+  ]
+}

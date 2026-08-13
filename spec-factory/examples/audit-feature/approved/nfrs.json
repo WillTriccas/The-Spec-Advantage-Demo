@@ -1,0 +1,34 @@
+{
+  "items": [
+    {
+      "id": "NFR-1",
+      "category": "security",
+      "statement": "Audit functionality must not expose raw account or amount data in operational or exported evidence.",
+      "target": "Zero sentinel matches across stdout, stderr, logs, and export."
+    },
+    {
+      "id": "NFR-2",
+      "category": "reliability",
+      "statement": "Separate command processes, retries, and concurrent decisions must not corrupt state.",
+      "target": "All workflow commands finish within adapter timeouts and every request has at most one terminal entry."
+    },
+    {
+      "id": "NFR-3",
+      "category": "performance",
+      "statement": "Date-range export must remain suitable for an interactive demonstration.",
+      "target": "The evaluator-owned export completes within the configured audit-command timeout."
+    },
+    {
+      "id": "NFR-4",
+      "category": "maintainability",
+      "statement": "Workflow lifecycle and persistence behavior must have automated tests.",
+      "target": "Tests cover proposal validation, self-approval, approval, rejection, retry, concurrency, and export."
+    },
+    {
+      "id": "NFR-5",
+      "category": "operability",
+      "statement": "Every command must return a deterministic machine-readable outcome.",
+      "target": "JSON stdout or JSON export file is parseable for every declared allowed exit code."
+    }
+  ]
+}

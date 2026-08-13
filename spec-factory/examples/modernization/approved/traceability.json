@@ -1,0 +1,11 @@
+{
+  "links": [
+    { "requirementId": "REQ-1", "acceptanceCriteriaIds": ["AC-1"], "invariantIds": [], "riskIds": ["RISK-1"] },
+    { "requirementId": "REQ-2", "acceptanceCriteriaIds": ["AC-2", "AC-3"], "invariantIds": ["INV-1"], "riskIds": ["RISK-1", "RISK-2"] },
+    { "requirementId": "REQ-3", "acceptanceCriteriaIds": ["AC-4", "AC-5"], "invariantIds": ["INV-2"], "riskIds": ["RISK-1"] },
+    { "requirementId": "REQ-4", "acceptanceCriteriaIds": ["AC-6", "AC-7"], "invariantIds": ["INV-3"], "riskIds": ["RISK-2"] },
+    { "requirementId": "REQ-5", "acceptanceCriteriaIds": ["AC-8"], "invariantIds": ["INV-1"], "riskIds": ["RISK-3"] },
+    { "requirementId": "REQ-6", "acceptanceCriteriaIds": ["AC-9"], "invariantIds": ["INV-4"], "riskIds": ["RISK-4"] },
+    { "requirementId": "REQ-7", "acceptanceCriteriaIds": ["AC-10"], "invariantIds": [], "riskIds": ["RISK-3"] }
+  ]
+}

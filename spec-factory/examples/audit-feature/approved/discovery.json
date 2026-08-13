@@ -1,0 +1,31 @@
+{
+  "systemSummary": "The canonical .NET 8 baseline ingests trades.csv, settlements.csv, and positions.csv; produces deterministic eod-summary.txt, eod-break-register.csv, and eod-result.json; and exposes stable BreakKey identities. Manual overrides are plain operational suppression with no approval history. benchmark-adapter.json is the existing black-box application contract; the feature adds audit-adapter.json.",
+  "components": [
+    "TradeRecon.Domain defines ReconciliationBreak and its deterministic BreakKey.",
+    "TradeRecon.Application orchestrates reconciliation and derives break state.",
+    "TradeRecon.Infrastructure supplies CSV sources, state stores, report output, and structured logging.",
+    "TradeRecon.Console exposes --date, --fixtures, --out, and --json.",
+    "New audit workflow must expose initialize, propose, decide, and export commands through audit-adapter.json."
+  ],
+  "dataFlows": [
+    "Evaluator invokes benchmark-adapter build, test, and run to prove the underlying application remains healthy.",
+    "initialize creates durable workflow state beneath evaluator-owned {stateDirectory}.",
+    "propose records requestId, proposer, business date, reason, and evidence as a durable proposed lifecycle entry.",
+    "decide records one approved or rejected terminal entry by a checker distinct from the proposer.",
+    "export selects entries by inclusive date range and writes a JSON array or an object with an entries array to {exportPath}."
+  ],
+  "constraints": [
+    "Both adapter files live at the candidate root and use executable/argument arrays rather than shell strings.",
+    "The evaluator owns state, input, output, and export paths and substitutes the documented placeholders.",
+    "Commands return parseable JSON on stdout, except export may write parseable JSON to {exportPath}.",
+    "Each durable entry must expose request identity, lifecycle action, a recognized actor field, contiguous 1-based sequence, and a verifiable SHA-256 previous-hash chain.",
+    "The application must not log or export raw account identifiers or trade amounts.",
+    "The internal persistence design is open, but state must survive across separate command processes."
+  ],
+  "knownBehaviors": [
+    "BreakKey is deterministic for identical reconciliation input.",
+    "The baseline uses exit code 2 for a completed run with outstanding breaks; this is an allowed success outcome in benchmark-adapter.json.",
+    "The baseline intentionally has no maker-checker or append-only audit implementation.",
+    "eod-result.json is deterministic and machine-readable, while diagnostic logs are written separately from JSON stdout."
+  ]
+}

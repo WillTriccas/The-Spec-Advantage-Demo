@@ -1,0 +1,26 @@
+{
+  "reviewers": [
+    { "name": "Synthetic Persona - Alex Morgan", "role": "Engineering Lead", "verdict": "approve" },
+    { "name": "Synthetic Persona - Priya Shah", "role": "Trade Operations", "verdict": "approve" },
+    { "name": "Synthetic Persona - Sam Rivera", "role": "Platform Engineering", "verdict": "approve" }
+  ],
+  "decision": "approved",
+  "decidedAt": "2026-08-12T12:00:00Z",
+  "notes": "Illustrative benchmark sign-off by synthetic personas; this is not a real organizational approval. Approved because the bundle is traceable to the checked-in synthetic baseline and adapter contract, with no unresolved critical ambiguity.",
+  "authors": [
+    { "name": "Synthetic Persona - Morgan Lee", "role": "Domain Architect" },
+    { "name": "Synthetic Persona - Taylor Kim", "role": "Business Analyst" }
+  ],
+  "blindnessAttestation": {
+    "attested": true,
+    "statement": "These named identities are synthetic demonstrator personas. The illustrative spec-author role was separated from evaluator design and used only the checked-in legacy baseline, public adapter contract, and synthetic stakeholder requirements; it did not use hidden evaluator implementation or expected benchmark outcomes."
+  },
+  "authoringEffort": {
+    "elapsedMinutes": 285,
+    "inputTokens": 41200,
+    "outputTokens": 18650,
+    "estimatedCostUsd": null,
+    "costEvidenceRef": null,
+    "costMethod": null
+  }
+}

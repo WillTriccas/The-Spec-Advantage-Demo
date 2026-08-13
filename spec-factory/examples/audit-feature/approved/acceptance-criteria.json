@@ -1,0 +1,92 @@
+{
+  "items": [
+    {
+      "id": "AC-1",
+      "requirementId": "REQ-1",
+      "given": "both candidate-root adapter files",
+      "when": "they are validated and invoked using evaluator-owned paths",
+      "then": "application and audit commands run without shell strings or internal-project assumptions",
+      "testable": true
+    },
+    {
+      "id": "AC-2",
+      "requirementId": "REQ-2",
+      "given": "a request with proposer maker-a and non-empty reason and evidence",
+      "when": "propose runs",
+      "then": "export proves one durable proposal for the same requestId by maker-a",
+      "testable": true
+    },
+    {
+      "id": "AC-3",
+      "requirementId": "REQ-2",
+      "given": "a request with empty reason and evidence",
+      "when": "propose runs",
+      "then": "no durable history exists for that request",
+      "testable": true
+    },
+    {
+      "id": "AC-4",
+      "requirementId": "REQ-3",
+      "given": "a proposal created by maker-a",
+      "when": "maker-a attempts to approve it",
+      "then": "export contains no final decision by maker-a",
+      "testable": true
+    },
+    {
+      "id": "AC-5",
+      "requirementId": "REQ-3",
+      "given": "a proposal created by maker-a",
+      "when": "checker-b approves it",
+      "then": "export proves exactly one approved final entry by checker-b",
+      "testable": true
+    },
+    {
+      "id": "AC-6",
+      "requirementId": "REQ-4",
+      "given": "a proposal and final decision",
+      "when": "history is exported",
+      "then": "entries retain both events in contiguous sequence order and every SHA-256 hash plus previousHash link recomputes successfully from canonical JSON",
+      "testable": true
+    },
+    {
+      "id": "AC-7",
+      "requirementId": "REQ-5",
+      "given": "an accepted approval",
+      "when": "the identical checker repeats the approval",
+      "then": "the command is idempotently handled and export still has one final decision",
+      "testable": true
+    },
+    {
+      "id": "AC-8",
+      "requirementId": "REQ-6",
+      "given": "one pending proposal",
+      "when": "different checkers concurrently approve and reject",
+      "then": "both commands complete through declared outcomes and export has exactly one actor-attributed final decision",
+      "testable": true
+    },
+    {
+      "id": "AC-9",
+      "requirementId": "REQ-7",
+      "given": "approved and rejected request history in the requested date range",
+      "when": "export runs",
+      "then": "the JSON array or entries array contains the complete history for both requests",
+      "testable": true
+    },
+    {
+      "id": "AC-10",
+      "requirementId": "REQ-8",
+      "given": "synthetic account and amount sentinels supplied during evaluation",
+      "when": "all command output and export JSON are scanned",
+      "then": "neither sentinel appears",
+      "testable": true
+    },
+    {
+      "id": "AC-11",
+      "requirementId": "REQ-9",
+      "given": "the canonical application plus audit feature",
+      "when": "benchmark-adapter build, test, and run execute",
+      "then": "the application remains healthy and produces its declared reconciliation outputs",
+      "testable": true
+    }
+  ]
+}

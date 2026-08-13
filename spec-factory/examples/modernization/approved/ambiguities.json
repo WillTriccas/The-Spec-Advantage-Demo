@@ -1,0 +1,32 @@
+{
+  "items": [
+    {
+      "id": "AMB-1",
+      "description": "Whether modernization may replace the positional CLI and output file contract was unclear.",
+      "severity": "critical",
+      "resolution": "The public CLI semantics and all four output paths are compatibility boundaries. Internal architecture may change, but benchmark-adapter.json must continue to invoke the candidate with evaluator-owned date/input/output values.",
+      "status": "resolved"
+    },
+    {
+      "id": "AMB-2",
+      "description": "Whether duplicate override rows can be silently deduplicated was unclear.",
+      "severity": "critical",
+      "resolution": "They cannot. The first eligible override may apply; every later override targeting that trade must surface as a stale override.",
+      "status": "resolved"
+    },
+    {
+      "id": "AMB-3",
+      "description": "Whether output equality means byte identity or semantic compatibility was unclear.",
+      "severity": "major",
+      "resolution": "CSV headers, row meaning, invariant formatting, summary values, and ledger idempotency are mandatory. Deterministic ordering is required so identical reruns are byte-identical.",
+      "status": "resolved"
+    },
+    {
+      "id": "AMB-4",
+      "description": "Whether the separate audit-feature workflow should be included in this episode was unclear.",
+      "severity": "minor",
+      "resolution": "It is explicitly out of scope; the canonical .NET 8 baseline for that feature is independent of modernization outputs.",
+      "status": "resolved"
+    }
+  ]
+}

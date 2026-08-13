@@ -1,0 +1,84 @@
+{
+  "items": [
+    {
+      "id": "AC-1",
+      "requirementId": "REQ-1",
+      "given": "a clean candidate workspace with the pinned .NET 8 SDK",
+      "when": "the adapter build and test commands run",
+      "then": "both commands finish with declared allowed exit codes",
+      "testable": true
+    },
+    {
+      "id": "AC-2",
+      "requirementId": "REQ-2",
+      "given": "records whose account, instrument, and currency vary only by case or surrounding whitespace",
+      "when": "reconciliation runs",
+      "then": "the records are compared using trimmed uppercase values",
+      "testable": true
+    },
+    {
+      "id": "AC-3",
+      "requirementId": "REQ-2",
+      "given": "two trade rows with the same trade identifier",
+      "when": "reconciliation runs",
+      "then": "the first row is canonical and every later row is reported as a duplicate break",
+      "testable": true
+    },
+    {
+      "id": "AC-4",
+      "requirementId": "REQ-3",
+      "given": "eligible counterpart records exactly on each configured tolerance boundary",
+      "when": "reconciliation runs",
+      "then": "the closed-interval comparisons accept the boundary values",
+      "testable": true
+    },
+    {
+      "id": "AC-5",
+      "requirementId": "REQ-3",
+      "given": "a trade with non-positive quantity or net amount",
+      "when": "counterpart records otherwise appear compatible",
+      "then": "the trade remains a break",
+      "testable": true
+    },
+    {
+      "id": "AC-6",
+      "requirementId": "REQ-4",
+      "given": "an override targeting a break with no concrete counterpart",
+      "when": "the override is processed",
+      "then": "no match is manufactured and the break remains visible",
+      "testable": true
+    },
+    {
+      "id": "AC-7",
+      "requirementId": "REQ-4",
+      "given": "two override instructions target the same eligible trade",
+      "when": "reconciliation runs",
+      "then": "the first may apply and the later instruction appears as a stale override",
+      "testable": true
+    },
+    {
+      "id": "AC-8",
+      "requirementId": "REQ-5",
+      "given": "any valid evaluator-owned fixture directory",
+      "when": "the adapter run command completes",
+      "then": "all four declared output files exist with stable headers and deterministic ordering",
+      "testable": true
+    },
+    {
+      "id": "AC-9",
+      "requirementId": "REQ-6",
+      "given": "the same business date and byte-identical input files",
+      "when": "the candidate runs twice against the same output state",
+      "then": "result files are equivalent and run-ledger.csv contains no duplicate run entry",
+      "testable": true
+    },
+    {
+      "id": "AC-10",
+      "requirementId": "REQ-7",
+      "given": "benchmark-adapter.json at the candidate root",
+      "when": "an external tool validates and invokes it",
+      "then": "the adapter needs no knowledge of the candidate's internal architecture",
+      "testable": true
+    }
+  ]
+}

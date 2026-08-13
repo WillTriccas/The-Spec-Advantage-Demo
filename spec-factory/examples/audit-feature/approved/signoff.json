@@ -1,0 +1,27 @@
+{
+  "reviewers": [
+    { "name": "Synthetic Persona - Casey Brooks", "role": "Compliance", "verdict": "approve" },
+    { "name": "Synthetic Persona - Priya Shah", "role": "Trade Operations", "verdict": "approve" },
+    { "name": "Synthetic Persona - Alex Morgan", "role": "Engineering Lead", "verdict": "approve" },
+    { "name": "Synthetic Persona - Devon Wright", "role": "Security", "verdict": "approve" }
+  ],
+  "decision": "approved",
+  "decidedAt": "2026-08-12T12:30:00Z",
+  "notes": "Illustrative benchmark sign-off by synthetic personas; this is not a real compliance or security approval. The bundle is approved for the synthetic experiment because the durable JSON contract, maker-checker rule, concurrency behavior, and sensitive-data boundary are explicit and testable.",
+  "authors": [
+    { "name": "Synthetic Persona - Taylor Kim", "role": "Business Analyst" },
+    { "name": "Synthetic Persona - Jordan Bell", "role": "Control Architect" }
+  ],
+  "blindnessAttestation": {
+    "attested": true,
+    "statement": "These named identities are synthetic demonstrator personas. The illustrative spec-author role was separated from evaluator design and used only the checked-in canonical baseline, public adapter contracts, and synthetic stakeholder requirements; it did not use hidden evaluator implementation or expected benchmark outcomes."
+  },
+  "authoringEffort": {
+    "elapsedMinutes": 340,
+    "inputTokens": 52800,
+    "outputTokens": 24100,
+    "estimatedCostUsd": null,
+    "costEvidenceRef": null,
+    "costMethod": null
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "schemaVersion": "2.0.0",
+  "weights": {
+    "functionalCorrectness": 35,
+    "behaviorPreservation": 20,
+    "securityControls": 15,
+    "maintainability": 15,
+    "operability": 10,
+    "scopeTraceability": 5
+  },
+  "allHardGates": [
+    "build",
+    "essential-business-invariants",
+    "no-critical-security-findings",
+    "maker-checker-separation",
+    "audit-integrity"
+  ],
+  "hardGatesByEpisode": {
+    "modernization": [
+      "build",
+      "essential-business-invariants",
+      "no-critical-security-findings"
+    ],
+    "audit-feature": [
+      "build",
+      "essential-business-invariants",
+      "no-critical-security-findings",
+      "maker-checker-separation",
+      "audit-integrity"
+    ]
+  },
+  "claimRule": {
+    "comparisonLane": "efficient-spec",
+    "controlLane": "frontier-raw",
+    "equivalentWithinPoints": 3,
+    "betterByMoreThanPoints": 3,
+    "aggregation": "marginal-medians",
+    "requireAllHardGates": true,
+    "comparisonLaneGatesDetermineEligibility": true,
+    "controlLaneGateFailuresAreReportedSeparately": true,
+    "inconclusiveWhenDeltaWithinObservedLaneSpread": true,
+    "overallRollup": "weaker-episode",
+    "qualityAndEfficiencyVerdictsAreSeparate": true,
+    "notes": "Quality is worse only when comparison median minus control median is below negative equivalentWithinPoints."
+  },
+  "efficiencyRule": {
+    "primaryMetrics": [
+      "estimated-cost-including-amortized-spec-authoring",
+      "total-tokens-including-spec-authoring"
+    ],
+    "elapsedTimeIsContextOnly": true,
+    "unknownCostIsUnavailable": true
+  },
+  "secondaryClaimRules": [
+    {
+      "id": "efficient-within-model-spec-effect",
+      "comparisonLane": "efficient-spec",
+      "controlLane": "efficient-raw",
+      "description": "Pre-registered secondary comparison of the spec effect within the efficient model."
+    },
+    {
+      "id": "frontier-within-model-spec-effect",
+      "comparisonLane": "frontier-spec",
+      "controlLane": "frontier-raw",
+      "description": "Pre-registered secondary comparison of the spec effect within the frontier model."
+    }
+  ],
+  "failedRunTreatment": {
+    "includeInAggregation": true,
+    "qualityScore": 0,
+    "applicableGates": "failed"
+  }
+}
+

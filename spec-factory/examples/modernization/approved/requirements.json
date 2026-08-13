@@ -1,0 +1,46 @@
+{
+  "items": [
+    {
+      "id": "REQ-1",
+      "statement": "The candidate must target .NET 8 and provide shell-free build and test commands through benchmark-adapter.json.",
+      "rationale": "Runtime modernization and repeatable black-box evaluation are the episode objectives.",
+      "testable": true
+    },
+    {
+      "id": "REQ-2",
+      "statement": "The candidate must preserve trimmed-uppercase account, instrument, and currency matching and treat only the first occurrence of a trade identifier as canonical.",
+      "rationale": "These normalization and duplicate rules affect which records may match.",
+      "testable": true
+    },
+    {
+      "id": "REQ-3",
+      "statement": "The candidate must preserve counterpart eligibility, separate inclusive tolerances for position quantity, settlement quantity, and settlement amount, and unconditional breaks for non-positive trade quantity or net amount.",
+      "rationale": "These are load-bearing reconciliation invariants.",
+      "testable": true
+    },
+    {
+      "id": "REQ-4",
+      "statement": "Manual overrides may resolve only a break with concrete counterpart candidates; an applied override must remain evidenced, and later duplicate override instructions must be emitted as stale overrides.",
+      "rationale": "Overrides must never manufacture a match or disappear without evidence.",
+      "testable": true
+    },
+    {
+      "id": "REQ-5",
+      "statement": "Every run must write matched-trades.csv, break-queue.csv, end-of-day-report.txt, and run-ledger.csv with stable schemas, invariant formatting, and deterministic ordering.",
+      "rationale": "These files are the application compatibility boundary.",
+      "testable": true
+    },
+    {
+      "id": "REQ-6",
+      "statement": "An exact-input rerun for the same business date must reproduce the same result files without duplicating output rows or adding a duplicate ledger entry.",
+      "rationale": "Operations relies on safe recovery reruns.",
+      "testable": true
+    },
+    {
+      "id": "REQ-7",
+      "statement": "benchmark-adapter.json must validate against contracts/candidate-adapter.schema.json, substitute evaluator-owned business date/input/output paths, declare all four outputs, and accept the candidate's documented successful exit codes.",
+      "rationale": "The sealed evaluator must not depend on internal project structure.",
+      "testable": true
+    }
+  ]
+}

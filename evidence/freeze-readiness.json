@@ -1,0 +1,375 @@
+{
+  "schemaVersion": "freeze-readiness/1.0.0",
+  "generatedAt": "2026-08-13T13:59:02.905Z",
+  "ready": false,
+  "blockers": [
+    "Repository working tree is not clean.",
+    "benchmarkVersion is still \"unfrozen\".",
+    "efficient model buildId is not pinned.",
+    "efficient agentVersion is not pinned.",
+    "efficient agentBuildId is not pinned.",
+    "efficient reasoning effort is not pinned.",
+    "frontier model buildId is not pinned.",
+    "frontier agentVersion is not pinned.",
+    "frontier agentBuildId is not pinned.",
+    "frontier reasoning effort is not pinned.",
+    "Baseline ref refs/tags/benchmark-legacy-v1 does not resolve.",
+    "Baseline ref refs/tags/benchmark-modernized-v1 does not resolve.",
+    "Independent scenario approval is not recorded.",
+    "Independent specifications approval is not recorded.",
+    "Independent evaluator approval is not recorded.",
+    "Independent claimAdjudication approval is not recorded."
+  ],
+  "benchmarkVersion": "unfrozen",
+  "repository": {
+    "headCommit": "3c86adf54e7a1b853d977b9a2cc4726973027667",
+    "clean": false,
+    "dirtyEntries": [
+      "M README.md",
+      " M benchmark/README.md",
+      " M benchmark/config/experiment.json",
+      " M benchmark/prompts/audit-feature-raw.md",
+      " M benchmark/prompts/modernization-raw.md",
+      " M benchmark/scripts/generate-illustrative-evidence.js",
+      " M benchmark/src/aggregate.js",
+      " M benchmark/src/claim.js",
+      " M benchmark/src/cli.js",
+      " M benchmark/src/cost.js",
+      " M benchmark/src/import.js",
+      " M benchmark/src/index.js",
+      " M benchmark/src/prepare.js",
+      " M benchmark/src/report.js",
+      " M benchmark/src/runs.js",
+      " M benchmark/src/schema-lite.js",
+      " M benchmark/test/aggregate.test.js",
+      " M benchmark/test/claim.test.js",
+      " M benchmark/test/cli.test.js",
+      " M benchmark/test/cost.test.js",
+      " M benchmark/test/import.test.js",
+      " M benchmark/test/prepare.test.js",
+      " M benchmark/test/report.test.js",
+      " M benchmark/test/runs.test.js",
+      " M benchmark/test/schema-lite.test.js",
+      " M contracts/report.schema.json",
+      " M contracts/run.schema.json",
+      " M dashboard/dist-single/index.html",
+      " M dashboard/src/App.test.tsx",
+      " M dashboard/src/App.tsx",
+      " D dashboard/src/fixture.json",
+      " M dashboard/src/types.ts",
+      " M docs/benchmark-freeze.md",
+      " M docs/experiment-protocol.md",
+      " M evaluator/src/audit.js",
+      " M evaluator/src/commands.js",
+      " M evaluator/src/constants.js",
+      " M evaluator/src/modernization.js",
+      " M evaluator/src/static-checks.js",
+      " M evaluator/test/evaluator.test.js",
+      " M evidence/README.md",
+      " M evidence/illustrative/README.md",
+      " M evidence/illustrative/claim-detail.json",
+      " M evidence/illustrative/report.json",
+      " M spec-factory/examples/audit-feature/approved/acceptance-criteria.json",
+      " M spec-factory/examples/audit-feature/approved/ambiguities.json",
+      " M spec-factory/examples/audit-feature/approved/discovery.json",
+      " M spec-factory/examples/audit-feature/approved/intent.json",
+      " M spec-factory/examples/audit-feature/approved/invariants.json",
+      " M spec-factory/examples/audit-feature/approved/manifest.json",
+      " M spec-factory/examples/audit-feature/approved/nfrs.json",
+      " M spec-factory/examples/audit-feature/approved/requirements.json",
+      " M spec-factory/examples/audit-feature/approved/risks.json",
+      " M spec-factory/examples/audit-feature/approved/signoff.json",
+      " M spec-factory/examples/audit-feature/approved/traceability.json",
+      " M spec-factory/examples/modernization/approved/acceptance-criteria.json",
+      " M spec-factory/examples/modernization/approved/ambiguities.json",
+      " M spec-factory/examples/modernization/approved/discovery.json",
+      " M spec-factory/examples/modernization/approved/intent.json",
+      " M spec-factory/examples/modernization/approved/invariants.json",
+      " M spec-factory/examples/modernization/approved/manifest.json",
+      " M spec-factory/examples/modernization/approved/nfrs.json",
+      " M spec-factory/examples/modernization/approved/requirements.json",
+      " M spec-factory/examples/modernization/approved/risks.json",
+      " M spec-factory/examples/modernization/approved/signoff.json",
+      " M spec-factory/examples/modernization/approved/traceability.json",
+      " M spec-factory/src/cli.js",
+      " M spec-factory/src/templates/signoff.json",
+      " M spec-factory/src/validate.js",
+      " M spec-factory/test/cli.test.js",
+      " M spec-factory/test/validate.test.js",
+      " M src/canonical-modernized/README.md",
+      " M src/canonical-modernized/src/TradeRecon.Domain/Settlement.cs",
+      " M src/canonical-modernized/src/TradeRecon.Domain/Trade.cs",
+      " M src/canonical-modernized/src/TradeRecon.Infrastructure/Sources/CsvReader.cs",
+      " M src/canonical-modernized/src/TradeRecon.Infrastructure/Sources/CsvReconciliationBatchSource.cs",
+      " M src/canonical-modernized/tests/TradeRecon.Tests/CliContractTests.cs",
+      "?? .github/",
+      "?? benchmark/config/approvals.json",
+      "?? benchmark/src/freeze.js",
+      "?? benchmark/test/freeze.test.js",
+      "?? evidence/freeze-readiness.json",
+      "?? scripts/"
+    ]
+  },
+  "baselines": [
+    {
+      "episodeId": "modernization",
+      "ref": "refs/tags/benchmark-legacy-v1",
+      "commit": null,
+      "path": "src/legacy-trade-reconciliation",
+      "sha256": null,
+      "archiveSha256": null
+    },
+    {
+      "episodeId": "audit-feature",
+      "ref": "refs/tags/benchmark-modernized-v1",
+      "commit": null,
+      "path": "src/canonical-modernized",
+      "sha256": null,
+      "archiveSha256": null
+    }
+  ],
+  "promptsAndSpecs": [
+    {
+      "episodeId": "modernization",
+      "taskBriefPath": "benchmark/prompts/modernization-raw.md",
+      "taskBriefSha256": "f22d3d71127ff9f1e7c3e35706442e5d4a79443ef273fa28e43468c0dc789957",
+      "rawPromptSha256": "f22d3d71127ff9f1e7c3e35706442e5d4a79443ef273fa28e43468c0dc789957",
+      "specPromptSha256": "518d8bb000fd36bb982c37042636adf1f54c0d1a484ba5319578ec858452db23",
+      "specBundlePath": "spec-factory/examples/modernization/approved",
+      "specManifestSha256": "c115dac33def611c45122471de8a0c392d3ed60c58279909a5e531fca991ca31",
+      "assembledSpecSha256": "e2de5ac4031db60b2d3ea4993cadbd53c0d4145a78febb97a78093276f34ac69",
+      "specQualityScore": 100,
+      "specAuthoringEffort": {
+        "elapsedMinutes": 285,
+        "inputTokens": 41200,
+        "outputTokens": 18650,
+        "estimatedCostUsd": null,
+        "costEvidenceRef": null,
+        "costMethod": null
+      }
+    },
+    {
+      "episodeId": "audit-feature",
+      "taskBriefPath": "benchmark/prompts/audit-feature-raw.md",
+      "taskBriefSha256": "f47aa4cd40324a29be02f62a6f7fb8c900a72017ad565ca3b3e7756e343d648d",
+      "rawPromptSha256": "f47aa4cd40324a29be02f62a6f7fb8c900a72017ad565ca3b3e7756e343d648d",
+      "specPromptSha256": "b4a29ff8f3be258bdb86f51d78760adf86cd8319cd1a1051c7dd7216b10724f4",
+      "specBundlePath": "spec-factory/examples/audit-feature/approved",
+      "specManifestSha256": "f284de412e86a8e5565308968dd8d6a3fd270714c53f635683e8f0a6d6384492",
+      "assembledSpecSha256": "2515ebe22dfd4d7d141a6f06603015fc4739e000283d51f12be4d9a1f4238cb8",
+      "specQualityScore": 100,
+      "specAuthoringEffort": {
+        "elapsedMinutes": 340,
+        "inputTokens": 52800,
+        "outputTokens": 24100,
+        "estimatedCostUsd": null,
+        "costEvidenceRef": null,
+        "costMethod": null
+      }
+    }
+  ],
+  "frozenInputs": {
+    "evaluatorSha256": "1540f263481cae49fa84bc8d187c5e1b503cc5775f41f24da1e54339870c8946",
+    "scoringConfigSha256": "c9e7c3bebd575b3b56f0409d69cdb5d952c175a73ec11ada7599d73a9648bac6",
+    "experimentConfigSha256": "339acfd96e7453ae80c20dd95f9cb7608615045d210f325ea4fc916dd1820354",
+    "costsConfigSha256": "3b2c5ed227eef9cb46c8686dca1bd76af97e2f50e36729358ebc7c9d00dc5ea5",
+    "benchmarkEngineSha256": "692ac1fb0026e3bc24ed523d12fe4fd38080991082114d3c88b5c0dac3af9977",
+    "runSchemaSha256": "b4cc4103ec2613d7f6ce46aef274a32b4e58a63cebeaccefc609f645606ccf11",
+    "reportSchemaSha256": "0d500177cdd0c05b9d0a316e71da44352700c2452f97bba0da640b61462f88c9",
+    "scoringConfig": {
+      "schemaVersion": "2.0.0",
+      "weights": {
+        "functionalCorrectness": 35,
+        "behaviorPreservation": 20,
+        "securityControls": 15,
+        "maintainability": 15,
+        "operability": 10,
+        "scopeTraceability": 5
+      },
+      "allHardGates": [
+        "build",
+        "essential-business-invariants",
+        "no-critical-security-findings",
+        "maker-checker-separation",
+        "audit-integrity"
+      ],
+      "hardGatesByEpisode": {
+        "modernization": [
+          "build",
+          "essential-business-invariants",
+          "no-critical-security-findings"
+        ],
+        "audit-feature": [
+          "build",
+          "essential-business-invariants",
+          "no-critical-security-findings",
+          "maker-checker-separation",
+          "audit-integrity"
+        ]
+      },
+      "claimRule": {
+        "comparisonLane": "efficient-spec",
+        "controlLane": "frontier-raw",
+        "equivalentWithinPoints": 3,
+        "betterByMoreThanPoints": 3,
+        "aggregation": "marginal-medians",
+        "requireAllHardGates": true,
+        "comparisonLaneGatesDetermineEligibility": true,
+        "controlLaneGateFailuresAreReportedSeparately": true,
+        "inconclusiveWhenDeltaWithinObservedLaneSpread": true,
+        "overallRollup": "weaker-episode",
+        "qualityAndEfficiencyVerdictsAreSeparate": true,
+        "notes": "Quality is worse only when comparison median minus control median is below negative equivalentWithinPoints."
+      },
+      "efficiencyRule": {
+        "primaryMetrics": [
+          "estimated-cost-including-amortized-spec-authoring",
+          "total-tokens-including-spec-authoring"
+        ],
+        "elapsedTimeIsContextOnly": true,
+        "unknownCostIsUnavailable": true
+      },
+      "secondaryClaimRules": [
+        {
+          "id": "efficient-within-model-spec-effect",
+          "comparisonLane": "efficient-spec",
+          "controlLane": "efficient-raw",
+          "description": "Pre-registered secondary comparison of the spec effect within the efficient model."
+        },
+        {
+          "id": "frontier-within-model-spec-effect",
+          "comparisonLane": "frontier-spec",
+          "controlLane": "frontier-raw",
+          "description": "Pre-registered secondary comparison of the spec effect within the frontier model."
+        }
+      ],
+      "failedRunTreatment": {
+        "includeInAggregation": true,
+        "qualityScore": 0,
+        "applicableGates": "failed"
+      }
+    },
+    "costsConfig": {
+      "schemaVersion": "2.0.0",
+      "pricingAsOf": null,
+      "currency": "USD",
+      "source": null,
+      "rateType": "unavailable",
+      "models": {
+        "mai-code-1.1-flash": {
+          "pricingAsOf": null,
+          "source": null,
+          "rateType": null,
+          "inputPerMillionTokens": null,
+          "cachedInputPerMillionTokens": null,
+          "outputPerMillionTokens": null,
+          "reasoningOutputPerMillionTokens": null,
+          "flatChargeUsd": null,
+          "notes": "Set all applicable fields from an approved, dated list, contracted, or internal chargeback source before freeze."
+        },
+        "claude-opus-5": {
+          "pricingAsOf": null,
+          "source": null,
+          "rateType": null,
+          "inputPerMillionTokens": null,
+          "cachedInputPerMillionTokens": null,
+          "outputPerMillionTokens": null,
+          "reasoningOutputPerMillionTokens": null,
+          "flatChargeUsd": null,
+          "notes": "Set all applicable fields from an approved, dated list, contracted, or internal chargeback source before freeze."
+        }
+      },
+      "specAuthoringAmortization": {
+        "enabled": true,
+        "notes": "Amortize approved spec authoring cost across the repetitions that consume it. Keep cost null until priced authoring effort exists."
+      }
+    },
+    "claimRule": {
+      "comparisonLane": "efficient-spec",
+      "controlLane": "frontier-raw",
+      "equivalentWithinPoints": 3,
+      "betterByMoreThanPoints": 3,
+      "aggregation": "marginal-medians",
+      "requireAllHardGates": true,
+      "comparisonLaneGatesDetermineEligibility": true,
+      "controlLaneGateFailuresAreReportedSeparately": true,
+      "inconclusiveWhenDeltaWithinObservedLaneSpread": true,
+      "overallRollup": "weaker-episode",
+      "qualityAndEfficiencyVerdictsAreSeparate": true,
+      "notes": "Quality is worse only when comparison median minus control median is below negative equivalentWithinPoints."
+    }
+  },
+  "models": [
+    {
+      "tier": "efficient",
+      "id": "mai-code-1.1-flash",
+      "displayName": "MAI Code 1.1 Flash",
+      "buildId": null,
+      "agentVersion": null,
+      "agentBuildId": null,
+      "effortParams": {
+        "reasoningEffort": null
+      }
+    },
+    {
+      "tier": "frontier",
+      "id": "claude-opus-5",
+      "displayName": "Claude Opus 5",
+      "buildId": null,
+      "agentVersion": null,
+      "agentBuildId": null,
+      "effortParams": {
+        "reasoningEffort": null
+      }
+    }
+  ],
+  "repetitionsPerLane": 3,
+  "executionPolicy": {
+    "freshWorkspacePerRun": true,
+    "crossRunMemory": false,
+    "humanRemediation": false,
+    "preserveFailedRuns": true,
+    "failedRunTreatment": "score-zero-and-fail-applicable-gates",
+    "timeoutSeconds": 5400,
+    "toolCallCap": 200,
+    "toolPermissionProfile": "standard-coding",
+    "runOrder": "randomized-interleaved",
+    "runOrderNotes": "Execute the seeded order across lanes rather than grouping by model or treatment.",
+    "captureQueueAndThrottleTime": true,
+    "queueAndThrottleNotes": "Record queue and throttle time separately from productive execution time."
+  },
+  "pricing": {
+    "pricingAsOf": null,
+    "source": null,
+    "rateType": "unavailable",
+    "monetaryClaimsEnabled": false
+  },
+  "approvals": {
+    "schemaVersion": "1.0.0",
+    "scenario": {
+      "approved": false,
+      "reviewer": null,
+      "approvedAt": null,
+      "evidenceRef": null
+    },
+    "specifications": {
+      "approved": false,
+      "reviewer": null,
+      "approvedAt": null,
+      "evidenceRef": null
+    },
+    "evaluator": {
+      "approved": false,
+      "reviewer": null,
+      "approvedAt": null,
+      "evidenceRef": null
+    },
+    "claimAdjudication": {
+      "approved": false,
+      "reviewer": null,
+      "approvedAt": null,
+      "evidenceRef": null
+    }
+  },
+  "recordSha256": "fe152a6939ba6abcf2859b26c87cae7ff9d5dd5bb497ec9ff56ab095aa1ca988"
+}

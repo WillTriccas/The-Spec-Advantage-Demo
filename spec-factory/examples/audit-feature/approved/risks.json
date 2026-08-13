@@ -1,0 +1,32 @@
+{
+  "items": [
+    {
+      "id": "RISK-1",
+      "description": "A persistence implementation may overwrite a current-state record and lose lifecycle history.",
+      "likelihood": "medium",
+      "impact": "high",
+      "mitigation": "Persist immutable entries and verify multi-entry history plus order/hash metadata through export."
+    },
+    {
+      "id": "RISK-2",
+      "description": "Maker-checker validation may trust the current command actor instead of the durable proposer.",
+      "likelihood": "medium",
+      "impact": "high",
+      "mitigation": "Compare the checker to proposer identity loaded from persisted proposal history."
+    },
+    {
+      "id": "RISK-3",
+      "description": "Non-atomic file or database writes may allow simultaneous approve and reject decisions.",
+      "likelihood": "medium",
+      "impact": "high",
+      "mitigation": "Use an atomic conditional append/transaction and test true concurrent processes."
+    },
+    {
+      "id": "RISK-4",
+      "description": "Generic object serialization or exception logging may leak synthetic account or amount fields.",
+      "likelihood": "medium",
+      "impact": "high",
+      "mitigation": "Use explicit allow-listed DTOs and scan all command output and export for sentinels."
+    }
+  ]
+}

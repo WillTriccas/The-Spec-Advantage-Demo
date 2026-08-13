@@ -1,0 +1,36 @@
+{
+  "systemSummary": "LegacyTradeReconciliation.exe is a synthetic .NET Framework 4.6.2 batch application. It loads trades.csv, positions.csv, settlements.csv, and manual-overrides.csv for a business date; normalizes and reconciles the records; then writes matched-trades.csv, break-queue.csv, end-of-day-report.txt, and run-ledger.csv. Public characterization tests cover the baseline and override/idempotency paths.",
+  "components": [
+    "Program.cs and RunRequest.cs parse the positional business-date, input-directory, and output-directory contract.",
+    "ReconciliationBatch.cs synchronously orchestrates loading, matching, overrides, reports, and ledger updates.",
+    "CsvFileGateway.cs parses and writes all CSV data using legacy schemas.",
+    "MatchingEngine.cs implements normalization, duplicate detection, candidate selection, and tolerances.",
+    "EndOfDayReporter.cs produces matched, break, and summary outputs.",
+    "RunLedgerStore.cs implements same-date exact-input rerun detection.",
+    "BatchConfiguration.cs reads externally configurable position, quantity, and settlement amount tolerances."
+  ],
+  "dataFlows": [
+    "trades.csv, positions.csv, settlements.csv, and manual-overrides.csv flow through CsvFileGateway into ReconciliationBatch.",
+    "MatchingEngine emits matched rows and breaks; override handling may convert eligible breaks into matched rows while retaining override evidence.",
+    "EndOfDayReporter writes three result files and RunLedgerStore writes run-ledger.csv.",
+    "benchmark-adapter.json supplies evaluator-owned input and output directories through command placeholders."
+  ],
+  "constraints": [
+    "Target runtime is .NET 8.",
+    "The three positional CLI arguments and four declared output paths must remain externally usable.",
+    "Input and output CSV schemas must remain compatible with the legacy characterization fixtures.",
+    "All data is synthetic and file-based; no database or network service is required.",
+    "A raw lane and a spec lane are both evaluated only through the public benchmark adapter."
+  ],
+  "knownBehaviors": [
+    "Account, instrument, and currency comparisons use trimmed uppercase values.",
+    "The first occurrence of a trade identifier is canonical; later duplicates become breaks.",
+    "Position and settlement candidates must agree on account, instrument, settlement date, and currency before tolerance checks.",
+    "Position quantity, settlement quantity, and settlement amount use separate inclusive tolerances.",
+    "Non-positive trade quantities and net amounts are always breaks.",
+    "Manual overrides can resolve only breaks with concrete counterpart candidates.",
+    "Suppressed breaks remain evidenced in matched-trades.csv.",
+    "Exact-input same-date reruns are idempotent and do not duplicate ledger entries.",
+    "Only the first override for a trade may apply; later duplicate instructions become stale-override breaks."
+  ]
+}
