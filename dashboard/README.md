@@ -1,6 +1,7 @@
 # Dashboard
 
-A standalone evidence dashboard for the AI-enabled spec SDLC demo.
+A standalone dashboard for the 24 bounded-measured SpecForge FSI benchmark runs.
+It reads `evidence/measured/report.json`; illustrative fixtures remain separate.
 
 ## Development
 
@@ -31,4 +32,6 @@ npm run test
 
 ## Theme
 
-The dashboard uses the Clawpilot theme system. It checks the `clawpilotTheme` query string parameter or falls back to `prefers-color-scheme`. Colors are implemented using CSS variables (e.g., `--cp-bg-light`, `--cp-accent`).
+The dashboard uses the Clawpilot theme system. It checks the `clawpilotTheme`
+query-string parameter or falls back to `prefers-color-scheme`. All colors use
+the `--cp-*` theme variables.

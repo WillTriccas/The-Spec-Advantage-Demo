@@ -1,295 +1,287 @@
-import React, { useState } from 'react';
-import type { Report, Run, ClaimDetail, HardGate } from './types';
-import fixtureData from '../../evidence/illustrative/report.json';
-import { AlertCircle, CheckCircle, HelpCircle, Info, ChevronDown, ChevronRight } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import {
+  AlertTriangle,
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  Clock3,
+  Gauge,
+  Info,
+  ShieldCheck,
+} from 'lucide-react';
+import measuredData from '../../evidence/measured/report.json';
+import type { ClaimDetail, HardGate, LaneSummary, Report, Run } from './types';
 
-const formatCost = (cost: number | null | undefined) => {
-  if (cost === null || cost === undefined) return 'Unavailable';
-  return `$${cost.toFixed(4)}`;
-};
+const report = measuredData as Report;
 
-const formatTime = (secs: number | undefined | null) => secs !== undefined && secs !== null ? `${secs.toFixed(1)}s` : 'N/A';
-const formatScore = (score: number) => `${score.toFixed(1)}%`;
+const formatScore = (value: number) => `${value.toFixed(1)}%`;
+const formatMinutes = (seconds: number | null | undefined) =>
+  seconds == null ? 'N/A' : `${(seconds / 60).toFixed(1)} min`;
+const formatTokens = (value: number | null | undefined) =>
+  value == null ? 'Unavailable' : `${(value / 1_000_000).toFixed(2)}M`;
 
-const StatusIcon = ({ status }: { status: string }) => {
-  switch (status) {
-    case 'supported': return <CheckCircle className="status-supported" size={20} />;
-    case 'not-supported': return <AlertCircle className="status-not-supported" size={20} />;
-    case 'inconclusive': return <HelpCircle className="status-inconclusive" size={20} />;
-    default: return <Info className="status-not-evaluated" size={20} />;
-  }
-};
+function StatusIcon({ status }: { status: ClaimDetail['status'] }) {
+  if (status === 'supported') return <CheckCircle2 className="status-supported" size={24} />;
+  if (status === 'not-supported') return <AlertTriangle className="status-not-supported" size={24} />;
+  return <Info className="status-inconclusive" size={24} />;
+}
 
-const ClaimCard = ({ claim, title, isOverall }: { claim: ClaimDetail; title: string, isOverall?: boolean }) => {
+function Badge({ children, tone = 'neutral' }: { children: React.ReactNode; tone?: string }) {
+  return <span className={`badge badge-${tone}`}>{children}</span>;
+}
+
+function MetricCard({
+  label,
+  value,
+  detail,
+  icon,
+}: {
+  label: string;
+  value: string;
+  detail: string;
+  icon: React.ReactNode;
+}) {
   return (
-    <section className="claim-card" style={isOverall ? { borderLeftWidth: '10px' } : {}}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-        <StatusIcon status={claim.status} />
-        <h2>{title}: {claim.status.toUpperCase()}</h2>
+    <article className="metric-card">
+      <div className="metric-icon">{icon}</div>
+      <div>
+        <div className="metric-label">{label}</div>
+        <div className="metric-value">{value}</div>
+        <div className="metric-detail">{detail}</div>
       </div>
-      <p style={{ fontSize: '16px', margin: '0 0 12px 0' }}>{claim.message}</p>
-      
-      <div className="claim-metrics" style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', marginTop: '12px' }}>
-        <div><strong>Quality Verdict:</strong> {claim.qualityVerdict}</div>
-        <div><strong>Efficiency Verdict:</strong> {claim.efficiencyVerdict}</div>
-        <div><strong>Driving Metric:</strong> {claim.drivingMetric}</div>
-        
-        {claim.qualityDelta !== undefined && claim.qualityDelta !== null && (
-          <div>
-            <strong>Quality Delta:</strong> {claim.qualityDelta > 0 ? '+' : ''}{claim.qualityDelta}%
-          </div>
-        )}
-        
-        {claim.costSavingPercent !== undefined && claim.costSavingPercent !== null && (
-          <div>
-            <strong>Cost Saving:</strong> {claim.costSavingPercent}%
-          </div>
-        )}
-      </div>
-    </section>
+    </article>
   );
-};
+}
 
-const HardGatesDisplay = ({ gates }: { gates: HardGate[] }) => {
-  if (!gates || gates.length === 0) return <span>None</span>;
+function ScoreBar({ score }: { score: number }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-      {gates.map((g, i) => (
-        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-          <span className={g.status === 'passed' ? 'hard-gate-pass' : g.status === 'failed' ? 'hard-gate-fail' : ''}>
-            {g.id}: {g.status}
-          </span>
-          {g.reason && <span style={{ fontSize: '12px', color: 'var(--cp-text-muted)' }}>({g.reason})</span>}
-        </div>
+    <div className="score-wrap" aria-label={`Quality score ${formatScore(score)}`}>
+      <div className="score-track">
+        <div className="score-fill" style={{ width: `${Math.max(0, Math.min(100, score))}%` }} />
+      </div>
+      <strong>{formatScore(score)}</strong>
+    </div>
+  );
+}
+
+function GateSummary({ gates }: { gates: HardGate[] }) {
+  return (
+    <div className="gate-list">
+      {gates.filter((gate) => gate.applicable).map((gate) => (
+        <span key={gate.id} className={gate.status === 'passed' ? 'gate-pass' : 'gate-fail'}>
+          {gate.id}: {gate.status}
+        </span>
       ))}
     </div>
   );
-};
+}
 
-const RunRow = ({ run }: { run: Run }) => {
+function RunRow({ run }: { run: Run }) {
   const [expanded, setExpanded] = useState(false);
-  const isFailed = run.status !== 'completed';
-  
   return (
     <React.Fragment>
-      <tr onClick={() => setExpanded(!expanded)} style={{ cursor: 'pointer', opacity: isFailed ? 0.7 : 1 }}>
+      <tr className={run.status === 'completed' ? '' : 'run-non-completed'}>
         <td>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button
+            className="row-toggle"
+            onClick={() => setExpanded((value) => !value)}
+            aria-label={`${expanded ? 'Collapse' : 'Expand'} ${run.runId}`}
+          >
             {expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-            {run.repetition}
-          </div>
+            R{run.repetition}
+          </button>
         </td>
-        <td>{run.laneId}</td>
+        <td><code>{run.laneId}</code></td>
         <td>{run.modelDisplayName}</td>
-        <td>{formatScore(run.qualityScore)}</td>
-        <td>{run.status}</td>
-        <td>{formatTime(run.elapsedSeconds)}</td>
-        <td>{formatCost(run.estimatedCostUsd)}</td>
+        <td><ScoreBar score={run.qualityScore} /></td>
+        <td><Badge tone={run.status === 'completed' ? 'neutral' : 'warning'}>{run.status}</Badge></td>
+        <td>{formatMinutes(run.elapsedSeconds)}</td>
+        <td>{run.hardGatesPassed ? 'Passed' : 'Failed'}</td>
       </tr>
       {expanded && (
         <tr>
-          <td colSpan={7} style={{ padding: 0 }}>
+          <td colSpan={7} className="expanded-cell">
             <div className="run-details">
-              <strong>Evidence Path:</strong> {run.evidencePath} <br />
-              <strong>Run Data Kind:</strong> {run.dataKind} <br />
-              <strong>Tool Calls:</strong> {run.toolCalls}
-              
-              <div style={{ marginTop: '12px' }}>
-                <strong>Hard Gates:</strong>
-                <HardGatesDisplay gates={run.hardGates} />
-              </div>
-
-              <div className="run-scores">
-                <div>Functional Correctness: {formatScore(run.scores.functionalCorrectness)}</div>
-                <div>Behavior Preservation: {formatScore(run.scores.behaviorPreservation)}</div>
-                <div>Security Controls: {formatScore(run.scores.securityControls)}</div>
-                <div>Maintainability: {formatScore(run.scores.maintainability)}</div>
-                <div>Operability: {formatScore(run.scores.operability)}</div>
-                <div>Scope Traceability: {formatScore(run.scores.scopeTraceability)}</div>
-              </div>
+              <div><strong>Run ID</strong><code>{run.runId}</code></div>
+              <div><strong>Tool calls</strong><span>{run.toolCalls}</span></div>
+              <div><strong>Tokens</strong><span>{formatTokens((run.inputTokens ?? 0) + (run.cachedInputTokens ?? 0) + (run.outputTokens ?? 0) + (run.reasoningTokens ?? 0))}</span></div>
+              <div><strong>Evidence</strong><code>{run.evidencePath}</code></div>
             </div>
+            <GateSummary gates={run.hardGates} />
           </td>
         </tr>
       )}
     </React.Fragment>
   );
-};
+}
+
+function LaneCard({ lane, featured }: { lane: LaneSummary; featured: boolean }) {
+  return (
+    <article className={`lane-card ${featured ? 'lane-featured' : ''}`}>
+      <div className="lane-heading">
+        <div>
+          <code>{lane.laneId}</code>
+          <h3>{lane.modelDisplayName}</h3>
+        </div>
+        {featured && <Badge tone="accent">Headline lane</Badge>}
+      </div>
+      <ScoreBar score={lane.qualityMedian} />
+      <div className="lane-stats">
+        <span>Range<strong>{formatScore(lane.qualityMin)}–{formatScore(lane.qualityMax)}</strong></span>
+        <span>Gate passes<strong>{lane.hardGatePassCount}/{lane.runCount}</strong></span>
+        <span>Median elapsed<strong>{formatMinutes(lane.elapsedMedianSeconds)}</strong></span>
+        <span>Median tokens<strong>{formatTokens(lane.tokenMedian)}</strong></span>
+      </div>
+    </article>
+  );
+}
 
 export default function App() {
-  const [data] = useState<Report>(fixtureData as Report);
-  const [viewMode, setViewMode] = useState<'executive' | 'engineering'>('executive');
-  
-  const [selectedEpisode, setSelectedEpisode] = useState<string>('all');
-  const [selectedLane, setSelectedLane] = useState<string>('all');
-  const [selectedModel, setSelectedModel] = useState<string>('all');
+  const [view, setView] = useState<'executive' | 'engineering'>('executive');
+  const [episodeFilter, setEpisodeFilter] = useState('all');
+  const [laneFilter, setLaneFilter] = useState('all');
 
-  const { metadata, overallClaim, episodes } = data;
-  const isIllustrative = metadata.dataKind === 'illustrative';
-  const isBoundedMeasured = metadata.evidenceQualification.level === 'bounded-measured';
+  const allRuns = report.episodes.flatMap((episode) => episode.runs);
+  const completed = allRuns.filter((run) => run.status === 'completed').length;
+  const timedOut = allRuns.filter((run) => run.status === 'timed-out').length;
+  const failed = allRuns.filter((run) => run.status === 'failed').length;
+  const sealedPasses = allRuns.filter((run) => run.hardGatesPassed).length;
 
-  const filteredEpisodes = episodes.filter(e => selectedEpisode === 'all' || e.id === selectedEpisode);
-  
-  const allLanes = Array.from(new Set(episodes.flatMap(e => e.laneSummaries.map(l => l.laneId))));
-  const allModels = Array.from(new Set(episodes.flatMap(e => e.laneSummaries.map(l => l.modelDisplayName))));
+  const comparisons = report.episodes.map((episode) => {
+    const comparison = episode.laneSummaries.find((lane) => lane.laneId === 'efficient-spec')!;
+    const control = episode.laneSummaries.find((lane) => lane.laneId === 'frontier-raw')!;
+    return { episode, comparison, control, delta: comparison.qualityMedian - control.qualityMedian };
+  });
+
+  const visibleEpisodes = useMemo(
+    () => report.episodes.filter((episode) => episodeFilter === 'all' || episode.id === episodeFilter),
+    [episodeFilter],
+  );
 
   return (
-    <div>
-      {isIllustrative && (
-        <div className="illustrative-banner">
-          ILLUSTRATIVE DATA ONLY - NOT FOR MEASUREMENT
-        </div>
-      )}
-      {isBoundedMeasured && (
-        <div className="illustrative-banner">
-          BOUNDED MEASURED EVIDENCE - PROVIDER BUILD IDS NOT EXPOSED
-        </div>
-      )}
-      <div className="dashboard-container">
+    <div className="page-shell">
+      <div className="evidence-banner">
+        BOUNDED-MEASURED EVIDENCE · PROVIDER BUILD IDS NOT EXPOSED
+      </div>
+      <main className="dashboard-container">
         <header className="header">
-          <div className="title-section">
-            <h1>Benchmark Evidence Dashboard</h1>
-            <div style={{ marginTop: '8px', display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <span className={`badge ${isIllustrative ? 'illustrative' : 'measured'}`}>
-                {metadata.dataKind.toUpperCase()}
-              </span>
-              <span className={`badge ${isBoundedMeasured ? 'illustrative' : 'measured'}`}>
-                {metadata.evidenceQualification.level.toUpperCase()}
-              </span>
-              <span className="badge measured">v{metadata.benchmarkVersion}</span>
-              <span style={{ fontSize: '12px', color: 'var(--cp-text-muted)' }}>
-                Generated: {new Date(metadata.generatedAt).toLocaleString()}
-              </span>
-              {metadata.frozenInputs?.evaluatorSha256 && (
-                <span style={{ fontSize: '12px', color: 'var(--cp-text-muted)' }}>
-                  Evaluator Hash: {metadata.frozenInputs.evaluatorSha256.substring(0,8)}...
-                </span>
-              )}
-            </div>
+          <div>
+            <div className="eyebrow">SpecForge FSI · AI-enabled SDLC benchmark</div>
+            <h1>Does a strong spec let an efficient model match frontier performance?</h1>
+            <p className="subtitle">
+              24 isolated modernization and audit-feature runs, independently scored by a sealed evaluator.
+            </p>
           </div>
-          
-          <div className="view-toggle">
-            <button 
-              className={viewMode === 'executive' ? 'active' : ''} 
-              onClick={() => setViewMode('executive')}
-            >
-              Executive View
-            </button>
-            <button 
-              className={viewMode === 'engineering' ? 'active' : ''} 
-              onClick={() => setViewMode('engineering')}
-            >
-              Engineering View
-            </button>
+          <div className="view-toggle" aria-label="Dashboard view">
+            <button className={view === 'executive' ? 'active' : ''} onClick={() => setView('executive')}>Executive</button>
+            <button className={view === 'engineering' ? 'active' : ''} onClick={() => setView('engineering')}>Engineering</button>
           </div>
         </header>
 
-        <p style={{ color: 'var(--cp-text-muted)', marginTop: 0 }}>
-          <strong>Evidence limitation:</strong> {metadata.evidenceQualification.limitation}
-        </p>
-
-        {selectedEpisode === 'all' && (
-          <ClaimCard claim={overallClaim} title="Overall Roll-up" isOverall={true} />
-        )}
-
-        <div className="filters card">
-          <div className="filter-group">
-            <label htmlFor="episode-filter">Episode</label>
-            <select id="episode-filter" value={selectedEpisode} onChange={e => setSelectedEpisode(e.target.value)}>
-              <option value="all">All Episodes</option>
-              {episodes.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
-            </select>
+        <section className="claim-hero">
+          <div className="claim-status">
+            <StatusIcon status={report.overallClaim.status} />
+            <div>
+              <div className="eyebrow">Pre-registered headline claim</div>
+              <h2>{report.overallClaim.status.replace('-', ' ')}</h2>
+            </div>
           </div>
-          <div className="filter-group">
-            <label htmlFor="lane-filter">Lane</label>
-            <select id="lane-filter" value={selectedLane} onChange={e => setSelectedLane(e.target.value)}>
-              <option value="all">All Lanes</option>
-              {allLanes.map(l => <option key={l} value={l}>{l}</option>)}
-            </select>
+          <p>{report.overallClaim.message}</p>
+          <div className="claim-badges">
+            <Badge tone="danger">Quality: {report.overallClaim.qualityVerdict}</Badge>
+            <Badge>Efficiency: {report.overallClaim.efficiencyVerdict}</Badge>
+            <Badge>{report.metadata.evidenceQualification.level}</Badge>
           </div>
-          <div className="filter-group">
-            <label htmlFor="model-filter">Model</label>
-            <select id="model-filter" value={selectedModel} onChange={e => setSelectedModel(e.target.value)}>
-              <option value="all">All Models</option>
-              {allModels.map(m => <option key={m} value={m}>{m}</option>)}
-            </select>
+        </section>
+
+        <section className="metrics-grid" aria-label="Execution summary">
+          <MetricCard label="Measured runs" value={String(allRuns.length)} detail={`${completed} completed within policy`} icon={<Gauge size={22} />} />
+          <MetricCard label="Sealed passes" value={`${sealedPasses}/${allRuns.length}`} detail="All applicable hard gates passed" icon={<ShieldCheck size={22} />} />
+          <MetricCard label="Policy outcomes" value={`${timedOut} timed out`} detail={`${failed} incomplete/failed run`} icon={<Clock3 size={22} />} />
+          <MetricCard label="Pricing evidence" value="Unavailable" detail="No monetary saving is claimed" icon={<Info size={22} />} />
+        </section>
+
+        <section className="card comparison-card">
+          <div className="section-heading">
+            <div>
+              <div className="eyebrow">Headline comparison</div>
+              <h2>Efficient + spec versus frontier + raw prompt</h2>
+            </div>
+            <Badge tone="accent">Marginal medians</Badge>
+          </div>
+          <div className="comparison-grid">
+            {comparisons.map(({ episode, comparison, control, delta }) => (
+              <article key={episode.id} className="comparison-row">
+                <div>
+                  <h3>{episode.name}</h3>
+                  <p>{episode.claim.message}</p>
+                </div>
+                <div className="comparison-scores">
+                  <div><span>Efficient + spec</span><strong>{formatScore(comparison.qualityMedian)}</strong><small>{comparison.hardGatePassCount}/{comparison.runCount} gate-complete</small></div>
+                  <div><span>Frontier + raw</span><strong>{formatScore(control.qualityMedian)}</strong><small>{control.hardGatePassCount}/{control.runCount} gate-complete</small></div>
+                  <div className={delta >= 0 ? 'delta-positive' : 'delta-negative'}><span>Delta</span><strong>{delta > 0 ? '+' : ''}{delta.toFixed(1)} pts</strong><small>efficient-spec minus frontier-raw</small></div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <div className="section-heading episode-heading">
+          <div>
+            <div className="eyebrow">Measured detail</div>
+            <h2>Lane performance by episode</h2>
+          </div>
+          <div className="filters">
+            <label>Episode
+              <select value={episodeFilter} onChange={(event) => setEpisodeFilter(event.target.value)}>
+                <option value="all">All episodes</option>
+                {report.episodes.map((episode) => <option key={episode.id} value={episode.id}>{episode.name}</option>)}
+              </select>
+            </label>
+            <label>Lane
+              <select value={laneFilter} onChange={(event) => setLaneFilter(event.target.value)}>
+                <option value="all">All lanes</option>
+                {['efficient-raw', 'efficient-spec', 'frontier-raw', 'frontier-spec'].map((lane) => <option key={lane}>{lane}</option>)}
+              </select>
+            </label>
           </div>
         </div>
 
-        {filteredEpisodes.map(episode => {
-          const epLanes = episode.laneSummaries.filter(l => 
-            (selectedLane === 'all' || l.laneId === selectedLane) &&
-            (selectedModel === 'all' || l.modelDisplayName === selectedModel)
-          );
-
-          const epRuns = episode.runs.filter(r => 
-            (selectedLane === 'all' || r.laneId === selectedLane) &&
-            (selectedModel === 'all' || r.modelDisplayName === selectedModel)
-          );
-
-          if (epLanes.length === 0) return null;
-
+        {visibleEpisodes.map((episode) => {
+          const lanes = episode.laneSummaries.filter((lane) => laneFilter === 'all' || lane.laneId === laneFilter);
+          const runs = episode.runs.filter((run) => laneFilter === 'all' || run.laneId === laneFilter);
           return (
-            <div key={episode.id} style={{ marginBottom: '40px' }}>
-              <h2 style={{ borderBottom: '2px solid var(--cp-border)', paddingBottom: '8px' }}>
-                Episode: {episode.name}
-              </h2>
-              
-              <ClaimCard claim={episode.claim} title={`${episode.name} Claim`} />
-              
-              <h3 style={{ marginTop: '24px' }}>Lane Scorecards</h3>
-              <div className="lanes-grid">
-                {epLanes.map(lane => (
-                  <div key={`${lane.laneId}-${lane.modelDisplayName}`} className="lane-card">
-                    <h3 data-testid="lane-header">{lane.laneId.toUpperCase()} <span style={{ fontWeight: 'normal', color: 'var(--cp-text-muted)', fontSize: '14px' }}>({lane.modelDisplayName})</span></h3>
-                    <div className="stat-row">
-                      <span>Quality (Median)</span>
-                      <span className="stat-value">{formatScore(lane.qualityMedian)}</span>
-                    </div>
-                    <div className="stat-row" style={{ color: 'var(--cp-text-muted)', fontSize: '12px' }}>
-                      <span>Range</span>
-                      <span>{formatScore(lane.qualityMin)} - {formatScore(lane.qualityMax)}</span>
-                    </div>
-                    <div className="stat-row" style={{ marginTop: '12px' }}>
-                      <span>Hard Gates (Pass/Fail)</span>
-                      <span className="stat-value">{lane.hardGatePassCount} / {lane.hardGateFailCount}</span>
-                    </div>
-                    <div className="stat-row" style={{ marginTop: '12px' }}>
-                      <span>Elapsed (Median)</span>
-                      <span className="stat-value">{formatTime(lane.elapsedMedianSeconds)}</span>
-                    </div>
-                    <div className="stat-row" style={{ marginTop: '12px' }}>
-                      <span>Cost (Median)</span>
-                      <span className="stat-value">{formatCost(lane.costMedianUsd)}</span>
-                    </div>
-                  </div>
-                ))}
+            <section key={episode.id} className="episode-section">
+              <div className="episode-title">
+                <div>
+                  <h2>{episode.name}</h2>
+                  <p>{episode.claim.message}</p>
+                </div>
+                <Badge tone={episode.claim.status === 'not-supported' ? 'danger' : 'neutral'}>{episode.claim.status}</Badge>
               </div>
-
-              {viewMode === 'engineering' && (
-                <div className="card">
-                  <h3>Run Details</h3>
-                  <table className="runs-table">
-                    <thead>
-                      <tr>
-                        <th>Repetition</th>
-                        <th>Lane</th>
-                        <th>Model</th>
-                        <th>Quality</th>
-                        <th>Status</th>
-                        <th>Elapsed</th>
-                        <th>Cost</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {epRuns.map(run => <RunRow key={run.runId} run={run} />)}
-                    </tbody>
-                  </table>
+              <div className="lanes-grid">
+                {lanes.map((lane) => <LaneCard key={lane.laneId} lane={lane} featured={lane.laneId === 'efficient-spec' || lane.laneId === 'frontier-raw'} />)}
+              </div>
+              {view === 'engineering' && (
+                <div className="card run-table-card">
+                  <h3>Run-level evidence</h3>
+                  <div className="table-scroll">
+                    <table className="runs-table">
+                      <thead><tr><th>Run</th><th>Lane</th><th>Model</th><th>Quality</th><th>Status</th><th>Elapsed</th><th>Hard gates</th></tr></thead>
+                      <tbody>{runs.map((run) => <RunRow key={run.runId} run={run} />)}</tbody>
+                    </table>
+                  </div>
                 </div>
               )}
-            </div>
+            </section>
           );
         })}
-      </div>
+
+        <footer className="evidence-footer">
+          <strong>Evidence boundary.</strong> {report.metadata.evidenceQualification.limitation}
+          <span>Benchmark {report.metadata.benchmarkVersion} · Evaluator {report.metadata.frozenInputs.evaluatorSha256.slice(0, 12)} · Generated {new Date(report.metadata.generatedAt).toLocaleString()}</span>
+        </footer>
+      </main>
     </div>
   );
 }

@@ -1,39 +1,30 @@
-import { describe, it, expect } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 import App from './App';
 
-describe('App', () => {
-  it('renders illustrative banner when dataKind is illustrative', () => {
+describe('measured dashboard', () => {
+  it('renders the bounded measured headline result', () => {
     render(<App />);
-    expect(screen.getByText('ILLUSTRATIVE DATA ONLY - NOT FOR MEASUREMENT')).toBeTruthy();
+    expect(screen.getByText(/bounded-measured evidence/i)).toBeTruthy();
+    expect(screen.getByText('not supported')).toBeTruthy();
+    expect(screen.getByText('24')).toBeTruthy();
   });
 
-  it('renders overall claim status correctly', () => {
+  it('shows the headline lane comparison for both episodes', () => {
     render(<App />);
-    expect(screen.getByText('Overall Roll-up: NOT-EVALUATED')).toBeTruthy();
-    expect(screen.getAllByText(/illustrative data only/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Efficient + spec')).toHaveLength(2);
+    expect(screen.getAllByText('Frontier + raw')).toHaveLength(2);
+    expect(screen.getAllByText('Platform modernization').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Explainable audit feature').length).toBeGreaterThan(0);
   });
 
-  it('renders episode claims correctly', () => {
+  it('reveals run-level evidence in engineering view and filters lanes', () => {
     render(<App />);
-    expect(screen.getByText('Platform modernization Claim: NOT-EVALUATED')).toBeTruthy();
-    expect(screen.getByText('Explainable audit feature Claim: NOT-EVALUATED')).toBeTruthy();
-  });
+    fireEvent.click(screen.getByText('Engineering'));
+    expect(screen.getAllByText('Run-level evidence')).toHaveLength(2);
 
-  it('filters lanes when view mode changes or filters applied', () => {
-    render(<App />);
-    
-    // Engineering view button should exist
-    const engViewButton = screen.getByText('Engineering View');
-    fireEvent.click(engViewButton);
-    
-    // Should show run details in engineering view
-    expect(screen.getAllByText('Run Details').length).toBeGreaterThan(0);
-    
-    // Test filter select
-    const laneSelect = screen.getByLabelText('Lane');
-    fireEvent.change(laneSelect, { target: { value: 'efficient-spec' } });
-    
-    expect(screen.queryByText('FRONTIER-RAW')).toBeNull();
+    fireEvent.change(screen.getByLabelText('Lane'), { target: { value: 'efficient-spec' } });
+    expect(screen.getAllByText('frontier-raw')).toHaveLength(1);
+    expect(screen.getAllByText('efficient-spec').length).toBeGreaterThan(0);
   });
 });

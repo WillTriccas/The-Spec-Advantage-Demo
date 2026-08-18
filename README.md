@@ -38,12 +38,11 @@ The benchmark is frozen as `specforge-fsi-v1.0.0`, with baseline tags, observabl
 Copilot runtime pins, high reasoning effort, and four explicit human approvals. The
 freeze record is ready with zero blockers.
 
-The 24 measured coding-agent runs have **not started**. The checked-in dashboard
-evidence remains illustrative, is labelled `not-evaluated`, and cannot support a
-model-performance claim. Because Copilot does not expose immutable provider model
-build IDs, future results are pre-qualified as `bounded-measured`: reproducible at the
-disclosed Copilot model-selection and agent-version boundary, not at a provider-build
-boundary.
+All 24 coding-agent runs have completed and were independently evaluated. The
+pre-registered headline claim is **not supported**: the efficient model with the
+approved spec did not match the frontier raw lane under the sealed evaluator. Evidence
+is qualified as `bounded-measured` because Copilot exposes model-selection IDs and the
+agent version, but not immutable provider model build IDs.
 
 See:
 
@@ -191,13 +190,10 @@ Open `dashboard\dist-single\index.html`.
 
 1. Start with the **Executive** view: hypothesis, claim status, quality medians,
    variability, hard gates, and efficiency.
-2. Point out the persistent **Illustrative / Not evaluated** labelling.
-3. Switch to the **Engineering** view and drill into lanes, repetitions, score
-   dimensions, evidence provenance, and specification-authoring effort.
-4. Explain that the same report engine and dashboard will display measured data after
-   the frozen 24-run experiment.
-
-Do not present the illustrative values as observed model performance.
+2. Explain the **bounded-measured** evidence boundary and unavailable monetary pricing.
+3. Compare `efficient-spec` with `frontier-raw` for each episode.
+4. Switch to the **Engineering** view and drill into retained timeouts, the incomplete
+   run, gate outcomes, usage, and evidence provenance.
 
 ### 7. Close on the operating model (1 minute)
 
@@ -212,21 +208,15 @@ For a 30-minute session, add a live workspace preparation, compare raw/spec prom
 show retained failed-run handling, and discuss how the client would replace the
 synthetic scenario with one of its own.
 
-## What remains before measured results
+## Measured result
 
-The product demonstration and benchmark freeze are ready. The experiment is not fully
-finished until these execution and publication steps are completed:
+The execution matrix contains 19 in-policy completions, four runs stopped at the frozen
+5,400-second boundary, and one incomplete run with no candidate change. Six candidates
+passed every applicable sealed-evaluator gate. Both episode claims and the overall
+roll-up are `not-supported`.
 
-1. Execute all 24 isolated runs in the frozen randomized order without human
-   remediation.
-2. Retain completed, failed, timed-out, and cancelled runs.
-3. Import and evaluate every run against the sealed evaluator.
-4. Publish the complete measured report and rebuild the dashboard from that report.
-5. Optionally add dated, sourced pricing; without it, monetary efficiency remains
-   unavailable rather than zero.
-
-Until those steps are complete, use the showcase to explain the method, controls, and
-decision experience—not to claim that the registered hypothesis has been proven.
+Dated, sourced pricing can still be added in a future benchmark version. This frozen
+version reports monetary efficiency as unavailable rather than zero.
 
 ## Freeze readiness
 
