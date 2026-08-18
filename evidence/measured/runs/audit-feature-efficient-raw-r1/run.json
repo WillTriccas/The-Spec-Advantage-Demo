@@ -71,6 +71,6 @@
     "transcriptPath": "evidence/measured/runs/audit-feature-efficient-raw-r1/evidence/transcript.jsonl",
     "transcriptSha256": "d9a59f7c52c9597af4c437627c74b6821fc3a93f377fefe06ed65cb4cd1085ee",
     "evaluatorPath": "evidence/measured/runs/audit-feature-efficient-raw-r1/evidence/evaluator.json",
-    "evaluatorSha256": "d209ef2e4c689a21d359e044a61a76b026993f05a04fbfdd87d0f24f8c6b9dc9"
+    "evaluatorSha256": "b68a6ef52ab297600301a3ee6c754bf32576efb9a5fcdfd57eb76dd5cc5e0985"
   }
 }

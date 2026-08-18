@@ -84,6 +84,6 @@
     "transcriptPath": "evidence/measured/runs/modernization-efficient-spec-r2/evidence/transcript.jsonl",
     "transcriptSha256": "d1700b39a2a1e6e1822765feaea1199dd5a14486b8beba21a52e8bcc2e3080af",
     "evaluatorPath": "evidence/measured/runs/modernization-efficient-spec-r2/evidence/evaluator.json",
-    "evaluatorSha256": "0a3af51b4df53130ca963401f4275ec78a593ced33d7c9acb5626875089563e4"
+    "evaluatorSha256": "ed7568f7499ef05a248b71761f99ef617ccd27503b31c16e90d66a07407483b6"
   }
 }

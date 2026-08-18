@@ -1,302 +1,329 @@
 {
-  "adapterValidation": {
-    "errors": [],
-    "passed": true
+  "attestation": {
+    "independentFromSpecAuthors": true,
+    "evaluatorNames": [
+      "sealed-ai-sdlc-benchmark-evaluator"
+    ],
+    "statement": "Evaluator used only allowed public contracts, prompts, scoring config, and source baselines; it remained blind to spec-factory/, evidence/, approved spec content, and expected measured benchmark output."
   },
-  "commands": [
-    {
-      "allowedExitCodes": [
-        0
-      ],
-      "arguments": [
-        "build",
-        "TradeReconciliation.sln",
-        "--configuration",
-        "Release",
-        "--nologo",
-        "-maxcpucount:1",
-        "-nodeReuse:false"
-      ],
-      "cwd": ".",
-      "executable": "C:\\Users\\willtriccas\\AppData\\Local\\dotnet\\dotnet.exe",
-      "exitCode": 0,
-      "id": "build",
-      "passed": true,
-      "sensitiveOutputDetected": false,
-      "signal": null,
-      "stderr": "",
-      "stdout": "  Determining projects to restore...\n  All projects are up-to-date for restore.\n  TradeReconciliation.Core -> <redacted-path>\\src\\TradeReconciliation.Core\\bin\\Release\\net8.0\\TradeReconciliation.Core.dll\n  TradeReconciliation.Cli -> <redacted-path>\\src\\TradeReconciliation.Cli\\bin\\Release\\net8.0\\TradeReconciliation.Cli.dll\n  TradeReconciliation.Tests -> <redacted-path>\\tests\\TradeReconciliation.Tests\\bin\\Release\\net8.0\\TradeReconciliation.Tests.dll\n\nBuild succeeded.\n    0 Warning(s)\n    0 Error(s)\n\nTime Elapsed 00:00:03.60\n",
-      "timedOut": false
-    },
-    {
-      "allowedExitCodes": [
-        0
-      ],
-      "arguments": [
-        "exec",
-        "tests/TradeReconciliation.Tests/bin/Release/net8.0/TradeReconciliation.Tests.dll"
-      ],
-      "cwd": ".",
-      "executable": "C:\\Users\\willtriccas\\AppData\\Local\\dotnet\\dotnet.exe",
-      "exitCode": 0,
-      "id": "test",
-      "passed": true,
-      "sensitiveOutputDetected": false,
-      "signal": null,
-      "stderr": "",
-      "stdout": "[PASS] BatchIntegrationTests.BaselineFixtureMatchesTheGoldenMaster (REQ-5 / RISK-1)\n[PASS] BatchIntegrationTests.ChangedInputForTheSameDateIsProcessedAsANewRun (REQ-6 / INV-4)\n[PASS] BatchIntegrationTests.DiagnosticsExposeCountsButNoRecordPayloads (NFR-5)\n[PASS] BatchIntegrationTests.EveryRunWritesAllFourDeclaredOutputsWithStableHeaders (REQ-5 / AC-8)\n[PASS] BatchIntegrationTests.ExactRerunIsByteIdenticalAndAddsNoLedgerRow (REQ-6 / AC-9 / INV-4)\n[PASS] BatchIntegrationTests.MalformedInputFailsWithoutLeakingRowPayloads (NFR-3 / NFR-5)\n[PASS] BatchIntegrationTests.MissingInputDirectoryProducesAnActionableFailure (NFR-3)\n[PASS] BatchIntegrationTests.MissingOverridesFileIsTreatedAsNoInstructions (REQ-5)\n[PASS] BatchIntegrationTests.OverrideFixtureMatchesTheGoldenMaster (REQ-4 / REQ-5 / RISK-1)\n[PASS] ContractTests.AdapterDeclaresShellFreeCommandsPlaceholdersAndOutputs (REQ-1 / AC-10)\n[PASS] ContractTests.AdapterExecutablesResolveToBuiltArtifacts (REQ-1 / AC-10)\n[PASS] ContractTests.CandidateTargetsNet8 (REQ-1 / AC-1)\n[PASS] ContractTests.CliRerunKeepsOutputsIdenticalAndStillSucceeds (REQ-7 / AC-9)\n[PASS] ContractTests.CliReturnsDocumentedExitCodes (REQ-7 / NFR-3)\n[PASS] ContractTests.PositionalArgumentsAreResolvedAndValidated (REQ-1 / AMB-1)\n[PASS] ManualOverrideTests.IdenticalDuplicateInstructionsAreAccountedForSeparately (REQ-4 / RISK-2)\n[PASS] ManualOverrideTests.OnlyTheFirstOverrideForATradeApplies (REQ-4 / AC-7)\n[PASS] ManualOverrideTests.OverrideCannotManufactureAMatchWithoutConcreteCounterparts (REQ-4 / AC-6 / INV-3)\n[PASS] ManualOverrideTests.OverrideForATradeWithNoBreakIsStale (REQ-4)\n[PASS] ManualOverrideTests.OverrideWithoutNoteOrApproverIsStale (REQ-4 / INV-3)\n[PASS] ManualOverrideTests.ReportListsBreakReasonsAndStaleOverridesDeterministically (REQ-5)\n[PASS] ManualOverrideTests.ReportSaysNoneWhenThereAreNoOpenBreaks (REQ-5)\n[PASS] ManualOverrideTests.SuppressedBreakStaysEvidencedInMatchedTrades (REQ-4 / REQ-5)\n[PASS] MatchingEngineTests.AcceptsCandidatesExactlyOnEveryToleranceBoundary (REQ-3 / AC-4)\n[PASS] MatchingEngineTests.ComparesAccountInstrumentAndCurrencyOnTrimmedUppercaseValues (REQ-2 / AC-2)\n[PASS] MatchingEngineTests.CounterpartIdentityIsProvenBeforeTolerances (REQ-3 / INV-2)\n[PASS] MatchingEngineTests.CounterpartsAreConsumedOnlyOnce (REQ-3)\n[PASS] MatchingEngineTests.FirstTradeIdOccurrenceIsCanonicalAndLaterOnesBreak (REQ-2 / AC-3 / INV-1)\n[PASS] MatchingEngineTests.InvalidToleranceConfigurationFailsFast (NFR-3)\n[PASS] MatchingEngineTests.MissingCounterpartsAreReportedAndNotOverrideEligible (REQ-3 / INV-2)\n[PASS] MatchingEngineTests.NonPositiveQuantityOrNetAmountAlwaysBreaks (REQ-3 / AC-5)\n[PASS] MatchingEngineTests.QuantitySignMismatchIsReported (REQ-3)\n[PASS] MatchingEngineTests.RejectsPositionQuantityJustOutsideTolerance (REQ-3 / AC-4)\n[PASS] MatchingEngineTests.RejectsSettlementQuantityAndAmountJustOutsideTolerance (REQ-3 / AC-4)\n[PASS] MatchingEngineTests.TolerancesAreExternallyConfigurable (NFR-2)\n\n35 tests, 35 passed, 0 failed.\n",
-      "timedOut": false
-    },
-    {
-      "allowedExitCodes": [
-        0
-      ],
-      "arguments": [
-        "exec",
-        "src/TradeReconciliation.Cli/bin/Release/net8.0/TradeReconciliation.Cli.dll",
-        "2026-02-17",
-        "<redacted-path>",
-        "<redacted-path>"
-      ],
-      "cwd": ".",
-      "executable": "C:\\Users\\willtriccas\\AppData\\Local\\dotnet\\dotnet.exe",
-      "exitCode": 0,
-      "id": "run-hidden-fixture-1",
-      "passed": true,
-      "sensitiveOutputDetected": false,
-      "signal": null,
-      "stderr": "",
-      "stdout": "Processed 10 trades into 5 matched rows and 5 open breaks.\nbusiness_date=2026-02-17 canonical=9 duplicates=1 override_matched=1 override_suppressed=1 stale_overrides=2\n",
-      "timedOut": false
-    },
-    {
-      "allowedExitCodes": [
-        0
-      ],
-      "arguments": [
-        "exec",
-        "src/TradeReconciliation.Cli/bin/Release/net8.0/TradeReconciliation.Cli.dll",
-        "2026-02-17",
-        "<redacted-path>",
-        "<redacted-path>"
-      ],
-      "cwd": ".",
-      "executable": "C:\\Users\\willtriccas\\AppData\\Local\\dotnet\\dotnet.exe",
-      "exitCode": 0,
-      "id": "run-hidden-fixture-2",
-      "passed": true,
-      "sensitiveOutputDetected": false,
-      "signal": null,
-      "stderr": "",
-      "stdout": "Exact rerun detected for 2026-02-17. Existing outputs were retained.\n",
-      "timedOut": false
-    }
-  ],
-  "dimensions": {
-    "behaviorPreservation": {
-      "findings": [
-        "Legacy observable CSV contract and rerun behavior were preserved."
-      ],
-      "passed": true,
-      "score": 20,
-      "weight": 20
-    },
-    "functionalCorrectness": {
-      "findings": [
-        "Hidden modernization fixture produced expected observable outcomes."
-      ],
-      "passed": true,
-      "score": 35,
-      "weight": 35
-    },
-    "maintainability": {
-      "findings": [
-        "Candidate exposed a schema-valid data-only benchmark adapter."
-      ],
-      "passed": true,
-      "score": 15,
-      "weight": 15
-    },
-    "operability": {
-      "findings": [
-        "Build, test, and repeated run commands completed through adapter arrays."
-      ],
-      "passed": true,
-      "score": 10,
-      "weight": 10
-    },
-    "scopeTraceability": {
-      "findings": [
-        "Adapter provided declared outputs for evaluator-owned hidden fixture."
-      ],
-      "passed": true,
-      "score": 5,
-      "weight": 5
-    },
-    "securityControls": {
-      "findings": [
-        "No blocking pinned static/dependency findings were detected; this is not a security certification."
-      ],
-      "passed": true,
-      "score": 15,
-      "weight": 15
-    }
+  "scores": {
+    "behaviorPreservation": 100,
+    "functionalCorrectness": 100,
+    "maintainability": 100,
+    "operability": 100,
+    "scopeTraceability": 100,
+    "securityControls": 100
   },
-  "episodeId": "modernization",
-  "evaluator": {
-    "blindnessAttestation": "Evaluator used only allowed public contracts, prompts, scoring config, and source baselines; it remained blind to spec-factory/, evidence/, approved spec content, and expected measured benchmark output.",
-    "commandTimeoutsMs": {
-      "auditCommand": 15000,
-      "build": 120000,
-      "run": 60000,
-      "scanner": 30000,
-      "test": 120000
+  "hardGates": {
+    "build": true,
+    "essential-business-invariants": true,
+    "no-critical-security-findings": true
+  },
+  "sealedEvidence": {
+    "adapterValidation": {
+      "errors": [],
+      "passed": true
     },
-    "fixtureHashes": {
-      "auditFeature": {
-        "fixtureSetHash": "89d6c189cb3ce8e0ef025a67bdbfe0299de45e94dab8edd507c5c0ff834b8e93",
-        "format": "adapter-placeholder-command-contract",
-        "id": "audit-hidden-synthetic-2026-08-12"
+    "commands": [
+      {
+        "allowedExitCodes": [
+          0
+        ],
+        "arguments": [
+          "build",
+          "TradeReconciliation.sln",
+          "--configuration",
+          "Release",
+          "--nologo",
+          "-maxcpucount:1",
+          "-nodeReuse:false"
+        ],
+        "cwd": ".",
+        "executable": "C:\\Users\\willtriccas\\AppData\\Local\\dotnet\\dotnet.exe",
+        "exitCode": 0,
+        "id": "build",
+        "passed": true,
+        "sensitiveOutputDetected": false,
+        "signal": null,
+        "stderr": "",
+        "stdout": "  Determining projects to restore...\n  All projects are up-to-date for restore.\n  TradeReconciliation.Core -> <redacted-path>\\src\\TradeReconciliation.Core\\bin\\Release\\net8.0\\TradeReconciliation.Core.dll\n  TradeReconciliation.Cli -> <redacted-path>\\src\\TradeReconciliation.Cli\\bin\\Release\\net8.0\\TradeReconciliation.Cli.dll\n  TradeReconciliation.Tests -> <redacted-path>\\tests\\TradeReconciliation.Tests\\bin\\Release\\net8.0\\TradeReconciliation.Tests.dll\n\nBuild succeeded.\n    0 Warning(s)\n    0 Error(s)\n\nTime Elapsed 00:00:03.60\n",
+        "timedOut": false
       },
-      "modernization": {
-        "businessDate": "2026-02-17",
-        "files": {
-          "overrides.csv": "ddece0d4b5268f64aec7d3b29abe59a0cf9a65d2512243fc505e23f3229b6c1a",
-          "positions.csv": "f0a2740e433862ddaae573ea7d94d3de563fab0a7ab1de93fe40e20c24427205",
-          "settlements.csv": "bf8d8cbd64faa67de0daddb3be7506db5fb5e56db9b0ae31283e47a2f7f1c348",
-          "trades.csv": "e68a5a8e0f754d0d5ef996c1e8f0afc91488e56a258a6d8b67a53225adbc175f"
+      {
+        "allowedExitCodes": [
+          0
+        ],
+        "arguments": [
+          "exec",
+          "tests/TradeReconciliation.Tests/bin/Release/net8.0/TradeReconciliation.Tests.dll"
+        ],
+        "cwd": ".",
+        "executable": "C:\\Users\\willtriccas\\AppData\\Local\\dotnet\\dotnet.exe",
+        "exitCode": 0,
+        "id": "test",
+        "passed": true,
+        "sensitiveOutputDetected": false,
+        "signal": null,
+        "stderr": "",
+        "stdout": "[PASS] BatchIntegrationTests.BaselineFixtureMatchesTheGoldenMaster (REQ-5 / RISK-1)\n[PASS] BatchIntegrationTests.ChangedInputForTheSameDateIsProcessedAsANewRun (REQ-6 / INV-4)\n[PASS] BatchIntegrationTests.DiagnosticsExposeCountsButNoRecordPayloads (NFR-5)\n[PASS] BatchIntegrationTests.EveryRunWritesAllFourDeclaredOutputsWithStableHeaders (REQ-5 / AC-8)\n[PASS] BatchIntegrationTests.ExactRerunIsByteIdenticalAndAddsNoLedgerRow (REQ-6 / AC-9 / INV-4)\n[PASS] BatchIntegrationTests.MalformedInputFailsWithoutLeakingRowPayloads (NFR-3 / NFR-5)\n[PASS] BatchIntegrationTests.MissingInputDirectoryProducesAnActionableFailure (NFR-3)\n[PASS] BatchIntegrationTests.MissingOverridesFileIsTreatedAsNoInstructions (REQ-5)\n[PASS] BatchIntegrationTests.OverrideFixtureMatchesTheGoldenMaster (REQ-4 / REQ-5 / RISK-1)\n[PASS] ContractTests.AdapterDeclaresShellFreeCommandsPlaceholdersAndOutputs (REQ-1 / AC-10)\n[PASS] ContractTests.AdapterExecutablesResolveToBuiltArtifacts (REQ-1 / AC-10)\n[PASS] ContractTests.CandidateTargetsNet8 (REQ-1 / AC-1)\n[PASS] ContractTests.CliRerunKeepsOutputsIdenticalAndStillSucceeds (REQ-7 / AC-9)\n[PASS] ContractTests.CliReturnsDocumentedExitCodes (REQ-7 / NFR-3)\n[PASS] ContractTests.PositionalArgumentsAreResolvedAndValidated (REQ-1 / AMB-1)\n[PASS] ManualOverrideTests.IdenticalDuplicateInstructionsAreAccountedForSeparately (REQ-4 / RISK-2)\n[PASS] ManualOverrideTests.OnlyTheFirstOverrideForATradeApplies (REQ-4 / AC-7)\n[PASS] ManualOverrideTests.OverrideCannotManufactureAMatchWithoutConcreteCounterparts (REQ-4 / AC-6 / INV-3)\n[PASS] ManualOverrideTests.OverrideForATradeWithNoBreakIsStale (REQ-4)\n[PASS] ManualOverrideTests.OverrideWithoutNoteOrApproverIsStale (REQ-4 / INV-3)\n[PASS] ManualOverrideTests.ReportListsBreakReasonsAndStaleOverridesDeterministically (REQ-5)\n[PASS] ManualOverrideTests.ReportSaysNoneWhenThereAreNoOpenBreaks (REQ-5)\n[PASS] ManualOverrideTests.SuppressedBreakStaysEvidencedInMatchedTrades (REQ-4 / REQ-5)\n[PASS] MatchingEngineTests.AcceptsCandidatesExactlyOnEveryToleranceBoundary (REQ-3 / AC-4)\n[PASS] MatchingEngineTests.ComparesAccountInstrumentAndCurrencyOnTrimmedUppercaseValues (REQ-2 / AC-2)\n[PASS] MatchingEngineTests.CounterpartIdentityIsProvenBeforeTolerances (REQ-3 / INV-2)\n[PASS] MatchingEngineTests.CounterpartsAreConsumedOnlyOnce (REQ-3)\n[PASS] MatchingEngineTests.FirstTradeIdOccurrenceIsCanonicalAndLaterOnesBreak (REQ-2 / AC-3 / INV-1)\n[PASS] MatchingEngineTests.InvalidToleranceConfigurationFailsFast (NFR-3)\n[PASS] MatchingEngineTests.MissingCounterpartsAreReportedAndNotOverrideEligible (REQ-3 / INV-2)\n[PASS] MatchingEngineTests.NonPositiveQuantityOrNetAmountAlwaysBreaks (REQ-3 / AC-5)\n[PASS] MatchingEngineTests.QuantitySignMismatchIsReported (REQ-3)\n[PASS] MatchingEngineTests.RejectsPositionQuantityJustOutsideTolerance (REQ-3 / AC-4)\n[PASS] MatchingEngineTests.RejectsSettlementQuantityAndAmountJustOutsideTolerance (REQ-3 / AC-4)\n[PASS] MatchingEngineTests.TolerancesAreExternallyConfigurable (NFR-2)\n\n35 tests, 35 passed, 0 failed.\n",
+        "timedOut": false
+      },
+      {
+        "allowedExitCodes": [
+          0
+        ],
+        "arguments": [
+          "exec",
+          "src/TradeReconciliation.Cli/bin/Release/net8.0/TradeReconciliation.Cli.dll",
+          "2026-02-17",
+          "<redacted-path>",
+          "<redacted-path>"
+        ],
+        "cwd": ".",
+        "executable": "C:\\Users\\willtriccas\\AppData\\Local\\dotnet\\dotnet.exe",
+        "exitCode": 0,
+        "id": "run-hidden-fixture-1",
+        "passed": true,
+        "sensitiveOutputDetected": false,
+        "signal": null,
+        "stderr": "",
+        "stdout": "Processed 10 trades into 5 matched rows and 5 open breaks.\nbusiness_date=2026-02-17 canonical=9 duplicates=1 override_matched=1 override_suppressed=1 stale_overrides=2\n",
+        "timedOut": false
+      },
+      {
+        "allowedExitCodes": [
+          0
+        ],
+        "arguments": [
+          "exec",
+          "src/TradeReconciliation.Cli/bin/Release/net8.0/TradeReconciliation.Cli.dll",
+          "2026-02-17",
+          "<redacted-path>",
+          "<redacted-path>"
+        ],
+        "cwd": ".",
+        "executable": "C:\\Users\\willtriccas\\AppData\\Local\\dotnet\\dotnet.exe",
+        "exitCode": 0,
+        "id": "run-hidden-fixture-2",
+        "passed": true,
+        "sensitiveOutputDetected": false,
+        "signal": null,
+        "stderr": "",
+        "stdout": "Exact rerun detected for 2026-02-17. Existing outputs were retained.\n",
+        "timedOut": false
+      }
+    ],
+    "dimensions": {
+      "behaviorPreservation": {
+        "findings": [
+          "Legacy observable CSV contract and rerun behavior were preserved."
+        ],
+        "passed": true,
+        "score": 20,
+        "weight": 20
+      },
+      "functionalCorrectness": {
+        "findings": [
+          "Hidden modernization fixture produced expected observable outcomes."
+        ],
+        "passed": true,
+        "score": 35,
+        "weight": 35
+      },
+      "maintainability": {
+        "findings": [
+          "Candidate exposed a schema-valid data-only benchmark adapter."
+        ],
+        "passed": true,
+        "score": 15,
+        "weight": 15
+      },
+      "operability": {
+        "findings": [
+          "Build, test, and repeated run commands completed through adapter arrays."
+        ],
+        "passed": true,
+        "score": 10,
+        "weight": 10
+      },
+      "scopeTraceability": {
+        "findings": [
+          "Adapter provided declared outputs for evaluator-owned hidden fixture."
+        ],
+        "passed": true,
+        "score": 5,
+        "weight": 5
+      },
+      "securityControls": {
+        "findings": [
+          "No blocking pinned static/dependency findings were detected; this is not a security certification."
+        ],
+        "passed": true,
+        "score": 15,
+        "weight": 15
+      }
+    },
+    "episodeId": "modernization",
+    "evaluator": {
+      "blindnessAttestation": "Evaluator used only allowed public contracts, prompts, scoring config, and source baselines; it remained blind to spec-factory/, evidence/, approved spec content, and expected measured benchmark output.",
+      "commandTimeoutsMs": {
+        "auditCommand": 15000,
+        "build": 120000,
+        "run": 60000,
+        "scanner": 30000,
+        "test": 120000
+      },
+      "fixtureHashes": {
+        "auditFeature": {
+          "fixtureSetHash": "89d6c189cb3ce8e0ef025a67bdbfe0299de45e94dab8edd507c5c0ff834b8e93",
+          "format": "adapter-placeholder-command-contract",
+          "id": "audit-hidden-synthetic-2026-08-12"
         },
-        "fixtureSetHash": "0c0f59af9fef130de5fd3cf715cf7aaec3856b774e8ff3feb92c30bddfe46ebf",
-        "format": "legacy-observable-csv-contract",
-        "id": "modernization-hidden-synthetic-2026-08-12"
+        "modernization": {
+          "businessDate": "2026-02-17",
+          "files": {
+            "overrides.csv": "ddece0d4b5268f64aec7d3b29abe59a0cf9a65d2512243fc505e23f3229b6c1a",
+            "positions.csv": "f0a2740e433862ddaae573ea7d94d3de563fab0a7ab1de93fe40e20c24427205",
+            "settlements.csv": "bf8d8cbd64faa67de0daddb3be7506db5fb5e56db9b0ae31283e47a2f7f1c348",
+            "trades.csv": "e68a5a8e0f754d0d5ef996c1e8f0afc91488e56a258a6d8b67a53225adbc175f"
+          },
+          "fixtureSetHash": "0c0f59af9fef130de5fd3cf715cf7aaec3856b774e8ff3feb92c30bddfe46ebf",
+          "format": "legacy-observable-csv-contract",
+          "id": "modernization-hidden-synthetic-2026-08-12"
+        }
+      },
+      "name": "sealed-ai-sdlc-benchmark-evaluator",
+      "scannerRulesets": [
+        {
+          "id": "static-secret-patterns",
+          "version": "2026.08.12"
+        },
+        {
+          "id": "static-unsafe-execution-deserialization",
+          "version": "2026.08.12"
+        },
+        {
+          "id": "dependency-vulnerability-command-output",
+          "version": "2026.08.12"
+        }
+      ],
+      "version": "1.0.0"
+    },
+    "gates": {
+      "build": {
+        "applicable": true,
+        "findings": [
+          "build command completed with an allowed exit code"
+        ],
+        "passed": true
+      },
+      "essential-business-invariants": {
+        "applicable": true,
+        "findings": [
+          "all hidden business invariant checks passed"
+        ],
+        "passed": true
+      },
+      "no-critical-security-findings": {
+        "applicable": true,
+        "findings": [
+          "0 blocking static/dependency finding(s)"
+        ],
+        "passed": true
       }
     },
-    "name": "sealed-ai-sdlc-benchmark-evaluator",
-    "scannerRulesets": [
-      {
-        "id": "static-secret-patterns",
-        "version": "2026.08.12"
-      },
-      {
-        "id": "static-unsafe-execution-deserialization",
-        "version": "2026.08.12"
-      },
-      {
-        "id": "dependency-vulnerability-command-output",
-        "version": "2026.08.12"
-      }
-    ],
-    "version": "1.0.0"
-  },
-  "gates": {
-    "build": {
-      "applicable": true,
-      "findings": [
-        "build command completed with an allowed exit code"
+    "outcome": "passed",
+    "schemaVersion": "sealed-evaluator-evidence/1.0.0",
+    "score": 100,
+    "staticChecks": {
+      "blockingFindings": 0,
+      "criticalFindings": 0,
+      "dependencyAuditCommands": [
+        {
+          "exitCode": 0,
+          "id": "dotnet-restore-for-audit",
+          "kind": "dotnet-restore",
+          "stderr": "",
+          "stdout": "",
+          "target": "TradeReconciliation.sln",
+          "timedOut": false
+        },
+        {
+          "exitCode": 0,
+          "id": "dotnet-list-package-vulnerable",
+          "kind": "dotnet",
+          "stderr": "",
+          "stdout": "\nThe following sources were used:\n   https://packagefeedproxy.microsoft.io/nuget/v3/index.json\n\nThe given project `TradeReconciliation.Core` has no vulnerable packages given the current sources.\nThe given project `TradeReconciliation.Cli` has no vulnerable packages given the current sources.\nThe given project `TradeReconciliation.Tests` has no vulnerable packages given the current sources.\n",
+          "target": "TradeReconciliation.sln",
+          "timedOut": false
+        },
+        {
+          "exitCode": 0,
+          "id": "dotnet-restore-for-audit",
+          "kind": "dotnet-restore",
+          "stderr": "",
+          "stdout": "",
+          "target": "src/TradeReconciliation.Cli/TradeReconciliation.Cli.csproj",
+          "timedOut": false
+        },
+        {
+          "exitCode": 0,
+          "id": "dotnet-list-package-vulnerable",
+          "kind": "dotnet",
+          "stderr": "",
+          "stdout": "\nThe following sources were used:\n   https://packagefeedproxy.microsoft.io/nuget/v3/index.json\n\nThe given project `TradeReconciliation.Cli` has no vulnerable packages given the current sources.\n",
+          "target": "src/TradeReconciliation.Cli/TradeReconciliation.Cli.csproj",
+          "timedOut": false
+        },
+        {
+          "exitCode": 0,
+          "id": "dotnet-restore-for-audit",
+          "kind": "dotnet-restore",
+          "stderr": "",
+          "stdout": "",
+          "target": "src/TradeReconciliation.Core/TradeReconciliation.Core.csproj",
+          "timedOut": false
+        },
+        {
+          "exitCode": 0,
+          "id": "dotnet-list-package-vulnerable",
+          "kind": "dotnet",
+          "stderr": "",
+          "stdout": "\nThe following sources were used:\n   https://packagefeedproxy.microsoft.io/nuget/v3/index.json\n\nThe given project `TradeReconciliation.Core` has no vulnerable packages given the current sources.\n",
+          "target": "src/TradeReconciliation.Core/TradeReconciliation.Core.csproj",
+          "timedOut": false
+        },
+        {
+          "exitCode": 0,
+          "id": "dotnet-restore-for-audit",
+          "kind": "dotnet-restore",
+          "stderr": "",
+          "stdout": "",
+          "target": "tests/TradeReconciliation.Tests/TradeReconciliation.Tests.csproj",
+          "timedOut": false
+        },
+        {
+          "exitCode": 0,
+          "id": "dotnet-list-package-vulnerable",
+          "kind": "dotnet",
+          "stderr": "",
+          "stdout": "\nThe following sources were used:\n   https://packagefeedproxy.microsoft.io/nuget/v3/index.json\n\nThe given project `TradeReconciliation.Tests` has no vulnerable packages given the current sources.\n",
+          "target": "tests/TradeReconciliation.Tests/TradeReconciliation.Tests.csproj",
+          "timedOut": false
+        }
       ],
-      "passed": true
-    },
-    "essential-business-invariants": {
-      "applicable": true,
       "findings": [
-        "all hidden business invariant checks passed"
-      ],
-      "passed": true
-    },
-    "no-critical-security-findings": {
-      "applicable": true,
-      "findings": [
-        "0 blocking static/dependency finding(s)"
-      ],
-      "passed": true
+        {
+          "path": "README.md",
+          "ruleId": "command-shell-execution",
+          "severity": "high"
+        }
+      ]
     }
   },
-  "outcome": "passed",
-  "schemaVersion": "sealed-evaluator-evidence/1.0.0",
-  "score": 100,
-  "staticChecks": {
-    "blockingFindings": 0,
-    "criticalFindings": 0,
-    "dependencyAuditCommands": [
-      {
-        "exitCode": 0,
-        "id": "dotnet-restore-for-audit",
-        "kind": "dotnet-restore",
-        "stderr": "",
-        "stdout": "",
-        "target": "TradeReconciliation.sln",
-        "timedOut": false
-      },
-      {
-        "exitCode": 0,
-        "id": "dotnet-list-package-vulnerable",
-        "kind": "dotnet",
-        "stderr": "",
-        "stdout": "\nThe following sources were used:\n   https://packagefeedproxy.microsoft.io/nuget/v3/index.json\n\nThe given project `TradeReconciliation.Core` has no vulnerable packages given the current sources.\nThe given project `TradeReconciliation.Cli` has no vulnerable packages given the current sources.\nThe given project `TradeReconciliation.Tests` has no vulnerable packages given the current sources.\n",
-        "target": "TradeReconciliation.sln",
-        "timedOut": false
-      },
-      {
-        "exitCode": 0,
-        "id": "dotnet-restore-for-audit",
-        "kind": "dotnet-restore",
-        "stderr": "",
-        "stdout": "",
-        "target": "src/TradeReconciliation.Cli/TradeReconciliation.Cli.csproj",
-        "timedOut": false
-      },
-      {
-        "exitCode": 0,
-        "id": "dotnet-list-package-vulnerable",
-        "kind": "dotnet",
-        "stderr": "",
-        "stdout": "\nThe following sources were used:\n   https://packagefeedproxy.microsoft.io/nuget/v3/index.json\n\nThe given project `TradeReconciliation.Cli` has no vulnerable packages given the current sources.\n",
-        "target": "src/TradeReconciliation.Cli/TradeReconciliation.Cli.csproj",
-        "timedOut": false
-      },
-      {
-        "exitCode": 0,
-        "id": "dotnet-restore-for-audit",
-        "kind": "dotnet-restore",
-        "stderr": "",
-        "stdout": "",
-        "target": "src/TradeReconciliation.Core/TradeReconciliation.Core.csproj",
-        "timedOut": false
-      },
-      {
-        "exitCode": 0,
-        "id": "dotnet-list-package-vulnerable",
-        "kind": "dotnet",
-        "stderr": "",
-        "stdout": "\nThe following sources were used:\n   https://packagefeedproxy.microsoft.io/nuget/v3/index.json\n\nThe given project `TradeReconciliation.Core` has no vulnerable packages given the current sources.\n",
-        "target": "src/TradeReconciliation.Core/TradeReconciliation.Core.csproj",
-        "timedOut": false
-      },
-      {
-        "exitCode": 0,
-        "id": "dotnet-restore-for-audit",
-        "kind": "dotnet-restore",
-        "stderr": "",
-        "stdout": "",
-        "target": "tests/TradeReconciliation.Tests/TradeReconciliation.Tests.csproj",
-        "timedOut": false
-      },
-      {
-        "exitCode": 0,
-        "id": "dotnet-list-package-vulnerable",
-        "kind": "dotnet",
-        "stderr": "",
-        "stdout": "\nThe following sources were used:\n   https://packagefeedproxy.microsoft.io/nuget/v3/index.json\n\nThe given project `TradeReconciliation.Tests` has no vulnerable packages given the current sources.\n",
-        "target": "tests/TradeReconciliation.Tests/TradeReconciliation.Tests.csproj",
-        "timedOut": false
-      }
-    ],
-    "findings": [
-      {
-        "path": "README.md",
-        "ruleId": "command-shell-execution",
-        "severity": "high"
-      }
-    ]
+  "compatibilityMapping": {
+    "dimensionRule": "passed => 100; failed => 0",
+    "gateRule": "gates.<id>.passed copied without reinterpretation",
+    "sourcePath": "evidence/measured/runs/modernization-frontier-spec-r3/evidence/sealed-evaluator.json"
   }
 }

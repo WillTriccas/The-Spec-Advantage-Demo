@@ -17,6 +17,11 @@ patch and bundle. `original-candidate.json` records the original measured
 candidate and baseline commit IDs; `original-candidate.patch` preserves the
 exact original tree delta.
 
+The frozen evaluator and scorer exposed an integration mismatch in their JSON
+field names. Original evaluator outputs are preserved unchanged, with a
+deterministic scoring compatibility view documented in
+`evaluator-compatibility.md`.
+
 The evidence qualification is `bounded-measured`: GitHub Copilot exposed the
 selected model IDs, agent version, and reasoning effort, but not immutable
 provider model build IDs.

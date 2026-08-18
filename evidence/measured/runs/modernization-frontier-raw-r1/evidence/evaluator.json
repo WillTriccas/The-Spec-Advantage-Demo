@@ -1,284 +1,311 @@
 {
-  "adapterValidation": {
-    "errors": [],
-    "passed": true
+  "attestation": {
+    "independentFromSpecAuthors": true,
+    "evaluatorNames": [
+      "sealed-ai-sdlc-benchmark-evaluator"
+    ],
+    "statement": "Evaluator used only allowed public contracts, prompts, scoring config, and source baselines; it remained blind to spec-factory/, evidence/, approved spec content, and expected measured benchmark output."
   },
-  "commands": [
-    {
-      "allowedExitCodes": [
-        0
-      ],
-      "arguments": [
-        "build",
-        "LegacyTradeReconciliation.sln",
-        "--configuration",
-        "Release"
-      ],
-      "cwd": ".",
-      "executable": "C:\\Users\\willtriccas\\AppData\\Local\\dotnet\\dotnet.exe",
-      "exitCode": 0,
-      "id": "build",
-      "passed": true,
-      "sensitiveOutputDetected": false,
-      "signal": null,
-      "stderr": "",
-      "stdout": "  Determining projects to restore...\n  All projects are up-to-date for restore.\n<redacted-path>\\LegacyTradeReconciliation\\Abstractions\\Interfaces.cs(70,10): warning CA1716: Rename virtual/interface member IBatchLog.Error(string) so that it no longer conflicts with the reserved language keyword 'Error'. Using a reserved keyword as the name of a virtual/interface member makes it harder for consumers in other languages to override/implement the member. (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1716) [<redacted-path>\\LegacyTradeReconciliation\\LegacyTradeReconciliation.csproj]\n<redacted-path>\\LegacyTradeReconciliation\\Abstractions\\Interfaces.cs(39,51): warning CA1716: In virtual/interface member IMatchingEngine.Reconcile(IReadOnlyCollection<TradeRecord>, IReadOnlyCollection<PositionRecord>, IReadOnlyCollection<SettlementRecord>, IReadOnlyCollection<ManualOverrideRecord>), rename parameter overrides so that it no longer conflicts with the reserved language keyword 'Overrides'. Using a reserved keyword as the name of a parameter on a virtual/interface member makes it harder for consumers in other languages to override/implement the member. (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1716) [<redacted-path>\\LegacyTradeReconciliation\\LegacyTradeReconciliation.csproj]\n<redacted-path>\\LegacyTradeReconciliation\\Infrastructure\\CsvInputReader.cs(71,37): warning CA1859: Change return type of method 'ReadRequired' from 'System.Collections.Generic.IReadOnlyList<T>' to 'System.Collections.Generic.List<T>' for improved performance (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1859) [<redacted-path>\\LegacyTradeReconciliation\\LegacyTradeReconciliation.csproj]\n  LegacyTradeReconciliation -> <redacted-path>\\LegacyTradeReconciliation\\bin\\Release\\net8.0\\LegacyTradeReconciliation.dll\n<redacted-path>\\tests\\Reconciliation.Tests\\GoldenMasterTests.cs(20,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.GoldenMasterTests.Fixture_produces_the_expected_artifacts(string, string) (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\GoldenMasterTests.cs(40,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.GoldenMasterTests.Every_run_publishes_the_four_contract_files() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\CommandLineTests.cs(11,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.CommandLineTests.No_arguments_runs_the_bundled_sample_batch() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\CommandLineTests.cs(22,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.CommandLineTests.Three_arguments_select_the_business_date_and_directories() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\CommandLineTests.cs(38,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.CommandLineTests.Help_is_reported_without_running_the_batch(string) (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\InfrastructureTests.cs(13,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.InfrastructureTests.A_malformed_row_reports_the_file_and_line_that_caused_it() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\GoldenMasterTests.cs(53,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.GoldenMasterTests.Rerunning_identical_inputs_changes_nothing() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\InfrastructureTests.cs(27,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.InfrastructureTests.An_unparseable_field_is_named_in_the_diagnostic() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\CommandLineTests.cs(53,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.CommandLineTests.An_unexpected_argument_count_is_refused(string) (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\InfrastructureTests.cs(41,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.InfrastructureTests.A_missing_required_feed_is_reported_by_name() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\GoldenMasterTests.cs(80,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.GoldenMasterTests.The_ledger_gains_one_row_per_distinct_input_set() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\CommandLineTests.cs(68,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.CommandLineTests.A_business_date_outside_the_agreed_format_is_refused(string) (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\GoldenMasterTests.cs(102,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.GoldenMasterTests.Reruns_are_detected_only_when_the_previous_outputs_survive() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\CommandLineTests.cs(82,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.CommandLineTests.An_empty_directory_argument_is_refused() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\GoldenMasterTests.cs(117,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.GoldenMasterTests.A_superseded_override_instruction_is_audited_rather_than_discarded() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\CommandLineTests.cs(91,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.CommandLineTests.A_missing_input_directory_fails_with_a_diagnostic_and_no_stack_trace() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\InfrastructureTests.cs(52,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.InfrastructureTests.Overrides_are_optional_and_blank_lines_are_ignored() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\CommandLineTests.cs(108,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.CommandLineTests.A_malformed_feed_fails_the_run_rather_than_publishing_partial_output() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\InfrastructureTests.cs(69,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.InfrastructureTests.Published_files_keep_their_agreed_headers_and_column_order() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\MatchingEngineTests.cs(11,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.MatchingEngineTests.A_clean_trade_matches_its_position_and_settlement() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\MatchingEngineTests.cs(28,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.MatchingEngineTests.Identifiers_are_compared_case_insensitively_and_trimmed() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\InfrastructureTests.cs(87,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.InfrastructureTests.Csv_output_is_written_as_utf8_without_a_byte_order_mark() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\CommandLineTests.cs(122,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.CommandLineTests.A_successful_run_reports_the_headline_counts() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\InfrastructureTests.cs(99,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.InfrastructureTests.Numbers_and_dates_are_formatted_invariantly() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\MatchingEngineTests.cs(41,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.MatchingEngineTests.A_repeated_trade_id_keeps_the_first_row_and_breaks_the_rest() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\InfrastructureTests.cs(114,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.InfrastructureTests.The_input_signature_is_stable_for_identical_inputs() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\MatchingEngineTests.cs(61,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.MatchingEngineTests.A_non_positive_quantity_or_amount_is_rejected_before_matching(string, string) (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\InfrastructureTests.cs(130,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.InfrastructureTests.The_input_signature_changes_when_the_inputs_or_the_date_change() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\InfrastructureTests.cs(149,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.InfrastructureTests.A_missing_input_directory_is_rejected_before_any_hashing() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\MatchingEngineTests.cs(77,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.MatchingEngineTests.A_trade_without_a_position_breaks_and_cannot_be_overridden() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\InfrastructureTests.cs(160,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.InfrastructureTests.The_ledger_survives_a_partially_written_previous_run() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\InfrastructureTests.cs(174,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.InfrastructureTests.The_output_directory_is_created_when_it_does_not_exist() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\test\n...[truncated]",
-      "timedOut": false
-    },
-    {
-      "allowedExitCodes": [
-        0
-      ],
-      "arguments": [
-        "test",
-        "LegacyTradeReconciliation.sln",
-        "--configuration",
-        "Release",
-        "--no-build"
-      ],
-      "cwd": ".",
-      "executable": "C:\\Users\\willtriccas\\AppData\\Local\\dotnet\\dotnet.exe",
-      "exitCode": 0,
-      "id": "test",
-      "passed": true,
-      "sensitiveOutputDetected": false,
-      "signal": null,
-      "stderr": "",
-      "stdout": "Test run for <redacted-path>\\tests\\Reconciliation.Tests\\bin\\Release\\net8.0\\Reconciliation.Tests.dll (.NETCoreApp,Version=v8.0)\nVSTest version 17.11.1 (arm64)\n\nStarting test execution, please wait...\nA total of 1 test files matched the specified pattern.\n\nPassed!  - Failed:     0, Passed:    68, Skipped:     0, Total:    68, Duration: 246 ms - Reconciliation.Tests.dll (net8.0)\n",
-      "timedOut": false
-    },
-    {
-      "allowedExitCodes": [
-        0
-      ],
-      "arguments": [
-        "exec",
-        "LegacyTradeReconciliation/bin/Release/net8.0/LegacyTradeReconciliation.dll",
-        "2026-02-17",
-        "<redacted-path>",
-        "<redacted-path>"
-      ],
-      "cwd": ".",
-      "executable": "C:\\Users\\willtriccas\\AppData\\Local\\dotnet\\dotnet.exe",
-      "exitCode": 0,
-      "id": "run-hidden-fixture-1",
-      "passed": true,
-      "sensitiveOutputDetected": false,
-      "signal": null,
-      "stderr": "",
-      "stdout": "Processed 10 trades into 5 matched rows and 5 open breaks.\n",
-      "timedOut": false
-    },
-    {
-      "allowedExitCodes": [
-        0
-      ],
-      "arguments": [
-        "exec",
-        "LegacyTradeReconciliation/bin/Release/net8.0/LegacyTradeReconciliation.dll",
-        "2026-02-17",
-        "<redacted-path>",
-        "<redacted-path>"
-      ],
-      "cwd": ".",
-      "executable": "C:\\Users\\willtriccas\\AppData\\Local\\dotnet\\dotnet.exe",
-      "exitCode": 0,
-      "id": "run-hidden-fixture-2",
-      "passed": true,
-      "sensitiveOutputDetected": false,
-      "signal": null,
-      "stderr": "",
-      "stdout": "Exact rerun detected for 2026-02-17. Existing outputs were retained.\n",
-      "timedOut": false
-    }
-  ],
-  "dimensions": {
-    "behaviorPreservation": {
-      "findings": [
-        "Legacy observable CSV contract and rerun behavior were preserved."
-      ],
-      "passed": true,
-      "score": 20,
-      "weight": 20
-    },
-    "functionalCorrectness": {
-      "findings": [
-        "Hidden modernization fixture produced expected observable outcomes."
-      ],
-      "passed": true,
-      "score": 35,
-      "weight": 35
-    },
-    "maintainability": {
-      "findings": [
-        "Candidate exposed a schema-valid data-only benchmark adapter."
-      ],
-      "passed": true,
-      "score": 15,
-      "weight": 15
-    },
-    "operability": {
-      "findings": [
-        "Build, test, and repeated run commands completed through adapter arrays."
-      ],
-      "passed": true,
-      "score": 10,
-      "weight": 10
-    },
-    "scopeTraceability": {
-      "findings": [
-        "Adapter provided declared outputs for evaluator-owned hidden fixture."
-      ],
-      "passed": true,
-      "score": 5,
-      "weight": 5
-    },
-    "securityControls": {
-      "findings": [
-        "No blocking pinned static/dependency findings were detected; this is not a security certification."
-      ],
-      "passed": true,
-      "score": 15,
-      "weight": 15
-    }
+  "scores": {
+    "behaviorPreservation": 100,
+    "functionalCorrectness": 100,
+    "maintainability": 100,
+    "operability": 100,
+    "scopeTraceability": 100,
+    "securityControls": 100
   },
-  "episodeId": "modernization",
-  "evaluator": {
-    "blindnessAttestation": "Evaluator used only allowed public contracts, prompts, scoring config, and source baselines; it remained blind to spec-factory/, evidence/, approved spec content, and expected measured benchmark output.",
-    "commandTimeoutsMs": {
-      "auditCommand": 15000,
-      "build": 120000,
-      "run": 60000,
-      "scanner": 30000,
-      "test": 120000
+  "hardGates": {
+    "build": true,
+    "essential-business-invariants": true,
+    "no-critical-security-findings": true
+  },
+  "sealedEvidence": {
+    "adapterValidation": {
+      "errors": [],
+      "passed": true
     },
-    "fixtureHashes": {
-      "auditFeature": {
-        "fixtureSetHash": "89d6c189cb3ce8e0ef025a67bdbfe0299de45e94dab8edd507c5c0ff834b8e93",
-        "format": "adapter-placeholder-command-contract",
-        "id": "audit-hidden-synthetic-2026-08-12"
+    "commands": [
+      {
+        "allowedExitCodes": [
+          0
+        ],
+        "arguments": [
+          "build",
+          "LegacyTradeReconciliation.sln",
+          "--configuration",
+          "Release"
+        ],
+        "cwd": ".",
+        "executable": "C:\\Users\\willtriccas\\AppData\\Local\\dotnet\\dotnet.exe",
+        "exitCode": 0,
+        "id": "build",
+        "passed": true,
+        "sensitiveOutputDetected": false,
+        "signal": null,
+        "stderr": "",
+        "stdout": "  Determining projects to restore...\n  All projects are up-to-date for restore.\n<redacted-path>\\LegacyTradeReconciliation\\Abstractions\\Interfaces.cs(70,10): warning CA1716: Rename virtual/interface member IBatchLog.Error(string) so that it no longer conflicts with the reserved language keyword 'Error'. Using a reserved keyword as the name of a virtual/interface member makes it harder for consumers in other languages to override/implement the member. (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1716) [<redacted-path>\\LegacyTradeReconciliation\\LegacyTradeReconciliation.csproj]\n<redacted-path>\\LegacyTradeReconciliation\\Abstractions\\Interfaces.cs(39,51): warning CA1716: In virtual/interface member IMatchingEngine.Reconcile(IReadOnlyCollection<TradeRecord>, IReadOnlyCollection<PositionRecord>, IReadOnlyCollection<SettlementRecord>, IReadOnlyCollection<ManualOverrideRecord>), rename parameter overrides so that it no longer conflicts with the reserved language keyword 'Overrides'. Using a reserved keyword as the name of a parameter on a virtual/interface member makes it harder for consumers in other languages to override/implement the member. (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1716) [<redacted-path>\\LegacyTradeReconciliation\\LegacyTradeReconciliation.csproj]\n<redacted-path>\\LegacyTradeReconciliation\\Infrastructure\\CsvInputReader.cs(71,37): warning CA1859: Change return type of method 'ReadRequired' from 'System.Collections.Generic.IReadOnlyList<T>' to 'System.Collections.Generic.List<T>' for improved performance (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1859) [<redacted-path>\\LegacyTradeReconciliation\\LegacyTradeReconciliation.csproj]\n  LegacyTradeReconciliation -> <redacted-path>\\LegacyTradeReconciliation\\bin\\Release\\net8.0\\LegacyTradeReconciliation.dll\n<redacted-path>\\tests\\Reconciliation.Tests\\GoldenMasterTests.cs(20,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.GoldenMasterTests.Fixture_produces_the_expected_artifacts(string, string) (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\GoldenMasterTests.cs(40,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.GoldenMasterTests.Every_run_publishes_the_four_contract_files() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\CommandLineTests.cs(11,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.CommandLineTests.No_arguments_runs_the_bundled_sample_batch() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\CommandLineTests.cs(22,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.CommandLineTests.Three_arguments_select_the_business_date_and_directories() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\CommandLineTests.cs(38,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.CommandLineTests.Help_is_reported_without_running_the_batch(string) (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\InfrastructureTests.cs(13,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.InfrastructureTests.A_malformed_row_reports_the_file_and_line_that_caused_it() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\GoldenMasterTests.cs(53,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.GoldenMasterTests.Rerunning_identical_inputs_changes_nothing() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\InfrastructureTests.cs(27,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.InfrastructureTests.An_unparseable_field_is_named_in_the_diagnostic() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\CommandLineTests.cs(53,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.CommandLineTests.An_unexpected_argument_count_is_refused(string) (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\InfrastructureTests.cs(41,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.InfrastructureTests.A_missing_required_feed_is_reported_by_name() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\GoldenMasterTests.cs(80,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.GoldenMasterTests.The_ledger_gains_one_row_per_distinct_input_set() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\CommandLineTests.cs(68,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.CommandLineTests.A_business_date_outside_the_agreed_format_is_refused(string) (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\GoldenMasterTests.cs(102,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.GoldenMasterTests.Reruns_are_detected_only_when_the_previous_outputs_survive() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\CommandLineTests.cs(82,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.CommandLineTests.An_empty_directory_argument_is_refused() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\GoldenMasterTests.cs(117,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.GoldenMasterTests.A_superseded_override_instruction_is_audited_rather_than_discarded() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\CommandLineTests.cs(91,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.CommandLineTests.A_missing_input_directory_fails_with_a_diagnostic_and_no_stack_trace() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\InfrastructureTests.cs(52,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.InfrastructureTests.Overrides_are_optional_and_blank_lines_are_ignored() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\CommandLineTests.cs(108,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.CommandLineTests.A_malformed_feed_fails_the_run_rather_than_publishing_partial_output() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\InfrastructureTests.cs(69,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.InfrastructureTests.Published_files_keep_their_agreed_headers_and_column_order() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\MatchingEngineTests.cs(11,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.MatchingEngineTests.A_clean_trade_matches_its_position_and_settlement() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\MatchingEngineTests.cs(28,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.MatchingEngineTests.Identifiers_are_compared_case_insensitively_and_trimmed() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\InfrastructureTests.cs(87,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.InfrastructureTests.Csv_output_is_written_as_utf8_without_a_byte_order_mark() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\CommandLineTests.cs(122,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.CommandLineTests.A_successful_run_reports_the_headline_counts() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\InfrastructureTests.cs(99,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.InfrastructureTests.Numbers_and_dates_are_formatted_invariantly() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\MatchingEngineTests.cs(41,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.MatchingEngineTests.A_repeated_trade_id_keeps_the_first_row_and_breaks_the_rest() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\InfrastructureTests.cs(114,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.InfrastructureTests.The_input_signature_is_stable_for_identical_inputs() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\MatchingEngineTests.cs(61,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.MatchingEngineTests.A_non_positive_quantity_or_amount_is_rejected_before_matching(string, string) (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\InfrastructureTests.cs(130,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.InfrastructureTests.The_input_signature_changes_when_the_inputs_or_the_date_change() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\InfrastructureTests.cs(149,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.InfrastructureTests.A_missing_input_directory_is_rejected_before_any_hashing() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\MatchingEngineTests.cs(77,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.MatchingEngineTests.A_trade_without_a_position_breaks_and_cannot_be_overridden() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\InfrastructureTests.cs(160,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.InfrastructureTests.The_ledger_survives_a_partially_written_previous_run() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\tests\\Reconciliation.Tests\\Reconciliation.Tests.csproj]\n<redacted-path>\\tests\\Reconciliation.Tests\\InfrastructureTests.cs(174,17): warning CA1707: Remove the underscores from member name Reconciliation.Tests.InfrastructureTests.The_output_directory_is_created_when_it_does_not_exist() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707) [<redacted-path>\\test\n...[truncated]",
+        "timedOut": false
       },
-      "modernization": {
-        "businessDate": "2026-02-17",
-        "files": {
-          "overrides.csv": "ddece0d4b5268f64aec7d3b29abe59a0cf9a65d2512243fc505e23f3229b6c1a",
-          "positions.csv": "f0a2740e433862ddaae573ea7d94d3de563fab0a7ab1de93fe40e20c24427205",
-          "settlements.csv": "bf8d8cbd64faa67de0daddb3be7506db5fb5e56db9b0ae31283e47a2f7f1c348",
-          "trades.csv": "e68a5a8e0f754d0d5ef996c1e8f0afc91488e56a258a6d8b67a53225adbc175f"
+      {
+        "allowedExitCodes": [
+          0
+        ],
+        "arguments": [
+          "test",
+          "LegacyTradeReconciliation.sln",
+          "--configuration",
+          "Release",
+          "--no-build"
+        ],
+        "cwd": ".",
+        "executable": "C:\\Users\\willtriccas\\AppData\\Local\\dotnet\\dotnet.exe",
+        "exitCode": 0,
+        "id": "test",
+        "passed": true,
+        "sensitiveOutputDetected": false,
+        "signal": null,
+        "stderr": "",
+        "stdout": "Test run for <redacted-path>\\tests\\Reconciliation.Tests\\bin\\Release\\net8.0\\Reconciliation.Tests.dll (.NETCoreApp,Version=v8.0)\nVSTest version 17.11.1 (arm64)\n\nStarting test execution, please wait...\nA total of 1 test files matched the specified pattern.\n\nPassed!  - Failed:     0, Passed:    68, Skipped:     0, Total:    68, Duration: 246 ms - Reconciliation.Tests.dll (net8.0)\n",
+        "timedOut": false
+      },
+      {
+        "allowedExitCodes": [
+          0
+        ],
+        "arguments": [
+          "exec",
+          "LegacyTradeReconciliation/bin/Release/net8.0/LegacyTradeReconciliation.dll",
+          "2026-02-17",
+          "<redacted-path>",
+          "<redacted-path>"
+        ],
+        "cwd": ".",
+        "executable": "C:\\Users\\willtriccas\\AppData\\Local\\dotnet\\dotnet.exe",
+        "exitCode": 0,
+        "id": "run-hidden-fixture-1",
+        "passed": true,
+        "sensitiveOutputDetected": false,
+        "signal": null,
+        "stderr": "",
+        "stdout": "Processed 10 trades into 5 matched rows and 5 open breaks.\n",
+        "timedOut": false
+      },
+      {
+        "allowedExitCodes": [
+          0
+        ],
+        "arguments": [
+          "exec",
+          "LegacyTradeReconciliation/bin/Release/net8.0/LegacyTradeReconciliation.dll",
+          "2026-02-17",
+          "<redacted-path>",
+          "<redacted-path>"
+        ],
+        "cwd": ".",
+        "executable": "C:\\Users\\willtriccas\\AppData\\Local\\dotnet\\dotnet.exe",
+        "exitCode": 0,
+        "id": "run-hidden-fixture-2",
+        "passed": true,
+        "sensitiveOutputDetected": false,
+        "signal": null,
+        "stderr": "",
+        "stdout": "Exact rerun detected for 2026-02-17. Existing outputs were retained.\n",
+        "timedOut": false
+      }
+    ],
+    "dimensions": {
+      "behaviorPreservation": {
+        "findings": [
+          "Legacy observable CSV contract and rerun behavior were preserved."
+        ],
+        "passed": true,
+        "score": 20,
+        "weight": 20
+      },
+      "functionalCorrectness": {
+        "findings": [
+          "Hidden modernization fixture produced expected observable outcomes."
+        ],
+        "passed": true,
+        "score": 35,
+        "weight": 35
+      },
+      "maintainability": {
+        "findings": [
+          "Candidate exposed a schema-valid data-only benchmark adapter."
+        ],
+        "passed": true,
+        "score": 15,
+        "weight": 15
+      },
+      "operability": {
+        "findings": [
+          "Build, test, and repeated run commands completed through adapter arrays."
+        ],
+        "passed": true,
+        "score": 10,
+        "weight": 10
+      },
+      "scopeTraceability": {
+        "findings": [
+          "Adapter provided declared outputs for evaluator-owned hidden fixture."
+        ],
+        "passed": true,
+        "score": 5,
+        "weight": 5
+      },
+      "securityControls": {
+        "findings": [
+          "No blocking pinned static/dependency findings were detected; this is not a security certification."
+        ],
+        "passed": true,
+        "score": 15,
+        "weight": 15
+      }
+    },
+    "episodeId": "modernization",
+    "evaluator": {
+      "blindnessAttestation": "Evaluator used only allowed public contracts, prompts, scoring config, and source baselines; it remained blind to spec-factory/, evidence/, approved spec content, and expected measured benchmark output.",
+      "commandTimeoutsMs": {
+        "auditCommand": 15000,
+        "build": 120000,
+        "run": 60000,
+        "scanner": 30000,
+        "test": 120000
+      },
+      "fixtureHashes": {
+        "auditFeature": {
+          "fixtureSetHash": "89d6c189cb3ce8e0ef025a67bdbfe0299de45e94dab8edd507c5c0ff834b8e93",
+          "format": "adapter-placeholder-command-contract",
+          "id": "audit-hidden-synthetic-2026-08-12"
         },
-        "fixtureSetHash": "0c0f59af9fef130de5fd3cf715cf7aaec3856b774e8ff3feb92c30bddfe46ebf",
-        "format": "legacy-observable-csv-contract",
-        "id": "modernization-hidden-synthetic-2026-08-12"
+        "modernization": {
+          "businessDate": "2026-02-17",
+          "files": {
+            "overrides.csv": "ddece0d4b5268f64aec7d3b29abe59a0cf9a65d2512243fc505e23f3229b6c1a",
+            "positions.csv": "f0a2740e433862ddaae573ea7d94d3de563fab0a7ab1de93fe40e20c24427205",
+            "settlements.csv": "bf8d8cbd64faa67de0daddb3be7506db5fb5e56db9b0ae31283e47a2f7f1c348",
+            "trades.csv": "e68a5a8e0f754d0d5ef996c1e8f0afc91488e56a258a6d8b67a53225adbc175f"
+          },
+          "fixtureSetHash": "0c0f59af9fef130de5fd3cf715cf7aaec3856b774e8ff3feb92c30bddfe46ebf",
+          "format": "legacy-observable-csv-contract",
+          "id": "modernization-hidden-synthetic-2026-08-12"
+        }
+      },
+      "name": "sealed-ai-sdlc-benchmark-evaluator",
+      "scannerRulesets": [
+        {
+          "id": "static-secret-patterns",
+          "version": "2026.08.12"
+        },
+        {
+          "id": "static-unsafe-execution-deserialization",
+          "version": "2026.08.12"
+        },
+        {
+          "id": "dependency-vulnerability-command-output",
+          "version": "2026.08.12"
+        }
+      ],
+      "version": "1.0.0"
+    },
+    "gates": {
+      "build": {
+        "applicable": true,
+        "findings": [
+          "build command completed with an allowed exit code"
+        ],
+        "passed": true
+      },
+      "essential-business-invariants": {
+        "applicable": true,
+        "findings": [
+          "all hidden business invariant checks passed"
+        ],
+        "passed": true
+      },
+      "no-critical-security-findings": {
+        "applicable": true,
+        "findings": [
+          "0 blocking static/dependency finding(s)"
+        ],
+        "passed": true
       }
     },
-    "name": "sealed-ai-sdlc-benchmark-evaluator",
-    "scannerRulesets": [
-      {
-        "id": "static-secret-patterns",
-        "version": "2026.08.12"
-      },
-      {
-        "id": "static-unsafe-execution-deserialization",
-        "version": "2026.08.12"
-      },
-      {
-        "id": "dependency-vulnerability-command-output",
-        "version": "2026.08.12"
-      }
-    ],
-    "version": "1.0.0"
-  },
-  "gates": {
-    "build": {
-      "applicable": true,
-      "findings": [
-        "build command completed with an allowed exit code"
+    "outcome": "passed",
+    "schemaVersion": "sealed-evaluator-evidence/1.0.0",
+    "score": 100,
+    "staticChecks": {
+      "blockingFindings": 0,
+      "criticalFindings": 0,
+      "dependencyAuditCommands": [
+        {
+          "exitCode": 0,
+          "id": "dotnet-restore-for-audit",
+          "kind": "dotnet-restore",
+          "stderr": "",
+          "stdout": "",
+          "target": "LegacyTradeReconciliation.sln",
+          "timedOut": false
+        },
+        {
+          "exitCode": 0,
+          "id": "dotnet-list-package-vulnerable",
+          "kind": "dotnet",
+          "stderr": "",
+          "stdout": "\nThe following sources were used:\n   https://packagefeedproxy.microsoft.io/nuget/v3/index.json\n\nThe given project `LegacyTradeReconciliation` has no vulnerable packages given the current sources.\nThe given project `Reconciliation.Tests` has no vulnerable packages given the current sources.\n",
+          "target": "LegacyTradeReconciliation.sln",
+          "timedOut": false
+        },
+        {
+          "exitCode": 0,
+          "id": "dotnet-restore-for-audit",
+          "kind": "dotnet-restore",
+          "stderr": "",
+          "stdout": "",
+          "target": "LegacyTradeReconciliation/LegacyTradeReconciliation.csproj",
+          "timedOut": false
+        },
+        {
+          "exitCode": 0,
+          "id": "dotnet-list-package-vulnerable",
+          "kind": "dotnet",
+          "stderr": "",
+          "stdout": "\nThe following sources were used:\n   https://packagefeedproxy.microsoft.io/nuget/v3/index.json\n\nThe given project `LegacyTradeReconciliation` has no vulnerable packages given the current sources.\n",
+          "target": "LegacyTradeReconciliation/LegacyTradeReconciliation.csproj",
+          "timedOut": false
+        },
+        {
+          "exitCode": 0,
+          "id": "dotnet-restore-for-audit",
+          "kind": "dotnet-restore",
+          "stderr": "",
+          "stdout": "",
+          "target": "tests/Reconciliation.Tests/Reconciliation.Tests.csproj",
+          "timedOut": false
+        },
+        {
+          "exitCode": 0,
+          "id": "dotnet-list-package-vulnerable",
+          "kind": "dotnet",
+          "stderr": "",
+          "stdout": "\nThe following sources were used:\n   https://packagefeedproxy.microsoft.io/nuget/v3/index.json\n\nThe given project `Reconciliation.Tests` has no vulnerable packages given the current sources.\n",
+          "target": "tests/Reconciliation.Tests/Reconciliation.Tests.csproj",
+          "timedOut": false
+        }
       ],
-      "passed": true
-    },
-    "essential-business-invariants": {
-      "applicable": true,
       "findings": [
-        "all hidden business invariant checks passed"
-      ],
-      "passed": true
-    },
-    "no-critical-security-findings": {
-      "applicable": true,
-      "findings": [
-        "0 blocking static/dependency finding(s)"
-      ],
-      "passed": true
+        {
+          "path": "README.md",
+          "ruleId": "command-shell-execution",
+          "severity": "high"
+        }
+      ]
     }
   },
-  "outcome": "passed",
-  "schemaVersion": "sealed-evaluator-evidence/1.0.0",
-  "score": 100,
-  "staticChecks": {
-    "blockingFindings": 0,
-    "criticalFindings": 0,
-    "dependencyAuditCommands": [
-      {
-        "exitCode": 0,
-        "id": "dotnet-restore-for-audit",
-        "kind": "dotnet-restore",
-        "stderr": "",
-        "stdout": "",
-        "target": "LegacyTradeReconciliation.sln",
-        "timedOut": false
-      },
-      {
-        "exitCode": 0,
-        "id": "dotnet-list-package-vulnerable",
-        "kind": "dotnet",
-        "stderr": "",
-        "stdout": "\nThe following sources were used:\n   https://packagefeedproxy.microsoft.io/nuget/v3/index.json\n\nThe given project `LegacyTradeReconciliation` has no vulnerable packages given the current sources.\nThe given project `Reconciliation.Tests` has no vulnerable packages given the current sources.\n",
-        "target": "LegacyTradeReconciliation.sln",
-        "timedOut": false
-      },
-      {
-        "exitCode": 0,
-        "id": "dotnet-restore-for-audit",
-        "kind": "dotnet-restore",
-        "stderr": "",
-        "stdout": "",
-        "target": "LegacyTradeReconciliation/LegacyTradeReconciliation.csproj",
-        "timedOut": false
-      },
-      {
-        "exitCode": 0,
-        "id": "dotnet-list-package-vulnerable",
-        "kind": "dotnet",
-        "stderr": "",
-        "stdout": "\nThe following sources were used:\n   https://packagefeedproxy.microsoft.io/nuget/v3/index.json\n\nThe given project `LegacyTradeReconciliation` has no vulnerable packages given the current sources.\n",
-        "target": "LegacyTradeReconciliation/LegacyTradeReconciliation.csproj",
-        "timedOut": false
-      },
-      {
-        "exitCode": 0,
-        "id": "dotnet-restore-for-audit",
-        "kind": "dotnet-restore",
-        "stderr": "",
-        "stdout": "",
-        "target": "tests/Reconciliation.Tests/Reconciliation.Tests.csproj",
-        "timedOut": false
-      },
-      {
-        "exitCode": 0,
-        "id": "dotnet-list-package-vulnerable",
-        "kind": "dotnet",
-        "stderr": "",
-        "stdout": "\nThe following sources were used:\n   https://packagefeedproxy.microsoft.io/nuget/v3/index.json\n\nThe given project `Reconciliation.Tests` has no vulnerable packages given the current sources.\n",
-        "target": "tests/Reconciliation.Tests/Reconciliation.Tests.csproj",
-        "timedOut": false
-      }
-    ],
-    "findings": [
-      {
-        "path": "README.md",
-        "ruleId": "command-shell-execution",
-        "severity": "high"
-      }
-    ]
+  "compatibilityMapping": {
+    "dimensionRule": "passed => 100; failed => 0",
+    "gateRule": "gates.<id>.passed copied without reinterpretation",
+    "sourcePath": "evidence/measured/runs/modernization-frontier-raw-r1/evidence/sealed-evaluator.json"
   }
 }

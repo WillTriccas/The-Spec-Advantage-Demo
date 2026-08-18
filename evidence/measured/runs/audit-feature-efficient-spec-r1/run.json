@@ -84,6 +84,6 @@
     "transcriptPath": "evidence/measured/runs/audit-feature-efficient-spec-r1/evidence/transcript.jsonl",
     "transcriptSha256": "4e318319c443d9c3148977dd7473bbc9d2a4bc4fc1c8f035b2a0bc355665799f",
     "evaluatorPath": "evidence/measured/runs/audit-feature-efficient-spec-r1/evidence/evaluator.json",
-    "evaluatorSha256": "98f839eedf135e79c29b1ab6a7af122dc662fa166e22d564a25236e57567bd20"
+    "evaluatorSha256": "334f5a3388949b33b832feb6464d27ea5f7518a7810479284f1b4ddd22e80796"
   }
 }

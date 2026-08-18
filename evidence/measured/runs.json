@@ -72,7 +72,7 @@
       "transcriptPath": "evidence/measured/runs/audit-feature-efficient-raw-r1/evidence/transcript.jsonl",
       "transcriptSha256": "d9a59f7c52c9597af4c437627c74b6821fc3a93f377fefe06ed65cb4cd1085ee",
       "evaluatorPath": "evidence/measured/runs/audit-feature-efficient-raw-r1/evidence/evaluator.json",
-      "evaluatorSha256": "d209ef2e4c689a21d359e044a61a76b026993f05a04fbfdd87d0f24f8c6b9dc9"
+      "evaluatorSha256": "b68a6ef52ab297600301a3ee6c754bf32576efb9a5fcdfd57eb76dd5cc5e0985"
     }
   },
   {
@@ -148,7 +148,7 @@
       "transcriptPath": "evidence/measured/runs/audit-feature-efficient-raw-r2/evidence/transcript.jsonl",
       "transcriptSha256": "990d303a9d7fa86a90ccba2d7c70edf807a3b56e507a42d63bd7f1b5a8326ea6",
       "evaluatorPath": "evidence/measured/runs/audit-feature-efficient-raw-r2/evidence/evaluator.json",
-      "evaluatorSha256": "354936ce0fbc384398857f11d1cf9ee6ce79828edb82ef92dbf96a264a042e7f"
+      "evaluatorSha256": "c2cd783fd2f28e60b8c9438104092be7de894350e617b8b6c805671349994e59"
     }
   },
   {
@@ -224,7 +224,7 @@
       "transcriptPath": "evidence/measured/runs/audit-feature-efficient-raw-r3/evidence/transcript.jsonl",
       "transcriptSha256": "b8fcf045dee67cf0e884db2c9b4503abc53acbaa2d70b78d7e58cb6c31947d92",
       "evaluatorPath": "evidence/measured/runs/audit-feature-efficient-raw-r3/evidence/evaluator.json",
-      "evaluatorSha256": "acd035b47f743b14f3debdcb267ab4a1b39f8581202213baeb688e418e1d5674"
+      "evaluatorSha256": "e437d9319524364ce851ab315a2cb217eadbdd274f5e38dedb61e80971a2d3d4"
     }
   },
   {
@@ -313,7 +313,7 @@
       "transcriptPath": "evidence/measured/runs/audit-feature-efficient-spec-r1/evidence/transcript.jsonl",
       "transcriptSha256": "4e318319c443d9c3148977dd7473bbc9d2a4bc4fc1c8f035b2a0bc355665799f",
       "evaluatorPath": "evidence/measured/runs/audit-feature-efficient-spec-r1/evidence/evaluator.json",
-      "evaluatorSha256": "98f839eedf135e79c29b1ab6a7af122dc662fa166e22d564a25236e57567bd20"
+      "evaluatorSha256": "334f5a3388949b33b832feb6464d27ea5f7518a7810479284f1b4ddd22e80796"
     }
   },
   {
@@ -402,7 +402,7 @@
       "transcriptPath": "evidence/measured/runs/audit-feature-efficient-spec-r2/evidence/transcript.jsonl",
       "transcriptSha256": "265f6bccfacd3a2df5aa3db2347823a926ff524dcafbc706ab9676f0ea13bf74",
       "evaluatorPath": "evidence/measured/runs/audit-feature-efficient-spec-r2/evidence/evaluator.json",
-      "evaluatorSha256": "354936ce0fbc384398857f11d1cf9ee6ce79828edb82ef92dbf96a264a042e7f"
+      "evaluatorSha256": "d033062a8586030f8ae96b1385fd563d8063fbf66197085e958ffa9391e85df3"
     }
   },
   {
@@ -491,7 +491,7 @@
       "transcriptPath": "evidence/measured/runs/audit-feature-efficient-spec-r3/evidence/transcript.jsonl",
       "transcriptSha256": "e0bbd1ffd1e9f310f112e54b7f7e5f9fa519212897543b2211a25b8382a79134",
       "evaluatorPath": "evidence/measured/runs/audit-feature-efficient-spec-r3/evidence/evaluator.json",
-      "evaluatorSha256": "9f8953bc3899b009c5778c2092f407ea2b345adb053ad9a8f93951663a6ee2cc"
+      "evaluatorSha256": "2731321bc426176a940439181aeec593c30ebca638b448716771cc6bb2a4a88a"
     }
   },
   {
@@ -567,7 +567,7 @@
       "transcriptPath": "evidence/measured/runs/audit-feature-frontier-raw-r1/evidence/transcript.jsonl",
       "transcriptSha256": "26e7dbb9147a867bb54eaf1db79cd644c1da4d599de1ce987db401619d58917d",
       "evaluatorPath": "evidence/measured/runs/audit-feature-frontier-raw-r1/evidence/evaluator.json",
-      "evaluatorSha256": "6e4d09001e3152dd0a6dec6c0e570509c1ff9984f79350c1e1ae31a62fb5ebca"
+      "evaluatorSha256": "573709093a6c679ebd4a877ffb6ae3c8a1bf7b09d5f2c1cd0fc6a5c740b0cbf7"
     }
   },
   {
@@ -643,7 +643,7 @@
       "transcriptPath": "evidence/measured/runs/audit-feature-frontier-raw-r2/evidence/transcript.jsonl",
       "transcriptSha256": "0f766e1247517af8cdb5544c9059e0fcdf9637740363b040c0e926f399cab3f5",
       "evaluatorPath": "evidence/measured/runs/audit-feature-frontier-raw-r2/evidence/evaluator.json",
-      "evaluatorSha256": "dbe32f8a2dac5e9e38fffaacaf7b118906ecd1cc32967b214c70ebb275b4acdd"
+      "evaluatorSha256": "2fe3e872b2a2fee39b9a27c319de08036bb0761a8159de02f2a745accee1ac30"
     }
   },
   {
@@ -719,7 +719,7 @@
       "transcriptPath": "evidence/measured/runs/audit-feature-frontier-raw-r3/evidence/transcript.jsonl",
       "transcriptSha256": "9ab8ec36cc643c4df86be463e6db326463210e6f6954eacfea34626d89cf579a",
       "evaluatorPath": "evidence/measured/runs/audit-feature-frontier-raw-r3/evidence/evaluator.json",
-      "evaluatorSha256": "ef9d9fe045aaabfaa7f655e642556e033477b7c19906225b39dde77e9a76c940"
+      "evaluatorSha256": "f6cbd4e9c810c400b0eaacfab28bc68f1263f0509493edb095fdf2d20a304261"
     }
   },
   {
@@ -808,7 +808,7 @@
       "transcriptPath": "evidence/measured/runs/audit-feature-frontier-spec-r1/evidence/transcript.jsonl",
       "transcriptSha256": "29b5c106651ec148da4b52bf737cb52d9e83dd963f88aab40548cd3006607ef4",
       "evaluatorPath": "evidence/measured/runs/audit-feature-frontier-spec-r1/evidence/evaluator.json",
-      "evaluatorSha256": "e95516a04ba523b000b33720f270b0893facd995580a0aef39bd05788f42fefb"
+      "evaluatorSha256": "720e6b887e52bda5e04b41888e321e216599c475793d76c46294bff424e316b0"
     }
   },
   {
@@ -897,7 +897,7 @@
       "transcriptPath": "evidence/measured/runs/audit-feature-frontier-spec-r2/evidence/transcript.jsonl",
       "transcriptSha256": "bcc1b33c3180d0d1eb8e9236c663e4ddbd7f74f01947120d5400524ee98b85df",
       "evaluatorPath": "evidence/measured/runs/audit-feature-frontier-spec-r2/evidence/evaluator.json",
-      "evaluatorSha256": "6ec5da4bbb2b49f1f3fa735d7769f565866852ee9cde5eab44b3e46de4c6f262"
+      "evaluatorSha256": "7860916fbd8860aa3ff6d232c22fbaa21bdab08ce26ee446e6aabcd1c10dfc00"
     }
   },
   {
@@ -986,7 +986,7 @@
       "transcriptPath": "evidence/measured/runs/audit-feature-frontier-spec-r3/evidence/transcript.jsonl",
       "transcriptSha256": "b1096bcf642331317ddd9d294c0d7e1dc1e68e29c57a6b2c71a728c23c6371e5",
       "evaluatorPath": "evidence/measured/runs/audit-feature-frontier-spec-r3/evidence/evaluator.json",
-      "evaluatorSha256": "70c3c9120edfe416cffc4fe64454fa62a474cd2790c51242f011a0d71b662b02"
+      "evaluatorSha256": "fb6e111415ccd1b9ff90a3ca7d7bd60200675741a62534deed11c557f4f9e062"
     }
   },
   {
@@ -1062,7 +1062,7 @@
       "transcriptPath": "evidence/measured/runs/modernization-efficient-raw-r1/evidence/transcript.jsonl",
       "transcriptSha256": "ecfc29930c9e3578407036f0522b6a72be452109875a865e3fb24d0365ffb793",
       "evaluatorPath": "evidence/measured/runs/modernization-efficient-raw-r1/evidence/evaluator.json",
-      "evaluatorSha256": "654354956c2e3a2c82acd87e3f5fd2e5174f48e063c3f95aefc5ce6a3c3eb0c2"
+      "evaluatorSha256": "82ac2213badd88900e4f4a3531d1e367eca388a75215fc686795223dc213f9fe"
     }
   },
   {
@@ -1138,7 +1138,7 @@
       "transcriptPath": "evidence/measured/runs/modernization-efficient-raw-r2/evidence/transcript.jsonl",
       "transcriptSha256": "d6a60a10d9d2198b19a33293957316036557e45fa4706aec58a6241a68c11667",
       "evaluatorPath": "evidence/measured/runs/modernization-efficient-raw-r2/evidence/evaluator.json",
-      "evaluatorSha256": "9e4bedc1a9549d92181a1d93223421b3651371cd83bdc30885419de94fded87d"
+      "evaluatorSha256": "d3ed291f234c172438e8d6ae4f0ea1f4fdd6e84f5f9e9df13cfa098923dc4f6a"
     }
   },
   {
@@ -1214,7 +1214,7 @@
       "transcriptPath": "evidence/measured/runs/modernization-efficient-raw-r3/evidence/transcript.jsonl",
       "transcriptSha256": "f38072a3791c741756b1fcbbf609da1adf4e3d7392405087d7a9b131d1a9522e",
       "evaluatorPath": "evidence/measured/runs/modernization-efficient-raw-r3/evidence/evaluator.json",
-      "evaluatorSha256": "463f63811113673a45698a74e82fb2d023a60e1d829061f2aa7b7510e3ef5153"
+      "evaluatorSha256": "de93a154f3433847b9893f25ef5d5ad0906ac6f981856abd027c4ab654c0801d"
     }
   },
   {
@@ -1303,7 +1303,7 @@
       "transcriptPath": "evidence/measured/runs/modernization-efficient-spec-r1/evidence/transcript.jsonl",
       "transcriptSha256": "bf397648c8d6116b404f5f1491f75ed92a52d33f029569f89b9bedbfb5acbec2",
       "evaluatorPath": "evidence/measured/runs/modernization-efficient-spec-r1/evidence/evaluator.json",
-      "evaluatorSha256": "377fcf8f076898376451c0ffc5529eaab9b22c69b40d6ab85926669b36457159"
+      "evaluatorSha256": "26c79f4c073654ad4cd7c77b834c09f52716543e0634a57d89ac267fddefec06"
     }
   },
   {
@@ -1392,7 +1392,7 @@
       "transcriptPath": "evidence/measured/runs/modernization-efficient-spec-r2/evidence/transcript.jsonl",
       "transcriptSha256": "d1700b39a2a1e6e1822765feaea1199dd5a14486b8beba21a52e8bcc2e3080af",
       "evaluatorPath": "evidence/measured/runs/modernization-efficient-spec-r2/evidence/evaluator.json",
-      "evaluatorSha256": "0a3af51b4df53130ca963401f4275ec78a593ced33d7c9acb5626875089563e4"
+      "evaluatorSha256": "ed7568f7499ef05a248b71761f99ef617ccd27503b31c16e90d66a07407483b6"
     }
   },
   {
@@ -1481,7 +1481,7 @@
       "transcriptPath": "evidence/measured/runs/modernization-efficient-spec-r3/evidence/transcript.jsonl",
       "transcriptSha256": "ff7ee8051442bf98570db7016cb3b330f810f217d5c021c6775a2506d3f82e2d",
       "evaluatorPath": "evidence/measured/runs/modernization-efficient-spec-r3/evidence/evaluator.json",
-      "evaluatorSha256": "6cbe94b7349a27373c9b205b33336399843b93471f438bcc2df50c24d0d5b571"
+      "evaluatorSha256": "def691074c22280c55939544d79afe554964968679e5ec4d6a98db7f5c36da40"
     }
   },
   {
@@ -1557,7 +1557,7 @@
       "transcriptPath": "evidence/measured/runs/modernization-frontier-raw-r1/evidence/transcript.jsonl",
       "transcriptSha256": "d25a8be41e596d63926f4c9e63f33b75b9d8a360135a7149c14f1b9e138fe31e",
       "evaluatorPath": "evidence/measured/runs/modernization-frontier-raw-r1/evidence/evaluator.json",
-      "evaluatorSha256": "251334df4d57c8448919e684cacf0f4b925580b50e9f0bea0c23db0d3a991fe0"
+      "evaluatorSha256": "e17f1d35681b1554059f18e57448dd359e67223a80f824bb050cb9f5651552b7"
     }
   },
   {
@@ -1633,7 +1633,7 @@
       "transcriptPath": "evidence/measured/runs/modernization-frontier-raw-r2/evidence/transcript.jsonl",
       "transcriptSha256": "01324955855c77cd626f593826048add7644213f95450427bc6b387fc4be335e",
       "evaluatorPath": "evidence/measured/runs/modernization-frontier-raw-r2/evidence/evaluator.json",
-      "evaluatorSha256": "192fb061e919ad4cb4243d8283bc7700bef0adac7d947c39272c5568b89642e5"
+      "evaluatorSha256": "0f4b5e3e0a1fc54c14cf4453b1c499e11e1fc7ba630ec40ea2a81cbd1f4b9df8"
     }
   },
   {
@@ -1709,7 +1709,7 @@
       "transcriptPath": "evidence/measured/runs/modernization-frontier-raw-r3/evidence/transcript.jsonl",
       "transcriptSha256": "3c7811a60779f5db1872e9d7bc2506ed785a061d63ae01e5e08773f9c083ff8b",
       "evaluatorPath": "evidence/measured/runs/modernization-frontier-raw-r3/evidence/evaluator.json",
-      "evaluatorSha256": "36cc7607a985dcc9b68f0b01950b2b8e4170ae354a6aed5fdaa56cf0996f54c2"
+      "evaluatorSha256": "aa91b7bef23c2f59447c626918c3b09fc8569fb914b568e58a42b1164290440a"
     }
   },
   {
@@ -1798,7 +1798,7 @@
       "transcriptPath": "evidence/measured/runs/modernization-frontier-spec-r1/evidence/transcript.jsonl",
       "transcriptSha256": "1d36b04145ada14231fd05f26a899fe1b96d6ca9d9755a966b40c4aed96460d5",
       "evaluatorPath": "evidence/measured/runs/modernization-frontier-spec-r1/evidence/evaluator.json",
-      "evaluatorSha256": "c2148d619f4768fe19f5de59045cf286219fea8cacffa04174349b127ed043df"
+      "evaluatorSha256": "26c2f719acdbece873c563030f2b616bf9e3243c0aafa8960b4ff9a8a511503e"
     }
   },
   {
@@ -1887,7 +1887,7 @@
       "transcriptPath": "evidence/measured/runs/modernization-frontier-spec-r2/evidence/transcript.jsonl",
       "transcriptSha256": "563f9a3d493daf63205edec6104aa1f68282dc8b9e676770fb2592ce2b816f4b",
       "evaluatorPath": "evidence/measured/runs/modernization-frontier-spec-r2/evidence/evaluator.json",
-      "evaluatorSha256": "2c0b34dd206cc6cbd79ba9dedf6c362093c5b7e9566bf80cfcb90b4c22a09f05"
+      "evaluatorSha256": "c8198f60a8216f02899d37be24966ff74039c50154997f1030ca922c72acf9e5"
     }
   },
   {
@@ -1976,7 +1976,7 @@
       "transcriptPath": "evidence/measured/runs/modernization-frontier-spec-r3/evidence/transcript.jsonl",
       "transcriptSha256": "75bc5e90afbbac1627a03426cc701623e4c5e7d8ded0ae2c26c468d456600af5",
       "evaluatorPath": "evidence/measured/runs/modernization-frontier-spec-r3/evidence/evaluator.json",
-      "evaluatorSha256": "886a2f80316f8c2e838d4ac81f58cee4f8e19368b60b9483778cfce310446543"
+      "evaluatorSha256": "8e8b2eeaa1649ce5e11372c3e35eb22584956f7ae5424311fd594843d5db296c"
     }
   }
 ]

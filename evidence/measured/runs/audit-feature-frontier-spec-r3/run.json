@@ -84,6 +84,6 @@
     "transcriptPath": "evidence/measured/runs/audit-feature-frontier-spec-r3/evidence/transcript.jsonl",
     "transcriptSha256": "b1096bcf642331317ddd9d294c0d7e1dc1e68e29c57a6b2c71a728c23c6371e5",
     "evaluatorPath": "evidence/measured/runs/audit-feature-frontier-spec-r3/evidence/evaluator.json",
-    "evaluatorSha256": "70c3c9120edfe416cffc4fe64454fa62a474cd2790c51242f011a0d71b662b02"
+    "evaluatorSha256": "fb6e111415ccd1b9ff90a3ca7d7bd60200675741a62534deed11c557f4f9e062"
   }
 }

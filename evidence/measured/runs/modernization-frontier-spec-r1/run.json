@@ -84,6 +84,6 @@
     "transcriptPath": "evidence/measured/runs/modernization-frontier-spec-r1/evidence/transcript.jsonl",
     "transcriptSha256": "1d36b04145ada14231fd05f26a899fe1b96d6ca9d9755a966b40c4aed96460d5",
     "evaluatorPath": "evidence/measured/runs/modernization-frontier-spec-r1/evidence/evaluator.json",
-    "evaluatorSha256": "c2148d619f4768fe19f5de59045cf286219fea8cacffa04174349b127ed043df"
+    "evaluatorSha256": "26c2f719acdbece873c563030f2b616bf9e3243c0aafa8960b4ff9a8a511503e"
   }
 }
