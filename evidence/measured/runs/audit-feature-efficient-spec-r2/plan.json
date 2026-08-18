@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "1.1.0",
+  "runId": "audit-feature-efficient-spec-r2",
+  "episodeId": "audit-feature",
+  "laneId": "efficient-spec",
+  "model": {
+    "id": "mai-code-1.1-flash",
+    "displayName": "MAI Code 1.1 Flash",
+    "tier": "efficient",
+    "buildId": "not-exposed-by-copilot",
+    "agentVersion": "1.0.79-9",
+    "agentBuildId": "not-separately-exposed-by-copilot",
+    "effortParams": {
+      "reasoningEffort": "high"
+    }
+  },
+  "inputMode": "spec",
+  "repetition": 2,
+  "baseline": {
+    "ref": "refs/tags/benchmark-modernized-v1",
+    "sha256": "82ff4d70d1423d45cb25e2d714355500d22b31eb6c8f47c5f5f246d4f4662120"
+  },
+  "brief": {
+    "path": "benchmark/prompts/audit-feature-raw.md",
+    "sha256": "f47aa4cd40324a29be02f62a6f7fb8c900a72017ad565ca3b3e7756e343d648d"
+  },
+  "promptSha256": "b4a29ff8f3be258bdb86f51d78760adf86cd8319cd1a1051c7dd7216b10724f4",
+  "spec": {
+    "id": "audit-feature-approved",
+    "sha256": "2515ebe22dfd4d7d141a6f06603015fc4739e000283d51f12be4d9a1f4238cb8",
+    "qualityScore": 100,
+    "authoringEffort": {
+      "elapsedSeconds": 20400,
+      "inputTokens": 52800,
+      "outputTokens": 24100,
+      "estimatedCostUsd": null,
+      "costEvidenceRef": null,
+      "costMethod": null,
+      "amortizedAcrossRuns": 3
+    }
+  },
+  "executionOrder": 19,
+  "executionPolicySnapshot": {
+    "freshWorkspacePerRun": true,
+    "crossRunMemory": false,
+    "humanRemediation": false,
+    "preserveFailedRuns": true,
+    "failedRunTreatment": "score-zero-and-fail-applicable-gates",
+    "timeoutSeconds": 5400,
+    "toolCallCap": 200,
+    "toolPermissionProfile": "standard-coding",
+    "runOrder": "randomized-interleaved",
+    "runOrderNotes": "Execute the seeded order across lanes rather than grouping by model or treatment.",
+    "captureQueueAndThrottleTime": true,
+    "queueAndThrottleNotes": "Record queue and throttle time separately from productive execution time."
+  },
+  "workspaceDir": "C:\\Users\\willtriccas\\.copilot\\repos\\copilot-worktrees\\Work-Demos\\willtriccas-ideal-chainsaw\\evidence\\measured\\runs\\audit-feature-efficient-spec-r2\\workspace",
+  "workspaceBaselineCommit": "0dcaa88b5ee0747c5ccc0566a2579677a5e30f38",
+  "promptPath": "C:\\Users\\willtriccas\\.copilot\\repos\\copilot-worktrees\\Work-Demos\\willtriccas-ideal-chainsaw\\evidence\\measured\\runs\\audit-feature-efficient-spec-r2\\PROMPT.md"
+}

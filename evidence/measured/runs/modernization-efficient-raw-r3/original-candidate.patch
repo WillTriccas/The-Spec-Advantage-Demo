@@ -1,0 +1,630 @@
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+index 0000000..5df4214
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,8 @@
++bin/
++obj/
++output/
++artifacts/
++.vs/
++*.user
++*.suo
++*.binlog
+diff --git a/LegacyTradeReconciliation/CsvFileGateway.cs b/LegacyTradeReconciliation/CsvFileGateway.cs
+index a8bf075..d8704e5 100644
+--- a/LegacyTradeReconciliation/CsvFileGateway.cs
++++ b/LegacyTradeReconciliation/CsvFileGateway.cs
+@@ -51,6 +51,8 @@ namespace LegacyTradeReconciliation
+                 .ToList();
+         }
+ 
++        private const string LineBreak = "\n";
++
+         public void WriteMatchedTrades(string outputDirectory, IReadOnlyCollection<MatchedTradeRecord> matchedTrades)
+         {
+             string path = Path.Combine(outputDirectory, BatchConfiguration.MatchedTradesFileName);
+@@ -73,7 +75,7 @@ namespace LegacyTradeReconciliation
+                     record.SettlementId ?? string.Empty,
+                     record.OverrideNote ?? string.Empty)));
+ 
+-            File.WriteAllLines(path, lines);
++            File.WriteAllText(path, string.Join(LineBreak, lines) + LineBreak);
+         }
+ 
+         public void WriteBreakQueue(string outputDirectory, IReadOnlyCollection<BreakRecord> breakQueue)
+@@ -98,7 +100,7 @@ namespace LegacyTradeReconciliation
+                     record.PositionId ?? string.Empty,
+                     record.SettlementId ?? string.Empty)));
+ 
+-            File.WriteAllLines(path, lines);
++            File.WriteAllText(path, string.Join(LineBreak, lines) + LineBreak);
+         }
+ 
+         public void WriteEndOfDayReport(string outputDirectory, string reportText)
+diff --git a/LegacyTradeReconciliation/EndOfDayReporter.cs b/LegacyTradeReconciliation/EndOfDayReporter.cs
+index 413ce33..4b844e8 100644
+--- a/LegacyTradeReconciliation/EndOfDayReporter.cs
++++ b/LegacyTradeReconciliation/EndOfDayReporter.cs
+@@ -57,7 +57,10 @@ namespace LegacyTradeReconciliation
+                 }
+             }
+ 
+-            return report.ToString().TrimEnd() + Environment.NewLine;
++            return report.ToString()
++                .Replace("\r\n", "\n")
++                .Replace("\r", "\n")
++                .TrimEnd() + "\n";
+         }
+     }
+ }
+diff --git a/LegacyTradeReconciliation/LegacyTradeReconciliation.csproj b/LegacyTradeReconciliation/LegacyTradeReconciliation.csproj
+index 0a6c695..785b13e 100644
+--- a/LegacyTradeReconciliation/LegacyTradeReconciliation.csproj
++++ b/LegacyTradeReconciliation/LegacyTradeReconciliation.csproj
+@@ -1,86 +1,17 @@
+-<?xml version="1.0" encoding="utf-8"?>
+-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
++<Project Sdk="Microsoft.NET.Sdk">
+   <PropertyGroup>
+-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+-    <ProjectGuid>{6C5D80C7-7C04-4BBA-A8E3-2E35AFD0C76C}</ProjectGuid>
+     <OutputType>Exe</OutputType>
+-    <AppDesignerFolder>Properties</AppDesignerFolder>
++    <TargetFramework>net8.0</TargetFramework>
++    <ImplicitUsings>enable</ImplicitUsings>
++    <Nullable>disable</Nullable>
+     <RootNamespace>LegacyTradeReconciliation</RootNamespace>
+     <AssemblyName>LegacyTradeReconciliation</AssemblyName>
+-    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
+-    <FileAlignment>512</FileAlignment>
+-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+-    <Deterministic>true</Deterministic>
+-    <LangVersion>7.3</LangVersion>
+-    <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
++    <LangVersion>latest</LangVersion>
+   </PropertyGroup>
+-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+-    <PlatformTarget>AnyCPU</PlatformTarget>
+-    <DebugSymbols>true</DebugSymbols>
+-    <DebugType>full</DebugType>
+-    <Optimize>false</Optimize>
+-    <OutputPath>bin\Debug\</OutputPath>
+-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+-    <ErrorReport>prompt</ErrorReport>
+-    <WarningLevel>4</WarningLevel>
+-  </PropertyGroup>
+-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
+-    <PlatformTarget>AnyCPU</PlatformTarget>
+-    <DebugType>pdbonly</DebugType>
+-    <Optimize>true</Optimize>
+-    <OutputPath>bin\Release\</OutputPath>
+-    <DefineConstants>TRACE</DefineConstants>
+-    <ErrorReport>prompt</ErrorReport>
+-    <WarningLevel>4</WarningLevel>
+-  </PropertyGroup>
+-  <ItemGroup>
+-    <Reference Include="Microsoft.CSharp" />
+-    <Reference Include="System" />
+-    <Reference Include="System.Core" />
+-    <Reference Include="System.Xml.Linq" />
+-    <Reference Include="System.Data.DataSetExtensions" />
+-    <Reference Include="System.Data" />
+-    <Reference Include="System.Xml" />
+-  </ItemGroup>
+-  <ItemGroup>
+-    <Compile Include="BatchConfiguration.cs" />
+-    <Compile Include="CsvFileGateway.cs" />
+-    <Compile Include="Domain\BreakRecord.cs" />
+-    <Compile Include="Domain\ManualOverrideRecord.cs" />
+-    <Compile Include="Domain\MatchedTradeRecord.cs" />
+-    <Compile Include="Domain\PositionRecord.cs" />
+-    <Compile Include="Domain\ReconciliationResult.cs" />
+-    <Compile Include="Domain\RunLedgerEntry.cs" />
+-    <Compile Include="Domain\SettlementRecord.cs" />
+-    <Compile Include="Domain\TradeRecord.cs" />
+-    <Compile Include="EndOfDayReporter.cs" />
+-    <Compile Include="MatchingEngine.cs" />
+-    <Compile Include="Program.cs" />
+-    <Compile Include="ReconciliationBatch.cs" />
+-    <Compile Include="RunLedgerStore.cs" />
+-    <Compile Include="RunRequest.cs" />
+-  </ItemGroup>
++
+   <ItemGroup>
+-    <None Include="App.config" />
+-    <Content Include="data\sample\overrides.csv">
++    <None Update="data\sample\**\*">
+       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+-    </Content>
+-    <Content Include="data\sample\positions.csv">
+-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+-    </Content>
+-    <Content Include="data\sample\settlements.csv">
+-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+-    </Content>
+-    <Content Include="data\sample\trades.csv">
+-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+-    </Content>
+-  </ItemGroup>
+-  <ItemGroup>
+-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net462" Version="1.0.3">
+-      <PrivateAssets>all</PrivateAssets>
+-    </PackageReference>
++    </None>
+   </ItemGroup>
+-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+ </Project>
+diff --git a/LegacyTradeReconciliation/RunLedgerStore.cs b/LegacyTradeReconciliation/RunLedgerStore.cs
+index 314a4e7..f20f53a 100644
+--- a/LegacyTradeReconciliation/RunLedgerStore.cs
++++ b/LegacyTradeReconciliation/RunLedgerStore.cs
+@@ -33,6 +33,7 @@ namespace LegacyTradeReconciliation
+             bool fileExists = File.Exists(_ledgerPath);
+             using (var writer = new StreamWriter(_ledgerPath, true))
+             {
++                writer.NewLine = "\n";
+                 if (!fileExists)
+                 {
+                     writer.WriteLine("business_date,input_signature,total_trades_read,open_break_count,matched_count");
+diff --git a/README.md b/README.md
+index cb905db..ca3bae9 100644
+--- a/README.md
++++ b/README.md
+@@ -13,10 +13,10 @@ This subtree contains a synthetic .NET Framework 4.6.2-style batch reconciliatio
+ 
+ ## Build
+ 
+-The projects are old-style `.csproj` files, but they use a single `PackageReference` for the .NET Framework 4.6.2 reference assemblies so they can usually restore with a modern CLI without installing a machine-wide targeting pack.
++The app and characterization tests target .NET 8 and use the SDK-style project format, so they build with the normal `dotnet build` / `dotnet test` workflow.
+ 
+ ```powershell
+-dotnet msbuild .\src\legacy-trade-reconciliation\LegacyTradeReconciliation.sln /t:Restore,Build /p:Configuration=Release
++dotnet build .\LegacyTradeReconciliation.sln -c Release
+ ```
+ 
+ ## Run
+@@ -24,16 +24,16 @@ dotnet msbuild .\src\legacy-trade-reconciliation\LegacyTradeReconciliation.sln /
+ Run the synthetic sample batch:
+ 
+ ```powershell
+-.\src\legacy-trade-reconciliation\LegacyTradeReconciliation\bin\Release\LegacyTradeReconciliation.exe
++dotnet run --project .\LegacyTradeReconciliation\LegacyTradeReconciliation.csproj --
+ ```
+ 
+ Or pass an explicit business date, input folder, and output folder:
+ 
+ ```powershell
+-.\src\legacy-trade-reconciliation\LegacyTradeReconciliation\bin\Release\LegacyTradeReconciliation.exe `
++dotnet run --project .\LegacyTradeReconciliation\LegacyTradeReconciliation.csproj -- `
+   2025-03-17 `
+-  .\src\legacy-trade-reconciliation\LegacyTradeReconciliation\data\sample `
+-  .\src\legacy-trade-reconciliation\scratch\sample-output
++  .\LegacyTradeReconciliation\data\sample `
++  .\scratch\sample-output
+ ```
+ 
+ The batch writes:
+@@ -46,7 +46,7 @@ The batch writes:
+ ## Characterization tests
+ 
+ ```powershell
+-.\src\legacy-trade-reconciliation\tests\LegacyTradeReconciliation.CharacterizationTests\bin\Release\LegacyTradeReconciliation.CharacterizationTests.exe
++dotnet test .\LegacyTradeReconciliation.sln -c Release --no-build
+ ```
+ 
+ The tests lock in deterministic golden-master behavior for:
+diff --git a/benchmark-adapter.json b/benchmark-adapter.json
+index 4e76bfc..1415d2a 100644
+--- a/benchmark-adapter.json
++++ b/benchmark-adapter.json
+@@ -4,21 +4,31 @@
+   "build": {
+     "executable": "dotnet",
+     "arguments": [
+-      "msbuild",
++      "build",
+       "LegacyTradeReconciliation.sln",
+-      "/t:Restore,Build",
+-      "/p:Configuration=Release"
++      "-c",
++      "Release"
+     ],
+     "allowedExitCodes": [0]
+   },
+   "test": {
+-    "executable": "tests/LegacyTradeReconciliation.CharacterizationTests/bin/Release/LegacyTradeReconciliation.CharacterizationTests.exe",
+-    "arguments": [],
++    "executable": "dotnet",
++    "arguments": [
++      "test",
++      "LegacyTradeReconciliation.sln",
++      "-c",
++      "Release",
++      "--no-build"
++    ],
+     "allowedExitCodes": [0]
+   },
+   "run": {
+-    "executable": "LegacyTradeReconciliation/bin/Release/LegacyTradeReconciliation.exe",
++    "executable": "dotnet",
+     "arguments": [
++      "run",
++      "--project",
++      "LegacyTradeReconciliation/LegacyTradeReconciliation.csproj",
++      "--",
+       "{businessDate}",
+       "{inputDirectory}",
+       "{outputDirectory}"
+diff --git a/tests/LegacyTradeReconciliation.CharacterizationTests/LegacyTradeReconciliation.CharacterizationTests.csproj b/tests/LegacyTradeReconciliation.CharacterizationTests/LegacyTradeReconciliation.CharacterizationTests.csproj
+index bd072a8..f982a11 100644
+--- a/tests/LegacyTradeReconciliation.CharacterizationTests/LegacyTradeReconciliation.CharacterizationTests.csproj
++++ b/tests/LegacyTradeReconciliation.CharacterizationTests/LegacyTradeReconciliation.CharacterizationTests.csproj
+@@ -1,104 +1,31 @@
+-<?xml version="1.0" encoding="utf-8"?>
+-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
++<Project Sdk="Microsoft.NET.Sdk">
+   <PropertyGroup>
+-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+-    <ProjectGuid>{4D84E6D4-9D19-450D-A6A5-AD31E2D2E1A5}</ProjectGuid>
+-    <OutputType>Exe</OutputType>
+-    <AppDesignerFolder>Properties</AppDesignerFolder>
++    <TargetFramework>net8.0</TargetFramework>
++    <OutputType>Library</OutputType>
++    <ImplicitUsings>enable</ImplicitUsings>
++    <Nullable>disable</Nullable>
++    <IsPackable>false</IsPackable>
++    <IsTestProject>true</IsTestProject>
+     <RootNamespace>LegacyTradeReconciliation.CharacterizationTests</RootNamespace>
+     <AssemblyName>LegacyTradeReconciliation.CharacterizationTests</AssemblyName>
+-    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
+-    <FileAlignment>512</FileAlignment>
+-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+-    <Deterministic>true</Deterministic>
+-    <LangVersion>7.3</LangVersion>
+-    <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
+-  </PropertyGroup>
+-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+-    <PlatformTarget>AnyCPU</PlatformTarget>
+-    <DebugSymbols>true</DebugSymbols>
+-    <DebugType>full</DebugType>
+-    <Optimize>false</Optimize>
+-    <OutputPath>bin\Debug\</OutputPath>
+-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+-    <ErrorReport>prompt</ErrorReport>
+-    <WarningLevel>4</WarningLevel>
+-  </PropertyGroup>
+-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
+-    <PlatformTarget>AnyCPU</PlatformTarget>
+-    <DebugType>pdbonly</DebugType>
+-    <Optimize>true</Optimize>
+-    <OutputPath>bin\Release\</OutputPath>
+-    <DefineConstants>TRACE</DefineConstants>
+-    <ErrorReport>prompt</ErrorReport>
+-    <WarningLevel>4</WarningLevel>
+   </PropertyGroup>
++
+   <ItemGroup>
+-    <Reference Include="Microsoft.CSharp" />
+-    <Reference Include="System" />
+-    <Reference Include="System.Core" />
+-    <Reference Include="System.Xml.Linq" />
+-    <Reference Include="System.Data.DataSetExtensions" />
+-    <Reference Include="System.Data" />
+-    <Reference Include="System.Xml" />
++    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
++    <PackageReference Include="xunit" Version="2.9.2" />
++    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
++      <PrivateAssets>all</PrivateAssets>
++      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
++    </PackageReference>
+   </ItemGroup>
++
+   <ItemGroup>
+-    <Compile Include="Program.cs" />
++    <ProjectReference Include="..\..\LegacyTradeReconciliation\LegacyTradeReconciliation.csproj" />
+   </ItemGroup>
++
+   <ItemGroup>
+-    <None Include="App.config" />
+-    <Content Include="Fixtures\baseline\expected\break-queue.csv">
+-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+-    </Content>
+-    <Content Include="Fixtures\baseline\expected\end-of-day-report.txt">
+-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+-    </Content>
+-    <Content Include="Fixtures\baseline\input\overrides.csv">
+-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+-    </Content>
+-    <Content Include="Fixtures\baseline\input\positions.csv">
+-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+-    </Content>
+-    <Content Include="Fixtures\baseline\input\settlements.csv">
+-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+-    </Content>
+-    <Content Include="Fixtures\baseline\input\trades.csv">
+-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+-    </Content>
+-    <Content Include="Fixtures\override-rerun\expected\break-queue.csv">
+-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+-    </Content>
+-    <Content Include="Fixtures\override-rerun\expected\end-of-day-report.txt">
++    <None Update="Fixtures\**\*">
+       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+-    </Content>
+-    <Content Include="Fixtures\override-rerun\expected\matched-trades.csv">
+-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+-    </Content>
+-    <Content Include="Fixtures\override-rerun\input\overrides.csv">
+-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+-    </Content>
+-    <Content Include="Fixtures\override-rerun\input\positions.csv">
+-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+-    </Content>
+-    <Content Include="Fixtures\override-rerun\input\settlements.csv">
+-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+-    </Content>
+-    <Content Include="Fixtures\override-rerun\input\trades.csv">
+-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+-    </Content>
+-  </ItemGroup>
+-  <ItemGroup>
+-    <ProjectReference Include="..\..\LegacyTradeReconciliation\LegacyTradeReconciliation.csproj">
+-      <Project>{6C5D80C7-7C04-4BBA-A8E3-2E35AFD0C76C}</Project>
+-      <Name>LegacyTradeReconciliation</Name>
+-    </ProjectReference>
+-  </ItemGroup>
+-  <ItemGroup>
+-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net462" Version="1.0.3">
+-      <PrivateAssets>all</PrivateAssets>
+-    </PackageReference>
++    </None>
+   </ItemGroup>
+-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+ </Project>
+diff --git a/tests/LegacyTradeReconciliation.CharacterizationTests/Program.cs b/tests/LegacyTradeReconciliation.CharacterizationTests/Program.cs
+index 441ad90..3f01a0d 100644
+--- a/tests/LegacyTradeReconciliation.CharacterizationTests/Program.cs
++++ b/tests/LegacyTradeReconciliation.CharacterizationTests/Program.cs
+@@ -1,150 +1,108 @@
+ using System;
+ using System.IO;
++using Xunit;
+ using LegacyTradeReconciliation;
+ 
+-namespace LegacyTradeReconciliation.CharacterizationTests
++namespace LegacyTradeReconciliation.CharacterizationTests;
++
++public class ReconciliationBehaviorTests
+ {
+-    public static class Program
++    [Fact]
++    public void BaselineGoldenMaster()
+     {
+-        public static int Main(string[] args)
+-        {
+-            RunTest("baseline-golden-master", RunBaselineGoldenMaster);
+-            RunTest("override-and-rerun", RunOverrideAndRerun);
+-            RunTest("duplicate-overrides-are-audited", RunDuplicateOverridesAreAudited);
+-            Console.WriteLine("All characterization tests passed.");
+-            return 0;
+-        }
++        string fixtureRoot = Path.Combine(AppContext.BaseDirectory, "Fixtures", "baseline");
++        string outputDirectory = PrepareOutputDirectory("baseline");
++        ExecuteBatch(fixtureRoot, outputDirectory);
++
++        AssertFileEquals(
++            Path.Combine(fixtureRoot, "expected", "break-queue.csv"),
++            Path.Combine(outputDirectory, "break-queue.csv"));
++        AssertFileEquals(
++            Path.Combine(fixtureRoot, "expected", "end-of-day-report.txt"),
++            Path.Combine(outputDirectory, "end-of-day-report.txt"));
++    }
+ 
+-        private static void RunBaselineGoldenMaster()
+-        {
+-            string fixtureRoot = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Fixtures", "baseline");
+-            string outputDirectory = PrepareOutputDirectory("baseline");
+-            ExecuteBatch(fixtureRoot, outputDirectory);
+-
+-            AssertFileEquals(
+-                Path.Combine(fixtureRoot, "expected", "break-queue.csv"),
+-                Path.Combine(outputDirectory, "break-queue.csv"));
+-            AssertFileEquals(
+-                Path.Combine(fixtureRoot, "expected", "end-of-day-report.txt"),
+-                Path.Combine(outputDirectory, "end-of-day-report.txt"));
+-        }
++    [Fact]
++    public void OverrideAndRerunIsIdempotent()
++    {
++        string fixtureRoot = Path.Combine(AppContext.BaseDirectory, "Fixtures", "override-rerun");
++        string outputDirectory = PrepareOutputDirectory("override-rerun");
++        ExecuteBatch(fixtureRoot, outputDirectory);
++
++        string firstMatchedTrades = File.ReadAllText(Path.Combine(outputDirectory, "matched-trades.csv"));
++        string firstReport = File.ReadAllText(Path.Combine(outputDirectory, "end-of-day-report.txt"));
++        string firstLedger = File.ReadAllText(Path.Combine(outputDirectory, "run-ledger.csv"));
++
++        AssertFileEquals(
++            Path.Combine(fixtureRoot, "expected", "matched-trades.csv"),
++            Path.Combine(outputDirectory, "matched-trades.csv"));
++        AssertFileEquals(
++            Path.Combine(fixtureRoot, "expected", "break-queue.csv"),
++            Path.Combine(outputDirectory, "break-queue.csv"));
++        AssertFileEquals(
++            Path.Combine(fixtureRoot, "expected", "end-of-day-report.txt"),
++            Path.Combine(outputDirectory, "end-of-day-report.txt"));
++
++        ExecuteBatch(fixtureRoot, outputDirectory);
++
++        Assert.Equal(firstMatchedTrades, File.ReadAllText(Path.Combine(outputDirectory, "matched-trades.csv")));
++        Assert.Equal(firstReport, File.ReadAllText(Path.Combine(outputDirectory, "end-of-day-report.txt")));
++        Assert.Equal(firstLedger, File.ReadAllText(Path.Combine(outputDirectory, "run-ledger.csv")));
++    }
+ 
+-        private static void RunOverrideAndRerun()
+-        {
+-            string fixtureRoot = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Fixtures", "override-rerun");
+-            string outputDirectory = PrepareOutputDirectory("override-rerun");
+-            ExecuteBatch(fixtureRoot, outputDirectory);
+-
+-            string firstMatchedTrades = File.ReadAllText(Path.Combine(outputDirectory, "matched-trades.csv"));
+-            string firstReport = File.ReadAllText(Path.Combine(outputDirectory, "end-of-day-report.txt"));
+-            string firstLedger = File.ReadAllText(Path.Combine(outputDirectory, "run-ledger.csv"));
+-
+-            AssertFileEquals(
+-                Path.Combine(fixtureRoot, "expected", "matched-trades.csv"),
+-                Path.Combine(outputDirectory, "matched-trades.csv"));
+-            AssertFileEquals(
+-                Path.Combine(fixtureRoot, "expected", "break-queue.csv"),
+-                Path.Combine(outputDirectory, "break-queue.csv"));
+-            AssertFileEquals(
+-                Path.Combine(fixtureRoot, "expected", "end-of-day-report.txt"),
+-                Path.Combine(outputDirectory, "end-of-day-report.txt"));
+-
+-            ExecuteBatch(fixtureRoot, outputDirectory);
+-
+-            AssertEqual("matched-trades rerun should stay identical", firstMatchedTrades, File.ReadAllText(Path.Combine(outputDirectory, "matched-trades.csv")));
+-            AssertEqual("report rerun should stay identical", firstReport, File.ReadAllText(Path.Combine(outputDirectory, "end-of-day-report.txt")));
+-            AssertEqual("ledger rerun should stay identical", firstLedger, File.ReadAllText(Path.Combine(outputDirectory, "run-ledger.csv")));
+-        }
++    [Fact]
++    public void DuplicateOverridesAreAudited()
++    {
++        string fixtureRoot = Path.Combine(AppContext.BaseDirectory, "Fixtures", "override-rerun");
++        string workingRoot = PrepareOutputDirectory("duplicate-overrides-input");
++        string inputDirectory = Path.Combine(workingRoot, "input");
++        string outputDirectory = PrepareOutputDirectory("duplicate-overrides-output");
++        Directory.CreateDirectory(inputDirectory);
+ 
+-        private static void RunDuplicateOverridesAreAudited()
++        foreach (string fileName in new[] { "trades.csv", "positions.csv", "settlements.csv", "overrides.csv" })
+         {
+-            string fixtureRoot = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Fixtures", "override-rerun");
+-            string workingRoot = PrepareOutputDirectory("duplicate-overrides-input");
+-            string inputDirectory = Path.Combine(workingRoot, "input");
+-            string outputDirectory = PrepareOutputDirectory("duplicate-overrides-output");
+-            Directory.CreateDirectory(inputDirectory);
+-
+-            foreach (string fileName in new[] { "trades.csv", "positions.csv", "settlements.csv", "overrides.csv" })
+-            {
+-                File.Copy(Path.Combine(fixtureRoot, "input", fileName), Path.Combine(inputDirectory, fileName));
+-            }
+-
+-            File.AppendAllText(
+-                Path.Combine(inputDirectory, "overrides.csv"),
+-                "T-1003,ForceMatch,Superseded duplicate instruction,ops-manager" + Environment.NewLine);
+-
+-            ExecuteBatch(workingRoot, outputDirectory);
+-
+-            string report = File.ReadAllText(Path.Combine(outputDirectory, "end-of-day-report.txt"));
+-            AssertContains("duplicate override count", report, "Stale Overrides: 1");
+-            AssertContains("duplicate override audit detail", report, "T-1003: ForceMatch (ops-manager)");
++            File.Copy(Path.Combine(fixtureRoot, "input", fileName), Path.Combine(inputDirectory, fileName));
+         }
+ 
+-        private static void ExecuteBatch(string fixtureRoot, string outputDirectory)
+-        {
+-            int exitCode = new ReconciliationBatch().Run(new[]
+-            {
+-                "2025-03-17",
+-                Path.Combine(fixtureRoot, "input"),
+-                outputDirectory
+-            });
+-
+-            if (exitCode != 0)
+-            {
+-                throw new InvalidOperationException("Batch exited with code " + exitCode + ".");
+-            }
+-        }
++        File.AppendAllText(
++            Path.Combine(inputDirectory, "overrides.csv"),
++            "T-1003,ForceMatch,Superseded duplicate instruction,ops-manager" + Environment.NewLine);
+ 
+-        private static string PrepareOutputDirectory(string name)
+-        {
+-            string directory = Path.Combine(Path.GetTempPath(), "legacy-trade-reconciliation-tests", name);
+-            if (Directory.Exists(directory))
+-            {
+-                Directory.Delete(directory, true);
+-            }
+-
+-            Directory.CreateDirectory(directory);
+-            return directory;
+-        }
++        ExecuteBatch(workingRoot, outputDirectory);
+ 
+-        private static void AssertFileEquals(string expectedPath, string actualPath)
+-        {
+-            AssertEqual(Path.GetFileName(actualPath), File.ReadAllText(expectedPath), File.ReadAllText(actualPath));
+-        }
++        string report = File.ReadAllText(Path.Combine(outputDirectory, "end-of-day-report.txt"));
++        Assert.Contains("Stale Overrides: 1", report, StringComparison.Ordinal);
++        Assert.Contains("T-1003: ForceMatch (ops-manager)", report, StringComparison.Ordinal);
++    }
+ 
+-        private static void AssertEqual(string label, string expected, string actual)
++    private static void ExecuteBatch(string fixtureRoot, string outputDirectory)
++    {
++        int exitCode = new ReconciliationBatch().Run(new[]
+         {
+-            if (!string.Equals(expected, actual, StringComparison.Ordinal))
+-            {
+-                throw new InvalidOperationException(label + " mismatch." + Environment.NewLine +
+-                    "Expected:" + Environment.NewLine +
+-                    expected + Environment.NewLine +
+-                    "Actual:" + Environment.NewLine +
+-                    actual);
+-            }
+-        }
++            "2025-03-17",
++            Path.Combine(fixtureRoot, "input"),
++            outputDirectory
++        });
+ 
+-        private static void AssertContains(string label, string actual, string expectedFragment)
+-        {
+-            if (actual.IndexOf(expectedFragment, StringComparison.Ordinal) < 0)
+-            {
+-                throw new InvalidOperationException(label + " missing expected text: " + expectedFragment);
+-            }
+-        }
++        Assert.Equal(0, exitCode);
++    }
+ 
+-        private static void RunTest(string name, Action action)
++    private static string PrepareOutputDirectory(string name)
++    {
++        string directory = Path.Combine(Path.GetTempPath(), "legacy-trade-reconciliation-tests", name);
++        if (Directory.Exists(directory))
+         {
+-            try
+-            {
+-                action();
+-                Console.WriteLine("[PASS] " + name);
+-            }
+-            catch (Exception exception)
+-            {
+-                Console.WriteLine("[FAIL] " + name);
+-                Console.WriteLine(exception.Message);
+-                Environment.Exit(1);
+-            }
++            Directory.Delete(directory, true);
+         }
++
++        Directory.CreateDirectory(directory);
++        return directory;
++    }
++
++    private static void AssertFileEquals(string expectedPath, string actualPath)
++    {
++        Assert.Equal(
++            File.ReadAllText(expectedPath),
++            File.ReadAllText(actualPath));
+     }
+ }

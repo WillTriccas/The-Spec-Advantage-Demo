@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.1.0",
+  "runId": "modernization-frontier-spec-r2",
+  "preparedAt": "2026-08-18T14:56:33.574Z",
+  "hashes": {
+    "taskBriefSha256": "f22d3d71127ff9f1e7c3e35706442e5d4a79443ef273fa28e43468c0dc789957",
+    "promptSha256": "518d8bb000fd36bb982c37042636adf1f54c0d1a484ba5319578ec858452db23",
+    "specManifestSha256": "c115dac33def611c45122471de8a0c392d3ed60c58279909a5e531fca991ca31",
+    "scoringConfigSha256": "c9e7c3bebd575b3b56f0409d69cdb5d952c175a73ec11ada7599d73a9648bac6",
+    "experimentConfigSha256": "b7f2dd0b8a5990a4264412829ede8e05fcb0a20fd7814cba902a01ac54f3276f",
+    "costsConfigSha256": "3b2c5ed227eef9cb46c8686dca1bd76af97e2f50e36729358ebc7c9d00dc5ea5",
+    "benchmarkEngineSha256": "848140d8340397b49926e4b1a05cca6a873850ee2822eb8ad8d654e3078dab9a",
+    "runSchemaSha256": "b4cc4103ec2613d7f6ce46aef274a32b4e58a63cebeaccefc609f645606ccf11",
+    "reportSchemaSha256": "b1b050eba32e96cb059d542ea21114e7d91d8e88cc22f74bc9b867be45187204",
+    "baselineSha256": "209c028929088c1695b9f00b4d10f3dd8c0e3217f9d41122301358f5927158a2",
+    "planSha256": "afbd62abdce322131a77794c9c6425a8889e1c7b955677b88f387ff3a1362050",
+    "evaluatorSha256": "1540f263481cae49fa84bc8d187c5e1b503cc5775f41f24da1e54339870c8946",
+    "freezeRecordSha256": "edd523966c35daa42a6ad2306670157c90336232bac20b3c6f3e88c27a66ef30"
+  },
+  "executionPolicySnapshot": {
+    "freshWorkspacePerRun": true,
+    "crossRunMemory": false,
+    "humanRemediation": false,
+    "preserveFailedRuns": true,
+    "failedRunTreatment": "score-zero-and-fail-applicable-gates",
+    "timeoutSeconds": 5400,
+    "toolCallCap": 200,
+    "toolPermissionProfile": "standard-coding",
+    "runOrder": "randomized-interleaved",
+    "runOrderNotes": "Execute the seeded order across lanes rather than grouping by model or treatment.",
+    "captureQueueAndThrottleTime": true,
+    "queueAndThrottleNotes": "Record queue and throttle time separately from productive execution time."
+  },
+  "importedAt": "2026-08-18T14:57:00.935Z",
+  "frozenVersions": {
+    "benchmarkVersion": "specforge-fsi-v1.0.0",
+    "baselineRef": "refs/tags/benchmark-legacy-v1",
+    "pinnedAgentVersion": "1.0.79-9",
+    "pinnedAgentBuildId": "not-separately-exposed-by-copilot",
+    "modelBuildId": "not-exposed-by-copilot",
+    "modelEffortParams": {
+      "reasoningEffort": "high"
+    }
+  },
+  "freezeRecordPath": "C:\\Users\\willtriccas\\.copilot\\repos\\copilot-worktrees\\Work-Demos\\willtriccas-ideal-chainsaw\\evidence\\freeze-readiness.json"
+}

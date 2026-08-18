@@ -1,0 +1,76 @@
+{
+  "schemaVersion": "1.1.0",
+  "dataKind": "measured",
+  "runId": "audit-feature-efficient-raw-r1",
+  "benchmarkVersion": "specforge-fsi-v1.0.0",
+  "episodeId": "audit-feature",
+  "laneId": "efficient-raw",
+  "model": {
+    "id": "mai-code-1.1-flash",
+    "displayName": "MAI Code 1.1 Flash",
+    "tier": "efficient",
+    "buildId": "not-exposed-by-copilot"
+  },
+  "inputMode": "raw",
+  "repetition": 1,
+  "baseline": {
+    "ref": "refs/tags/benchmark-modernized-v1",
+    "commit": "806344ba17e194b54d0e645455829ab05c58fb6c",
+    "sha256": "82ff4d70d1423d45cb25e2d714355500d22b31eb6c8f47c5f5f246d4f4662120"
+  },
+  "brief": {
+    "path": "benchmark/prompts/audit-feature-raw.md",
+    "sha256": "f47aa4cd40324a29be02f62a6f7fb8c900a72017ad565ca3b3e7756e343d648d"
+  },
+  "spec": null,
+  "frozenInputs": {
+    "freezeRecordSha256": "edd523966c35daa42a6ad2306670157c90336232bac20b3c6f3e88c27a66ef30",
+    "evaluatorSha256": "1540f263481cae49fa84bc8d187c5e1b503cc5775f41f24da1e54339870c8946",
+    "scoringConfigSha256": "c9e7c3bebd575b3b56f0409d69cdb5d952c175a73ec11ada7599d73a9648bac6",
+    "costsConfigSha256": "3b2c5ed227eef9cb46c8686dca1bd76af97e2f50e36729358ebc7c9d00dc5ea5",
+    "benchmarkEngineSha256": "848140d8340397b49926e4b1a05cca6a873850ee2822eb8ad8d654e3078dab9a",
+    "promptSha256": "f47aa4cd40324a29be02f62a6f7fb8c900a72017ad565ca3b3e7756e343d648d",
+    "experimentConfigSha256": "b7f2dd0b8a5990a4264412829ede8e05fcb0a20fd7814cba902a01ac54f3276f",
+    "runSchemaSha256": "b4cc4103ec2613d7f6ce46aef274a32b4e58a63cebeaccefc609f645606ccf11",
+    "reportSchemaSha256": "b1b050eba32e96cb059d542ea21114e7d91d8e88cc22f74bc9b867be45187204"
+  },
+  "execution": {
+    "status": "failed",
+    "order": 21,
+    "startedAt": "2026-08-18T12:32:45.907Z",
+    "endedAt": "2026-08-18T13:28:06.630Z",
+    "elapsedSeconds": 3320.723,
+    "productiveSeconds": 15.293,
+    "queueSeconds": 30.576,
+    "modelId": "mai-code-1.1-flash",
+    "modelBuildId": "not-exposed-by-copilot",
+    "agentVersion": "1.0.79-9",
+    "agentBuildId": "not-separately-exposed-by-copilot",
+    "reasoningEffort": "high",
+    "toolCalls": 4,
+    "inputTokens": 30758,
+    "cachedInputTokens": 64000,
+    "outputTokens": 1086,
+    "reasoningTokens": 704,
+    "estimatedCostUsd": null,
+    "specAuthoringCostUsd": null,
+    "firstGreenBuildSeconds": null,
+    "firstPassingSuiteSeconds": null,
+    "reworkCount": 0,
+    "scopeChurnFiles": 0
+  },
+  "source": {
+    "commit": "874095f1c58cb6d9b1992d183edf9393c48d0c93",
+    "diffPath": "evidence/measured/runs/audit-feature-efficient-raw-r1/candidate.patch",
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bundlePath": "evidence/measured/runs/audit-feature-efficient-raw-r1/source.bundle",
+    "bundleSha256": "a83f4fb7a82a6c856bccbb58b58f1357ff862a4ce05b4ae2dbdf52d7fc74208b"
+  },
+  "evidence": {
+    "directory": "evidence/measured/runs/audit-feature-efficient-raw-r1/evidence",
+    "transcriptPath": "evidence/measured/runs/audit-feature-efficient-raw-r1/evidence/transcript.jsonl",
+    "transcriptSha256": "d9a59f7c52c9597af4c437627c74b6821fc3a93f377fefe06ed65cb4cd1085ee",
+    "evaluatorPath": "evidence/measured/runs/audit-feature-efficient-raw-r1/evidence/evaluator.json",
+    "evaluatorSha256": "d209ef2e4c689a21d359e044a61a76b026993f05a04fbfdd87d0f24f8c6b9dc9"
+  }
+}

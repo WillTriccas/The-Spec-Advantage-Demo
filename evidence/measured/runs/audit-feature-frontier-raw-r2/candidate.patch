@@ -1,0 +1,2918 @@
+diff --git a/README.md b/README.md
+index f3899db..0de131e 100644
+--- a/README.md
++++ b/README.md
+@@ -5,10 +5,12 @@ for an AI-enabled SDLC benchmark. It ingests synthetic trade, position and settl
+ records, reconciles them under configurable tolerances, records unmatched breaks, supports
+ manual overrides and idempotent reruns, and emits end-of-day (EOD) reports.
+ 
+-> **Scope note.** This baseline intentionally does **not** implement the Episode 2 audit
+-> feature. There is no maker–checker workflow, no append-only resolution audit log, and no
+-> reason/evidence approval system. Manual override here is a plain operational suppression
+-> with no approval gate or history. Those capabilities are added later in the benchmark.
++> **Scope note.** The baseline reconciliation engine treats a manual override as a plain
++> operational suppression with no approval gate. Governed resolution of an exception — the
++> maker–checker workflow, its append-only audit history and the Compliance export — is a
++> separate capability, hosted by `TradeRecon.AuditConsole` and documented under
++> [Exception resolution and audit history](#exception-resolution-and-audit-history). The two
++> hosts are independent: the reconciliation CLI contract below is unchanged.
+ 
+ ## Architecture
+ 
+@@ -25,7 +27,8 @@ src/canonical-modernized/
+ │   ├── TradeRecon.Domain/           # entities, value objects, enums, tolerances (no deps)
+ │   ├── TradeRecon.Application/      # engine, matcher, runner, report builder, abstractions
+ │   ├── TradeRecon.Infrastructure/   # CSV sources, in-memory stores, file report writer, DI
+-│   └── TradeRecon.Console/          # DI-wired host that runs a reconciliation for a date
++│   ├── TradeRecon.Console/          # DI-wired host that runs a reconciliation for a date
++│   └── TradeRecon.AuditConsole/     # DI-wired host for propose / decide / export
+ └── tests/
+     └── TradeRecon.Tests/            # xUnit unit + fixture-backed end-to-end tests
+ ```
+@@ -44,6 +47,11 @@ Key types:
+ | Application | `EndOfDayReportBuilder` | Renders the EOD summary, CSV break register and JSON result |
+ | Infrastructure | `CsvReconciliationBatchSource` | Loads inputs from CSV fixtures (async I/O) |
+ | Infrastructure | `InMemory*` stores, `FileReportWriter` | Idempotent persistence + report output |
++| Domain | `AuditEntry`, `ResolutionAction`, `ActorRole` | One immutable, hash-chained history record |
++| Application | `ResolutionWorkflowService` | Propose / decide / export rules (maker–checker, idempotency) |
++| Application | `SensitiveTextRedactor`, `AuditHashing` | Redaction at the boundary; tamper-evident chaining |
++| Application | `AuditTrailSnapshot`, `AuditExportBuilder` | Chain verification and the Compliance export |
++| Infrastructure | `FileAuditTrailStore` | Append-only JSONL trail guarded by a cross-process lock |
+ 
+ ## Business invariants
+ 
+@@ -207,6 +215,78 @@ invariant formatting.
+ to assert on specific breaks or to feed a manual override. `difference`, `tradeId` and
+ `settlementId` are nullable depending on break type.
+ 
++## Exception resolution and audit history
++
++An operational break may be resolved, but never silently and never by one person alone.
++`TradeRecon.AuditConsole` hosts that workflow as a second black-box CLI, deliberately separate
++from the reconciliation host so the contract above is untouched.
++
++**The rules it enforces**
++
++1. **Maker–checker.** A resolution is *proposed* by one person and *decided* by another. The
++   proposer can never be the checker; a self-approval is refused and **nothing is appended**,
++   so the trail can never contain a self-approved resolution.
++2. **Exactly one durable decision.** The first decision to reach durable state wins. Later
++   conflicting decisions are refused, including when concurrent processes race: the trail is
++   guarded by a cross-process lock held across the whole read → decide → append sequence, and
++   an entry is rejected unless it extends the current head.
++3. **Idempotent retries.** Replaying an identical `propose` or `decide` (same actor, same
++   decision) succeeds and appends nothing — a retried command after a crash or a timeout
++   cannot duplicate history.
++4. **Append-only, tamper-evident.** Entries are appended to `resolution-audit-trail.jsonl` and
++   never rewritten; each carries a monotonic sequence and a SHA-256 hash over its canonical
++   form plus its predecessor's hash. Any edit or reordering breaks the chain, and the export
++   reports `chainVerified: false`.
++5. **No sensitive data.** Operator-supplied reason and evidence text is redacted *before* it
++   reaches durable state, stdout or stderr: account identifiers, instrument identifiers and
++   trade amounts are replaced with `[REDACTED-ID]` / `[REDACTED-AMOUNT]`. The original text is
++   retained only as a SHA-256 hash, which still proves that a retry carried the same reason.
++6. **Explainable.** Every entry records who acted, in which role, when, against which request
++   and business date, so the export answers "who resolved this, and on what basis?".
++
++**Commands** — each writes exactly one JSON document to stdout.
++
++```
++initialize --state <dir>
++propose    --state <dir> --request-id <id> --proposer <who> --business-date <yyyy-MM-dd>
++           --reason <text> --evidence <text>
++decide     --state <dir> --request-id <id> --approver <who> --decision <approve|reject>
++export     --state <dir> --from <yyyy-MM-dd> --to <yyyy-MM-dd> --output <path>
++```
++
++**Exit codes** (stable):
++
++| Code | Meaning |
++|------|---------|
++| `0` | Accepted, or an identical retry replayed |
++| `3` | Understood but refused by a workflow rule (`self-approval-rejected`, `already-decided`, `proposal-conflict`, `unknown-request`, `invalid-decision`) |
++| `1` | Invalid arguments or an I/O failure |
++
++A refusal is not a crash: it still writes a JSON document whose `result.outcome` names the
++rule that refused it, so a harness can assert on the reason rather than on a message.
++
++**Export** — `export` writes the document to `--output` *and* to stdout. It contains the
++per-request roll-up (`status`, `finalDecidedBy`, `decisionCount`, `checkerDistinctFromProposer`)
++and every durable entry in the range, plus `chainVerified` and the head hash.
++
++`audit-adapter.json` is the data-only contract for these four commands, in the same shape as
++`benchmark-adapter.json`: an executable plus a fully separated argument array. Because
++arguments are never concatenated into a shell string, operator text such as a reason
++containing `&&` or quotes is passed through verbatim and can never be re-interpreted as shell
++syntax.
++
++```powershell
++$state = "./audit-state"
++dotnet run --project src/TradeRecon.AuditConsole -c Release --no-build -- initialize --state $state
++dotnet run --project src/TradeRecon.AuditConsole -c Release --no-build -- propose --state $state `
++  --request-id REQ-1 --proposer analyst.maker --business-date 2024-06-03 `
++  --reason "Custodian timing difference" --evidence "Ticket OPS-4471"
++dotnet run --project src/TradeRecon.AuditConsole -c Release --no-build -- decide --state $state `
++  --request-id REQ-1 --approver compliance.checker --decision approve
++dotnet run --project src/TradeRecon.AuditConsole -c Release --no-build -- export --state $state `
++  --from 2024-06-01 --to 2024-06-30 --output ./audit-export.json
++```
++
+ ## Input format
+ 
+ `trades.csv`
+diff --git a/TradeRecon.sln b/TradeRecon.sln
+index 8d36e6f..2b077a6 100644
+--- a/TradeRecon.sln
++++ b/TradeRecon.sln
+@@ -17,6 +17,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0C386F45
+ EndProject
+ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradeRecon.Tests", "tests\TradeRecon.Tests\TradeRecon.Tests.csproj", "{470AC8FD-BDF3-4EB5-A899-8FA77E3EE9E0}"
+ EndProject
++Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradeRecon.AuditConsole", "src\TradeRecon.AuditConsole\TradeRecon.AuditConsole.csproj", "{4E2A9332-82DA-4C74-B90F-17AC1688760D}"
++EndProject
+ Global
+ 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+ 		Debug|Any CPU = Debug|Any CPU
+@@ -46,6 +48,10 @@ Global
+ 		{470AC8FD-BDF3-4EB5-A899-8FA77E3EE9E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+ 		{470AC8FD-BDF3-4EB5-A899-8FA77E3EE9E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+ 		{470AC8FD-BDF3-4EB5-A899-8FA77E3EE9E0}.Release|Any CPU.Build.0 = Release|Any CPU
++		{4E2A9332-82DA-4C74-B90F-17AC1688760D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
++		{4E2A9332-82DA-4C74-B90F-17AC1688760D}.Debug|Any CPU.Build.0 = Debug|Any CPU
++		{4E2A9332-82DA-4C74-B90F-17AC1688760D}.Release|Any CPU.ActiveCfg = Release|Any CPU
++		{4E2A9332-82DA-4C74-B90F-17AC1688760D}.Release|Any CPU.Build.0 = Release|Any CPU
+ 	EndGlobalSection
+ 	GlobalSection(NestedProjects) = preSolution
+ 		{64960CF1-46A3-4FE0-A36D-40D30676AA89} = {57A3EB5F-B78E-45ED-BF2A-5182DB5EB91F}
+@@ -53,5 +59,6 @@ Global
+ 		{62DFDE00-84D6-468D-86A2-B87D49AEDB98} = {57A3EB5F-B78E-45ED-BF2A-5182DB5EB91F}
+ 		{B3572F63-FC90-4345-B03F-BBF50773E5D7} = {57A3EB5F-B78E-45ED-BF2A-5182DB5EB91F}
+ 		{470AC8FD-BDF3-4EB5-A899-8FA77E3EE9E0} = {0C386F45-138C-488A-A35E-731729F3C973}
++		{4E2A9332-82DA-4C74-B90F-17AC1688760D} = {57A3EB5F-B78E-45ED-BF2A-5182DB5EB91F}
+ 	EndGlobalSection
+ EndGlobal
+diff --git a/audit-adapter.json b/audit-adapter.json
+new file mode 100644
+index 0000000..8a9b11d
+--- /dev/null
++++ b/audit-adapter.json
+@@ -0,0 +1,90 @@
++{
++  "schemaVersion": "1.0.0",
++  "workingDirectory": ".",
++  "initialize": {
++    "executable": "dotnet",
++    "arguments": [
++      "run",
++      "--project",
++      "src/TradeRecon.AuditConsole/TradeRecon.AuditConsole.csproj",
++      "--configuration",
++      "Release",
++      "--no-build",
++      "--",
++      "initialize",
++      "--state",
++      "{stateDirectory}"
++    ],
++    "allowedExitCodes": [0]
++  },
++  "propose": {
++    "executable": "dotnet",
++    "arguments": [
++      "run",
++      "--project",
++      "src/TradeRecon.AuditConsole/TradeRecon.AuditConsole.csproj",
++      "--configuration",
++      "Release",
++      "--no-build",
++      "--",
++      "propose",
++      "--state",
++      "{stateDirectory}",
++      "--request-id",
++      "{requestId}",
++      "--proposer",
++      "{proposer}",
++      "--business-date",
++      "{businessDate}",
++      "--reason",
++      "{reason}",
++      "--evidence",
++      "{evidence}"
++    ],
++    "allowedExitCodes": [0, 3]
++  },
++  "decide": {
++    "executable": "dotnet",
++    "arguments": [
++      "run",
++      "--project",
++      "src/TradeRecon.AuditConsole/TradeRecon.AuditConsole.csproj",
++      "--configuration",
++      "Release",
++      "--no-build",
++      "--",
++      "decide",
++      "--state",
++      "{stateDirectory}",
++      "--request-id",
++      "{requestId}",
++      "--approver",
++      "{approver}",
++      "--decision",
++      "{decision}"
++    ],
++    "allowedExitCodes": [0, 3]
++  },
++  "export": {
++    "executable": "dotnet",
++    "arguments": [
++      "run",
++      "--project",
++      "src/TradeRecon.AuditConsole/TradeRecon.AuditConsole.csproj",
++      "--configuration",
++      "Release",
++      "--no-build",
++      "--",
++      "export",
++      "--state",
++      "{stateDirectory}",
++      "--from",
++      "{fromDate}",
++      "--to",
++      "{toDate}",
++      "--output",
++      "{exportPath}"
++    ],
++    "allowedExitCodes": [0]
++  }
++}
+diff --git a/src/TradeRecon.Application/Abstractions/IAuditTrailStore.cs b/src/TradeRecon.Application/Abstractions/IAuditTrailStore.cs
+new file mode 100644
+index 0000000..34768f3
+--- /dev/null
++++ b/src/TradeRecon.Application/Abstractions/IAuditTrailStore.cs
+@@ -0,0 +1,34 @@
++using TradeRecon.Application.Audit;
++using TradeRecon.Domain.Audit;
++
++namespace TradeRecon.Application.Abstractions;
++
++/// <summary>
++/// Durable, append-only storage for the resolution audit trail.
++///
++/// Implementations must serialise <see cref="ExecuteAsync{TResult}"/> across every concurrent
++/// caller — including separate operating-system processes — so that a decision is evaluated
++/// against, and appended to, a trail that cannot change underneath it. That is what makes two
++/// racing decisions collapse to exactly one durable final decision.
++/// </summary>
++public interface IAuditTrailStore
++{
++    /// <summary>Creates the trail if it does not exist. Safe to call repeatedly.</summary>
++    Task InitializeAsync(CancellationToken cancellationToken = default);
++
++    /// <summary>Reads and hash-verifies the whole trail.</summary>
++    Task<AuditTrailSnapshot> ReadAsync(CancellationToken cancellationToken = default);
++
++    /// <summary>
++    /// Runs <paramref name="decide"/> under an exclusive lock over the trail and durably appends
++    /// the entry it returns, if any, before releasing the lock.
++    /// </summary>
++    Task<TResult> ExecuteAsync<TResult>(
++        Func<AuditTrailSnapshot, AuditTransaction<TResult>> decide,
++        CancellationToken cancellationToken = default);
++}
++
++/// <summary>The outcome of a guarded decision: an optional entry to append plus its result.</summary>
++/// <param name="Append">Entry to append durably, or <c>null</c> for a read-only outcome.</param>
++/// <param name="Result">Value returned to the caller.</param>
++public sealed record AuditTransaction<TResult>(AuditEntry? Append, TResult Result);
+diff --git a/src/TradeRecon.Application/Audit/AuditEntrySerializer.cs b/src/TradeRecon.Application/Audit/AuditEntrySerializer.cs
+new file mode 100644
+index 0000000..a770c3c
+--- /dev/null
++++ b/src/TradeRecon.Application/Audit/AuditEntrySerializer.cs
+@@ -0,0 +1,109 @@
++using System.Globalization;
++using System.Text.Json;
++using System.Text.Json.Serialization;
++using TradeRecon.Domain.Audit;
++
++namespace TradeRecon.Application.Audit;
++
++/// <summary>
++/// Converts audit entries to and from the single-line JSON form used by the append-only trail
++/// file. Line-delimited JSON keeps the store genuinely append-only: writing a new entry never
++/// rewrites an existing byte.
++/// </summary>
++public static class AuditEntrySerializer
++{
++    private static readonly JsonSerializerOptions Options = new()
++    {
++        WriteIndented = false,
++        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
++        DefaultIgnoreCondition = JsonIgnoreCondition.Never
++    };
++
++    /// <summary>Serialises <paramref name="entry"/> as one JSON line (no trailing newline).</summary>
++    public static string Serialize(AuditEntry entry)
++    {
++        ArgumentNullException.ThrowIfNull(entry);
++        return JsonSerializer.Serialize(ToDocument(entry), Options);
++    }
++
++    /// <summary>Parses one JSON line back into an entry.</summary>
++    public static AuditEntry Deserialize(string line)
++    {
++        ArgumentException.ThrowIfNullOrWhiteSpace(line);
++
++        var document = JsonSerializer.Deserialize<AuditEntryDocument>(line, Options)
++            ?? throw new FormatException("Audit trail line is not a JSON object.");
++
++        return FromDocument(document);
++    }
++
++    /// <summary>Wire projection of an entry. Dates and instants are invariant strings.</summary>
++    public static AuditEntryDocument ToDocument(AuditEntry entry)
++    {
++        ArgumentNullException.ThrowIfNull(entry);
++
++        return new AuditEntryDocument
++        {
++            Sequence = entry.Sequence,
++            Version = entry.Version,
++            RequestId = entry.RequestId,
++            Action = entry.Action.ToString(),
++            Actor = entry.Actor,
++            ActorRole = entry.ActorRole.ToString(),
++            Proposer = entry.Proposer,
++            Checker = entry.Checker,
++            BusinessDate = entry.BusinessDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
++            Timestamp = entry.Timestamp.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture),
++            ReasonRedacted = entry.ReasonRedacted,
++            ReasonHash = entry.ReasonHash,
++            EvidenceRedacted = entry.EvidenceRedacted,
++            EvidenceHash = entry.EvidenceHash,
++            PreviousHash = entry.PreviousHash,
++            EntryHash = entry.EntryHash
++        };
++    }
++
++    private static AuditEntry FromDocument(AuditEntryDocument document)
++    {
++        return new AuditEntry
++        {
++            Sequence = document.Sequence,
++            Version = document.Version,
++            RequestId = document.RequestId,
++            Action = Enum.Parse<ResolutionAction>(document.Action, ignoreCase: false),
++            Actor = document.Actor,
++            ActorRole = Enum.Parse<ActorRole>(document.ActorRole, ignoreCase: false),
++            Proposer = document.Proposer,
++            Checker = string.IsNullOrEmpty(document.Checker) ? null : document.Checker,
++            BusinessDate = DateOnly.ParseExact(document.BusinessDate, "yyyy-MM-dd", CultureInfo.InvariantCulture),
++            Timestamp = DateTimeOffset.Parse(document.Timestamp, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind),
++            ReasonRedacted = document.ReasonRedacted,
++            ReasonHash = document.ReasonHash,
++            EvidenceRedacted = document.EvidenceRedacted,
++            EvidenceHash = document.EvidenceHash,
++            PreviousHash = document.PreviousHash,
++            EntryHash = document.EntryHash
++        };
++    }
++}
++
++/// <summary>Serialisation shape of an audit entry, shared by the trail file and the export.</summary>
++public sealed record AuditEntryDocument
++{
++    public required long Sequence { get; init; }
++    public required int Version { get; init; }
++    public required string RequestId { get; init; }
++    public required string Action { get; init; }
++    public required string Actor { get; init; }
++    public required string ActorRole { get; init; }
++    public required string Proposer { get; init; }
++    public string? Checker { get; init; }
++    public required string BusinessDate { get; init; }
++    public required string Timestamp { get; init; }
++    public required string ReasonRedacted { get; init; }
++    public required string ReasonHash { get; init; }
++    public required string EvidenceRedacted { get; init; }
++    public required string EvidenceHash { get; init; }
++    public required string PreviousHash { get; init; }
++    public required string EntryHash { get; init; }
++}
+diff --git a/src/TradeRecon.Application/Audit/AuditExportBuilder.cs b/src/TradeRecon.Application/Audit/AuditExportBuilder.cs
+new file mode 100644
+index 0000000..f8371f3
+--- /dev/null
++++ b/src/TradeRecon.Application/Audit/AuditExportBuilder.cs
+@@ -0,0 +1,137 @@
++using System.Globalization;
++using TradeRecon.Domain.Audit;
++
++namespace TradeRecon.Application.Audit;
++
++/// <summary>
++/// Projects the append-only trail into the Compliance export for a business-date range.
++///
++/// The export is a faithful copy of durable entries — never a re-derivation — plus a per-request
++/// roll-up that makes the maker-checker property directly assertable: every approved or rejected
++/// request shows exactly one final decision, taken by a checker distinct from its proposer.
++/// </summary>
++public static class AuditExportBuilder
++{
++    /// <summary>Schema version stamped into the export so readers can pin expectations.</summary>
++    public const string SchemaVersion = "1.0";
++
++    public static AuditExportDocument Build(AuditTrailSnapshot snapshot, DateOnly fromDate, DateOnly toDate)
++    {
++        ArgumentNullException.ThrowIfNull(snapshot);
++
++        var entries = snapshot.Entries
++            .Where(e => e.BusinessDate >= fromDate && e.BusinessDate <= toDate)
++            .OrderBy(e => e.Sequence)
++            .ToList();
++
++        var requests = entries
++            .GroupBy(e => ResolutionIdentity.Normalize(e.RequestId), StringComparer.OrdinalIgnoreCase)
++            .OrderBy(g => g.Min(e => e.Sequence))
++            .Select(BuildRequestSummary)
++            .ToList();
++
++        return new AuditExportDocument
++        {
++            SchemaVersion = SchemaVersion,
++            FromDate = fromDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
++            ToDate = toDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
++            EntryCount = entries.Count,
++            RequestCount = requests.Count,
++            ChainVerified = snapshot.ChainVerified,
++            HeadHash = snapshot.HeadHash,
++            Requests = requests,
++            Entries = entries.Select(AuditEntrySerializer.ToDocument).ToList()
++        };
++    }
++
++    private static AuditRequestSummaryDocument BuildRequestSummary(IGrouping<string, AuditEntry> group)
++    {
++        var ordered = group.OrderBy(e => e.Sequence).ToList();
++        var proposal = ordered.FirstOrDefault(e => e.Action == ResolutionAction.Proposed);
++        var decisions = ordered.Where(e => e.Action != ResolutionAction.Proposed).ToList();
++        var finalDecision = decisions.Count > 0 ? decisions[0] : null;
++
++        var status = finalDecision?.Action switch
++        {
++            ResolutionAction.Approved => ResolutionStatus.Approved,
++            ResolutionAction.Rejected => ResolutionStatus.Rejected,
++            _ => ResolutionStatus.Pending
++        };
++
++        var proposer = proposal?.Proposer ?? ordered[0].Proposer;
++
++        return new AuditRequestSummaryDocument
++        {
++            RequestId = group.Key,
++            BusinessDate = ordered[0].BusinessDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
++            Proposer = proposer,
++            Status = status.ToString(),
++            FinalAction = finalDecision?.Action.ToString(),
++            FinalDecidedBy = finalDecision?.Actor,
++            DecisionCount = decisions.Count,
++            EntryCount = ordered.Count,
++            FirstSequence = ordered[0].Sequence,
++            LastSequence = ordered[^1].Sequence,
++            LatestVersion = ordered[^1].Version,
++            LatestHash = ordered[^1].EntryHash,
++            CheckerDistinctFromProposer = finalDecision is not null
++                && !ResolutionIdentity.SamePerson(finalDecision.Actor, proposer),
++            SelfApproved = finalDecision is not null
++                && ResolutionIdentity.SamePerson(finalDecision.Actor, proposer)
++        };
++    }
++}
++
++/// <summary>The Compliance export document for a business-date range.</summary>
++public sealed record AuditExportDocument
++{
++    public required string SchemaVersion { get; init; }
++    public required string FromDate { get; init; }
++    public required string ToDate { get; init; }
++    public required int EntryCount { get; init; }
++    public required int RequestCount { get; init; }
++
++    /// <summary>False when recomputing the hash chain does not reconcile with what is stored.</summary>
++    public required bool ChainVerified { get; init; }
++
++    /// <summary>Hash of the trail head at export time.</summary>
++    public required string HeadHash { get; init; }
++
++    /// <summary>Per-request roll-up of the maker-checker outcome.</summary>
++    public required IReadOnlyList<AuditRequestSummaryDocument> Requests { get; init; }
++
++    /// <summary>Every durable entry in the range, in append order.</summary>
++    public required IReadOnlyList<AuditEntryDocument> Entries { get; init; }
++}
++
++/// <summary>Roll-up of one request's lifecycle within the exported range.</summary>
++public sealed record AuditRequestSummaryDocument
++{
++    public required string RequestId { get; init; }
++    public required string BusinessDate { get; init; }
++    public required string Proposer { get; init; }
++
++    /// <summary>Pending, Approved or Rejected.</summary>
++    public required string Status { get; init; }
++
++    /// <summary>Approved or Rejected once decided; otherwise <c>null</c>.</summary>
++    public string? FinalAction { get; init; }
++
++    /// <summary>The checker who took the final decision; otherwise <c>null</c>.</summary>
++    public string? FinalDecidedBy { get; init; }
++
++    /// <summary>Durable decisions recorded. Never exceeds one.</summary>
++    public required int DecisionCount { get; init; }
++
++    public required int EntryCount { get; init; }
++    public required long FirstSequence { get; init; }
++    public required long LastSequence { get; init; }
++    public required int LatestVersion { get; init; }
++    public required string LatestHash { get; init; }
++
++    /// <summary>True when a decision exists and its checker differs from the proposer.</summary>
++    public required bool CheckerDistinctFromProposer { get; init; }
++
++    /// <summary>Always false: self-approval is refused before anything is appended.</summary>
++    public required bool SelfApproved { get; init; }
++}
+diff --git a/src/TradeRecon.Application/Audit/AuditHashing.cs b/src/TradeRecon.Application/Audit/AuditHashing.cs
+new file mode 100644
+index 0000000..682125d
+--- /dev/null
++++ b/src/TradeRecon.Application/Audit/AuditHashing.cs
+@@ -0,0 +1,62 @@
++using System.Globalization;
++using System.Security.Cryptography;
++using System.Text;
++using TradeRecon.Domain.Audit;
++
++namespace TradeRecon.Application.Audit;
++
++/// <summary>
++/// Tamper-evidence primitives for the audit trail. Every entry is hashed over its canonical
++/// form together with the previous entry's hash, so any edit, reorder or deletion inside the
++/// append-only file is detectable by recomputing the chain.
++/// </summary>
++public static class AuditHashing
++{
++    /// <summary>Previous-hash value used by the first entry in a trail.</summary>
++    public static readonly string GenesisHash = new('0', 64);
++
++    /// <summary>Lower-case hexadecimal SHA-256 digest of <paramref name="value"/>.</summary>
++    public static string Sha256Hex(string value)
++    {
++        ArgumentNullException.ThrowIfNull(value);
++        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(value));
++        return Convert.ToHexString(bytes).ToLowerInvariant();
++    }
++
++    /// <summary>
++    /// Canonical, culture-independent projection of an entry used as hash input. Field order is
++    /// fixed and every field is delimited so no two distinct entries can collide.
++    /// </summary>
++    public static string CanonicalForm(AuditEntry entry)
++    {
++        ArgumentNullException.ThrowIfNull(entry);
++
++        return string.Join('\u001f',
++            entry.PreviousHash,
++            entry.Sequence.ToString(CultureInfo.InvariantCulture),
++            entry.Version.ToString(CultureInfo.InvariantCulture),
++            entry.RequestId,
++            entry.Action.ToString(),
++            entry.Actor,
++            entry.ActorRole.ToString(),
++            entry.Proposer,
++            entry.Checker ?? string.Empty,
++            entry.BusinessDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
++            entry.Timestamp.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture),
++            entry.ReasonHash,
++            entry.EvidenceHash,
++            entry.ReasonRedacted,
++            entry.EvidenceRedacted);
++    }
++
++    /// <summary>Returns <paramref name="entry"/> with <c>EntryHash</c> recomputed.</summary>
++    public static AuditEntry WithComputedHash(AuditEntry entry)
++        => entry with { EntryHash = Sha256Hex(CanonicalForm(entry)) };
++
++    /// <summary>True when the entry's stored hash matches its canonical form.</summary>
++    public static bool HasValidHash(AuditEntry entry)
++    {
++        ArgumentNullException.ThrowIfNull(entry);
++        return string.Equals(entry.EntryHash, Sha256Hex(CanonicalForm(entry)), StringComparison.Ordinal);
++    }
++}
+diff --git a/src/TradeRecon.Application/Audit/AuditJson.cs b/src/TradeRecon.Application/Audit/AuditJson.cs
+new file mode 100644
+index 0000000..89230ba
+--- /dev/null
++++ b/src/TradeRecon.Application/Audit/AuditJson.cs
+@@ -0,0 +1,25 @@
++using System.Text.Json;
++using System.Text.Json.Serialization;
++
++namespace TradeRecon.Application.Audit;
++
++/// <summary>
++/// Serialisation settings shared by every audit command's stdout document and by the Compliance
++/// export file, so a harness sees one consistent JSON shape.
++/// </summary>
++public static class AuditJson
++{
++    private static readonly JsonSerializerOptions Options = new()
++    {
++        WriteIndented = true,
++        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
++        DefaultIgnoreCondition = JsonIgnoreCondition.Never,
++        Converters = { new JsonStringEnumConverter() }
++    };
++
++    /// <summary>Renders <paramref name="value"/> as indented, camelCase JSON.</summary>
++    public static string Serialize<T>(T value) => JsonSerializer.Serialize(value, Options);
++
++    /// <summary>Parses JSON produced by <see cref="Serialize{T}"/>.</summary>
++    public static T? Deserialize<T>(string json) => JsonSerializer.Deserialize<T>(json, Options);
++}
+diff --git a/src/TradeRecon.Application/Audit/AuditTrailSnapshot.cs b/src/TradeRecon.Application/Audit/AuditTrailSnapshot.cs
+new file mode 100644
+index 0000000..ba2ed61
+--- /dev/null
++++ b/src/TradeRecon.Application/Audit/AuditTrailSnapshot.cs
+@@ -0,0 +1,67 @@
++using TradeRecon.Domain.Audit;
++
++namespace TradeRecon.Application.Audit;
++
++/// <summary>
++/// An immutable, hash-verified view of the whole audit trail as read from durable storage.
++/// </summary>
++public sealed class AuditTrailSnapshot
++{
++    private AuditTrailSnapshot(IReadOnlyList<AuditEntry> entries, bool chainVerified, string headHash)
++    {
++        Entries = entries;
++        ChainVerified = chainVerified;
++        HeadHash = headHash;
++    }
++
++    /// <summary>Entries in durable append order.</summary>
++    public IReadOnlyList<AuditEntry> Entries { get; }
++
++    /// <summary>False when a hash, link or sequence number does not reconcile.</summary>
++    public bool ChainVerified { get; }
++
++    /// <summary>Hash of the last entry, or the genesis hash for an empty trail.</summary>
++    public string HeadHash { get; }
++
++    /// <summary>Sequence number the next appended entry must take.</summary>
++    public long NextSequence => Entries.Count == 0 ? 1 : Entries[^1].Sequence + 1;
++
++    /// <summary>Builds a snapshot, recomputing the hash chain to detect tampering.</summary>
++    public static AuditTrailSnapshot Create(IReadOnlyList<AuditEntry> entries)
++    {
++        ArgumentNullException.ThrowIfNull(entries);
++
++        var verified = true;
++        var previous = AuditHashing.GenesisHash;
++        var expectedSequence = 1L;
++
++        foreach (var entry in entries)
++        {
++            if (entry.Sequence != expectedSequence
++                || !string.Equals(entry.PreviousHash, previous, StringComparison.Ordinal)
++                || !AuditHashing.HasValidHash(entry))
++            {
++                verified = false;
++            }
++
++            previous = entry.EntryHash;
++            expectedSequence++;
++        }
++
++        return new AuditTrailSnapshot(entries, verified, previous);
++    }
++
++    /// <summary>All entries for a request, in append order.</summary>
++    public IReadOnlyList<AuditEntry> EntriesFor(string requestId)
++        => Entries.Where(e => ResolutionIdentity.SameRequest(e.RequestId, requestId)).ToList();
++
++    /// <summary>The proposal entry for a request, or <c>null</c> when it was never proposed.</summary>
++    public AuditEntry? ProposalFor(string requestId)
++        => Entries.FirstOrDefault(e =>
++            e.Action == ResolutionAction.Proposed && ResolutionIdentity.SameRequest(e.RequestId, requestId));
++
++    /// <summary>The single durable final decision for a request, or <c>null</c> when still pending.</summary>
++    public AuditEntry? DecisionFor(string requestId)
++        => Entries.FirstOrDefault(e =>
++            e.Action != ResolutionAction.Proposed && ResolutionIdentity.SameRequest(e.RequestId, requestId));
++}
+diff --git a/src/TradeRecon.Application/Audit/ResolutionIdentity.cs b/src/TradeRecon.Application/Audit/ResolutionIdentity.cs
+new file mode 100644
+index 0000000..d7eadbc
+--- /dev/null
++++ b/src/TradeRecon.Application/Audit/ResolutionIdentity.cs
+@@ -0,0 +1,21 @@
++namespace TradeRecon.Application.Audit;
++
++/// <summary>
++/// Comparison rules for the identities the workflow recognises. Request ids and person ids are
++/// compared case-insensitively after trimming so that a retry sent as <c>"Alice"</c> cannot be
++/// mistaken for a second, distinct person <c>"alice "</c> — which would otherwise defeat both
++/// idempotency and the self-approval guard.
++/// </summary>
++public static class ResolutionIdentity
++{
++    /// <summary>Canonical form of a supplied identity or request id.</summary>
++    public static string Normalize(string? value) => (value ?? string.Empty).Trim();
++
++    /// <summary>True when both values name the same request.</summary>
++    public static bool SameRequest(string? left, string? right)
++        => string.Equals(Normalize(left), Normalize(right), StringComparison.OrdinalIgnoreCase);
++
++    /// <summary>True when both values name the same person.</summary>
++    public static bool SamePerson(string? left, string? right)
++        => string.Equals(Normalize(left), Normalize(right), StringComparison.OrdinalIgnoreCase);
++}
+diff --git a/src/TradeRecon.Application/Audit/ResolutionWorkflowService.cs b/src/TradeRecon.Application/Audit/ResolutionWorkflowService.cs
+new file mode 100644
+index 0000000..b184c25
+--- /dev/null
++++ b/src/TradeRecon.Application/Audit/ResolutionWorkflowService.cs
+@@ -0,0 +1,391 @@
++using System.Globalization;
++using TradeRecon.Application.Abstractions;
++using TradeRecon.Domain.Audit;
++
++namespace TradeRecon.Application.Audit;
++
++/// <summary>
++/// The maker-checker resolution workflow.
++///
++/// Guarantees, each enforced inside the store's exclusive transaction so they hold across
++/// concurrent processes:
++///
++/// 1. <b>Segregation of duties.</b> A decision by the proposer is refused and leaves no durable
++///    entry, so an approved or rejected request always shows a checker distinct from its maker.
++/// 2. <b>Idempotent retries.</b> Re-sending the same proposal, or the same decision from the same
++///    checker, returns the original outcome and appends nothing.
++/// 3. <b>Exactly one final decision.</b> The first decision to win the lock is durable; a
++///    conflicting concurrent decision is refused and reports the decision that won.
++/// 4. <b>No sensitive leakage.</b> Reason and evidence are redacted and hashed before they reach
++///    the trail, so account identifiers and trade amounts never enter durable state or output.
++/// </summary>
++public sealed class ResolutionWorkflowService
++{
++    private readonly IAuditTrailStore _store;
++    private readonly TimeProvider _clock;
++
++    public ResolutionWorkflowService(IAuditTrailStore store, TimeProvider? clock = null)
++    {
++        _store = store ?? throw new ArgumentNullException(nameof(store));
++        _clock = clock ?? TimeProvider.System;
++    }
++
++    /// <summary>Creates the durable trail if needed.</summary>
++    public async Task<WorkflowResult> InitializeAsync(CancellationToken cancellationToken = default)
++    {
++        await _store.InitializeAsync(cancellationToken).ConfigureAwait(false);
++        var snapshot = await _store.ReadAsync(cancellationToken).ConfigureAwait(false);
++
++        return new WorkflowResult
++        {
++            Ok = true,
++            Outcome = WorkflowOutcome.Initialized,
++            RequestId = null,
++            Status = null,
++            IdempotentReplay = snapshot.Entries.Count > 0,
++            EntryCount = snapshot.Entries.Count,
++            HeadHash = snapshot.HeadHash,
++            Message = "Audit trail ready."
++        };
++    }
++
++    /// <summary>Records an analyst's proposed resolution, or replays an identical retry.</summary>
++    public Task<WorkflowResult> ProposeAsync(ProposeCommand command, CancellationToken cancellationToken = default)
++    {
++        ArgumentNullException.ThrowIfNull(command);
++
++        var requestId = ResolutionIdentity.Normalize(command.RequestId);
++        var proposer = ResolutionIdentity.Normalize(command.Proposer);
++        var reasonHash = AuditHashing.Sha256Hex(command.Reason ?? string.Empty);
++        var evidenceHash = AuditHashing.Sha256Hex(command.Evidence ?? string.Empty);
++        var reasonRedacted = SensitiveTextRedactor.Redact(command.Reason);
++        var evidenceRedacted = SensitiveTextRedactor.Redact(command.Evidence);
++
++        return _store.ExecuteAsync<WorkflowResult>(snapshot =>
++        {
++            var existing = snapshot.ProposalFor(requestId);
++            if (existing is not null)
++            {
++                var identical = ResolutionIdentity.SamePerson(existing.Proposer, proposer)
++                    && existing.BusinessDate == command.BusinessDate
++                    && string.Equals(existing.ReasonHash, reasonHash, StringComparison.Ordinal)
++                    && string.Equals(existing.EvidenceHash, evidenceHash, StringComparison.Ordinal);
++
++                if (!identical)
++                {
++                    return new AuditTransaction<WorkflowResult>(null, Failure(
++                        WorkflowOutcome.ProposalConflict,
++                        requestId,
++                        snapshot,
++                        "A different proposal already exists for this request id."));
++                }
++
++                return new AuditTransaction<WorkflowResult>(null, Success(
++                    WorkflowOutcome.ProposalReplayed,
++                    requestId,
++                    snapshot,
++                    existing,
++                    idempotentReplay: true,
++                    "Identical proposal already recorded; nothing appended."));
++            }
++
++            var entry = AuditHashing.WithComputedHash(new AuditEntry
++            {
++                Sequence = snapshot.NextSequence,
++                Version = 1,
++                RequestId = requestId,
++                Action = ResolutionAction.Proposed,
++                Actor = proposer,
++                ActorRole = ActorRole.Proposer,
++                Proposer = proposer,
++                Checker = null,
++                BusinessDate = command.BusinessDate,
++                Timestamp = _clock.GetUtcNow(),
++                ReasonRedacted = reasonRedacted,
++                ReasonHash = reasonHash,
++                EvidenceRedacted = evidenceRedacted,
++                EvidenceHash = evidenceHash,
++                PreviousHash = snapshot.HeadHash,
++                EntryHash = string.Empty
++            });
++
++            return new AuditTransaction<WorkflowResult>(entry, new WorkflowResult
++            {
++                Ok = true,
++                Outcome = WorkflowOutcome.Proposed,
++                RequestId = requestId,
++                Status = ResolutionStatus.Pending,
++                Proposer = proposer,
++                Checker = null,
++                BusinessDate = command.BusinessDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
++                Sequence = entry.Sequence,
++                Version = entry.Version,
++                EntryHash = entry.EntryHash,
++                IdempotentReplay = false,
++                EntryCount = snapshot.Entries.Count + 1,
++                HeadHash = entry.EntryHash,
++                Message = "Resolution proposed and awaiting a checker."
++            });
++        }, cancellationToken);
++    }
++
++    /// <summary>Records a checker's approval or rejection, enforcing segregation of duties.</summary>
++    public Task<WorkflowResult> DecideAsync(DecideCommand command, CancellationToken cancellationToken = default)
++    {
++        ArgumentNullException.ThrowIfNull(command);
++
++        var requestId = ResolutionIdentity.Normalize(command.RequestId);
++        var approver = ResolutionIdentity.Normalize(command.Approver);
++
++        return _store.ExecuteAsync<WorkflowResult>(snapshot =>
++        {
++            var proposal = snapshot.ProposalFor(requestId);
++            if (proposal is null)
++            {
++                return new AuditTransaction<WorkflowResult>(null, Failure(
++                    WorkflowOutcome.UnknownRequest,
++                    requestId,
++                    snapshot,
++                    "No proposal exists for this request id."));
++            }
++
++            if (ResolutionIdentity.SamePerson(proposal.Proposer, approver))
++            {
++                return new AuditTransaction<WorkflowResult>(null, Failure(
++                    WorkflowOutcome.SelfApprovalRejected,
++                    requestId,
++                    snapshot,
++                    "The proposer cannot decide their own request; a different checker is required.",
++                    proposal));
++            }
++
++            var decided = snapshot.DecisionFor(requestId);
++            if (decided is not null)
++            {
++                var replay = ResolutionIdentity.SamePerson(decided.Actor, approver)
++                    && decided.Action == command.Decision;
++
++                if (replay)
++                {
++                    return new AuditTransaction<WorkflowResult>(null, Success(
++                        WorkflowOutcome.DecisionReplayed,
++                        requestId,
++                        snapshot,
++                        decided,
++                        idempotentReplay: true,
++                        "Identical decision already recorded; nothing appended."));
++                }
++
++                return new AuditTransaction<WorkflowResult>(null, Failure(
++                    WorkflowOutcome.AlreadyDecided,
++                    requestId,
++                    snapshot,
++                    "The request already has a final decision; it cannot be decided again.",
++                    proposal,
++                    decided));
++            }
++
++            var entry = AuditHashing.WithComputedHash(new AuditEntry
++            {
++                Sequence = snapshot.NextSequence,
++                Version = proposal.Version + 1,
++                RequestId = requestId,
++                Action = command.Decision,
++                Actor = approver,
++                ActorRole = ActorRole.Checker,
++                Proposer = proposal.Proposer,
++                Checker = approver,
++                BusinessDate = proposal.BusinessDate,
++                Timestamp = _clock.GetUtcNow(),
++                ReasonRedacted = proposal.ReasonRedacted,
++                ReasonHash = proposal.ReasonHash,
++                EvidenceRedacted = proposal.EvidenceRedacted,
++                EvidenceHash = proposal.EvidenceHash,
++                PreviousHash = snapshot.HeadHash,
++                EntryHash = string.Empty
++            });
++
++            return new AuditTransaction<WorkflowResult>(entry, new WorkflowResult
++            {
++                Ok = true,
++                Outcome = command.Decision == ResolutionAction.Approved
++                    ? WorkflowOutcome.Approved
++                    : WorkflowOutcome.Rejected,
++                RequestId = requestId,
++                Status = StatusOf(command.Decision),
++                Proposer = proposal.Proposer,
++                Checker = approver,
++                BusinessDate = proposal.BusinessDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
++                Sequence = entry.Sequence,
++                Version = entry.Version,
++                EntryHash = entry.EntryHash,
++                IdempotentReplay = false,
++                EntryCount = snapshot.Entries.Count + 1,
++                HeadHash = entry.EntryHash,
++                Message = "Final decision recorded by a checker distinct from the proposer."
++            });
++        }, cancellationToken);
++    }
++
++    /// <summary>Projects the append-only history for a business-date range.</summary>
++    public async Task<AuditExportDocument> ExportAsync(
++        DateOnly fromDate,
++        DateOnly toDate,
++        CancellationToken cancellationToken = default)
++    {
++        if (toDate < fromDate)
++        {
++            throw new ArgumentException("The export range end date precedes its start date.", nameof(toDate));
++        }
++
++        var snapshot = await _store.ReadAsync(cancellationToken).ConfigureAwait(false);
++        return AuditExportBuilder.Build(snapshot, fromDate, toDate);
++    }
++
++    private static ResolutionStatus StatusOf(ResolutionAction action) => action switch
++    {
++        ResolutionAction.Approved => ResolutionStatus.Approved,
++        ResolutionAction.Rejected => ResolutionStatus.Rejected,
++        _ => ResolutionStatus.Pending
++    };
++
++    private static WorkflowResult Success(
++        string outcome,
++        string requestId,
++        AuditTrailSnapshot snapshot,
++        AuditEntry entry,
++        bool idempotentReplay,
++        string message)
++    {
++        var decision = snapshot.DecisionFor(requestId);
++
++        return new WorkflowResult
++        {
++            Ok = true,
++            Outcome = outcome,
++            RequestId = requestId,
++            Status = decision is null ? ResolutionStatus.Pending : StatusOf(decision.Action),
++            Proposer = entry.Proposer,
++            Checker = decision?.Actor,
++            BusinessDate = entry.BusinessDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
++            Sequence = entry.Sequence,
++            Version = entry.Version,
++            EntryHash = entry.EntryHash,
++            IdempotentReplay = idempotentReplay,
++            EntryCount = snapshot.Entries.Count,
++            HeadHash = snapshot.HeadHash,
++            Message = message
++        };
++    }
++
++    private static WorkflowResult Failure(
++        string outcome,
++        string requestId,
++        AuditTrailSnapshot snapshot,
++        string message,
++        AuditEntry? proposal = null,
++        AuditEntry? decision = null)
++    {
++        decision ??= snapshot.DecisionFor(requestId);
++        proposal ??= snapshot.ProposalFor(requestId);
++
++        return new WorkflowResult
++        {
++            Ok = false,
++            Outcome = outcome,
++            Error = outcome,
++            RequestId = requestId,
++            Status = decision is null
++                ? (proposal is null ? null : ResolutionStatus.Pending)
++                : StatusOf(decision.Action),
++            Proposer = proposal?.Proposer,
++            Checker = decision?.Actor,
++            BusinessDate = proposal?.BusinessDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
++            Sequence = decision?.Sequence ?? proposal?.Sequence,
++            Version = decision?.Version ?? proposal?.Version,
++            EntryHash = decision?.EntryHash ?? proposal?.EntryHash,
++            IdempotentReplay = false,
++            EntryCount = snapshot.Entries.Count,
++            HeadHash = snapshot.HeadHash,
++            Message = message
++        };
++    }
++}
++
++/// <summary>An analyst's proposed resolution for a reconciliation break.</summary>
++public sealed record ProposeCommand
++{
++    public required string RequestId { get; init; }
++    public required string Proposer { get; init; }
++    public required DateOnly BusinessDate { get; init; }
++
++    /// <summary>Free-text justification. Redacted and hashed before it is persisted.</summary>
++    public required string Reason { get; init; }
++
++    /// <summary>Free-text evidence reference. Redacted and hashed before it is persisted.</summary>
++    public required string Evidence { get; init; }
++}
++
++/// <summary>A checker's decision on an existing proposal.</summary>
++public sealed record DecideCommand
++{
++    public required string RequestId { get; init; }
++    public required string Approver { get; init; }
++
++    /// <summary>Either <see cref="ResolutionAction.Approved"/> or <see cref="ResolutionAction.Rejected"/>.</summary>
++    public required ResolutionAction Decision { get; init; }
++}
++
++/// <summary>Stable outcome codes reported on stdout so a harness can assert on them.</summary>
++public static class WorkflowOutcome
++{
++    public const string Initialized = "initialized";
++    public const string Proposed = "proposed";
++    public const string ProposalReplayed = "proposal-replayed";
++    public const string ProposalConflict = "proposal-conflict";
++    public const string Approved = "approved";
++    public const string Rejected = "rejected";
++    public const string DecisionReplayed = "decision-replayed";
++    public const string AlreadyDecided = "already-decided";
++    public const string SelfApprovalRejected = "self-approval-rejected";
++    public const string UnknownRequest = "unknown-request";
++    public const string InvalidDecision = "invalid-decision";
++    public const string Exported = "exported";
++}
++
++/// <summary>Result of a workflow command, rendered verbatim as the command's JSON stdout.</summary>
++public sealed record WorkflowResult
++{
++    /// <summary>True when the command was accepted (including an idempotent replay).</summary>
++    public required bool Ok { get; init; }
++
++    /// <summary>Stable outcome code (see <see cref="WorkflowOutcome"/>).</summary>
++    public required string Outcome { get; init; }
++
++    public string? RequestId { get; init; }
++
++    /// <summary>Lifecycle state of the request after the command.</summary>
++    public ResolutionStatus? Status { get; init; }
++
++    public string? Proposer { get; init; }
++    public string? Checker { get; init; }
++    public string? BusinessDate { get; init; }
++    public long? Sequence { get; init; }
++    public int? Version { get; init; }
++    public string? EntryHash { get; init; }
++
++    /// <summary>True when a retry matched an existing entry and nothing was appended.</summary>
++    public required bool IdempotentReplay { get; init; }
++
++    /// <summary>Total entries in the trail after the command.</summary>
++    public int EntryCount { get; init; }
++
++    /// <summary>Hash of the trail head after the command.</summary>
++    public string? HeadHash { get; init; }
++
++    /// <summary>Set to the outcome code when <see cref="Ok"/> is false.</summary>
++    public string? Error { get; init; }
++
++    /// <summary>Human-readable explanation. Never contains caller-supplied text.</summary>
++    public required string Message { get; init; }
++}
+diff --git a/src/TradeRecon.Application/Audit/SensitiveTextRedactor.cs b/src/TradeRecon.Application/Audit/SensitiveTextRedactor.cs
+new file mode 100644
+index 0000000..2c9bd13
+--- /dev/null
++++ b/src/TradeRecon.Application/Audit/SensitiveTextRedactor.cs
+@@ -0,0 +1,102 @@
++using System.Text;
++using System.Text.RegularExpressions;
++
++namespace TradeRecon.Application.Audit;
++
++/// <summary>
++/// Masks sensitive tokens out of operator-supplied free text before it is logged, printed or
++/// persisted.
++///
++/// The reconciliation domain treats account identifiers (and instrument identifiers, which are
++/// account-linked in the break register) and trade amounts as sensitive. A human writing a
++/// resolution reason may paste any of them, so redaction is applied structurally rather than by
++/// blocklist: any token that mixes letters and digits is treated as an identifier, and any token
++/// carrying three or more digits is treated as a monetary or quantity value. The rule is
++/// deliberately conservative — it may mask a harmless token, but it cannot let an account number
++/// or an amount through.
++/// </summary>
++public static class SensitiveTextRedactor
++{
++    /// <summary>Replacement emitted for a masked identifier-like token.</summary>
++    public const string IdentifierMask = "[REDACTED-ID]";
++
++    /// <summary>Replacement emitted for a masked numeric (amount or quantity) token.</summary>
++    public const string NumericMask = "[REDACTED-AMOUNT]";
++
++    /// <summary>Maximum length of a redacted projection; longer text is truncated.</summary>
++    public const int MaxLength = 512;
++
++    private static readonly Regex TokenPattern = new(
++        @"[A-Za-z0-9][A-Za-z0-9._,\-/]*",
++        RegexOptions.Compiled | RegexOptions.CultureInvariant);
++
++    private static readonly Regex WhitespacePattern = new(
++        @"\s+",
++        RegexOptions.Compiled | RegexOptions.CultureInvariant);
++
++    /// <summary>
++    /// Returns <paramref name="text"/> with identifier-like and amount-like tokens masked,
++    /// whitespace normalised and control characters removed.
++    /// </summary>
++    public static string Redact(string? text)
++    {
++        if (string.IsNullOrWhiteSpace(text))
++        {
++            return string.Empty;
++        }
++
++        var normalised = WhitespacePattern.Replace(StripControlCharacters(text), " ").Trim();
++        var masked = TokenPattern.Replace(normalised, static match => MaskToken(match.Value));
++
++        return masked.Length <= MaxLength
++            ? masked
++            : masked[..MaxLength] + "…";
++    }
++
++    /// <summary>True when <paramref name="text"/> would survive redaction unchanged.</summary>
++    public static bool IsFreeOfSensitiveTokens(string? text)
++        => string.Equals(Redact(text), WhitespacePattern.Replace(StripControlCharacters(text ?? string.Empty), " ").Trim(), StringComparison.Ordinal);
++
++    private static string MaskToken(string token)
++    {
++        var letters = 0;
++        var digits = 0;
++
++        foreach (var c in token)
++        {
++            if (char.IsAsciiLetter(c))
++            {
++                letters++;
++            }
++            else if (char.IsAsciiDigit(c))
++            {
++                digits++;
++            }
++        }
++
++        if (digits == 0)
++        {
++            return token;
++        }
++
++        // A token mixing letters and digits is an identifier (ACC001, GB00B03MLX29, T003).
++        if (letters > 0 && digits >= 2)
++        {
++            return IdentifierMask;
++        }
++
++        // Pure numbers of any material size are treated as amounts or quantities.
++        return digits >= 3 ? NumericMask : token;
++    }
++
++    private static string StripControlCharacters(string text)
++    {
++        var sb = new StringBuilder(text.Length);
++        foreach (var c in text)
++        {
++            sb.Append(char.IsControl(c) ? ' ' : c);
++        }
++
++        return sb.ToString();
++    }
++}
+diff --git a/src/TradeRecon.AuditConsole/AuditCliCommand.cs b/src/TradeRecon.AuditConsole/AuditCliCommand.cs
+new file mode 100644
+index 0000000..2855006
+--- /dev/null
++++ b/src/TradeRecon.AuditConsole/AuditCliCommand.cs
+@@ -0,0 +1,86 @@
++namespace TradeRecon.AuditConsole;
++
++/// <summary>
++/// A parsed audit command: a verb plus its <c>--option value</c> pairs.
++///
++/// Option values are taken verbatim, including values that begin with a dash, because a
++/// resolution reason is arbitrary operator text. Commands are therefore safe to express as a
++/// shell-free argument array in an adapter contract.
++/// </summary>
++internal sealed class AuditCliCommand
++{
++    private readonly Dictionary<string, string> _options;
++
++    private AuditCliCommand(string verb, Dictionary<string, string> options)
++    {
++        Verb = verb;
++        _options = options;
++    }
++
++    /// <summary>The command verb, lower-cased.</summary>
++    public string Verb { get; }
++
++    public static AuditCliCommand Parse(string[] args)
++    {
++        ArgumentNullException.ThrowIfNull(args);
++
++        if (args.Length == 0 || args[0].StartsWith('-'))
++        {
++            throw new ArgumentException("A command is required: initialize, propose, decide or export.");
++        }
++
++        var verb = args[0].Trim().ToLowerInvariant();
++        var options = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
++
++        for (var i = 1; i < args.Length; i++)
++        {
++            var token = args[i];
++            if (!token.StartsWith("--", StringComparison.Ordinal) || token.Length <= 2)
++            {
++                throw new ArgumentException($"Unexpected argument at position {i}; expected an --option.");
++            }
++
++            var name = token[2..];
++            string value;
++
++            var separator = name.IndexOf('=', StringComparison.Ordinal);
++            if (separator >= 0)
++            {
++                value = name[(separator + 1)..];
++                name = name[..separator];
++            }
++            else
++            {
++                if (i + 1 >= args.Length)
++                {
++                    throw new ArgumentException($"Option --{name} requires a value.");
++                }
++
++                value = args[++i];
++            }
++
++            if (name.Length == 0)
++            {
++                throw new ArgumentException($"Unexpected argument at position {i}; expected an --option.");
++            }
++
++            options[name] = value;
++        }
++
++        return new AuditCliCommand(verb, options);
++    }
++
++    /// <summary>Returns the first supplied alias of an option, or throws when none was given.</summary>
++    public string RequireOption(params string[] names)
++    {
++        foreach (var name in names)
++        {
++            if (_options.TryGetValue(name, out var value) && !string.IsNullOrWhiteSpace(value))
++            {
++                return value;
++            }
++        }
++
++        throw new ArgumentException($"Option --{names[0]} is required and must not be empty.");
++    }
++}
+diff --git a/src/TradeRecon.AuditConsole/Program.cs b/src/TradeRecon.AuditConsole/Program.cs
+new file mode 100644
+index 0000000..6e25329
+--- /dev/null
++++ b/src/TradeRecon.AuditConsole/Program.cs
+@@ -0,0 +1,266 @@
++using System.Globalization;
++using Microsoft.Extensions.DependencyInjection;
++using TradeRecon.Application.Audit;
++using TradeRecon.Domain.Audit;
++using TradeRecon.Infrastructure;
++
++namespace TradeRecon.AuditConsole;
++
++/// <summary>
++/// Black-box command-line host for explainable exception resolution and its audit history.
++///
++/// Four verbs, each writing one JSON document to stdout and nothing else:
++///
++/// <code>
++/// initialize --state &lt;dir&gt;
++/// propose    --state &lt;dir&gt; --request-id &lt;id&gt; --proposer &lt;who&gt; --business-date &lt;yyyy-MM-dd&gt;
++///            --reason &lt;text&gt; --evidence &lt;text&gt;
++/// decide     --state &lt;dir&gt; --request-id &lt;id&gt; --approver &lt;who&gt; --decision &lt;approve|reject&gt;
++/// export     --state &lt;dir&gt; --from &lt;yyyy-MM-dd&gt; --to &lt;yyyy-MM-dd&gt; --output &lt;path&gt;
++/// </code>
++///
++/// Exit codes: 0 accepted (including an idempotent retry), 3 refused by policy (self-approval,
++/// an already-decided request, a conflicting proposal, an unknown request), 1 invalid arguments
++/// or an I/O failure. A refusal still writes a JSON document describing why.
++///
++/// Caller-supplied reason and evidence text is redacted before it reaches stdout, stderr or
++/// durable state, so account identifiers and trade amounts cannot leak through this host.
++/// </summary>
++public static class Program
++{
++    /// <summary>The command was accepted, or an identical retry was replayed.</summary>
++    public const int ExitOk = 0;
++
++    /// <summary>Invalid arguments or an I/O failure.</summary>
++    public const int ExitError = 1;
++
++    /// <summary>The command was understood but refused by a workflow rule.</summary>
++    public const int ExitRefused = 3;
++
++    private const string Usage = """
++        Usage:
++          TradeRecon.AuditConsole initialize --state <dir>
++          TradeRecon.AuditConsole propose    --state <dir> --request-id <id> --proposer <who>
++                                             --business-date <yyyy-MM-dd> --reason <text> --evidence <text>
++          TradeRecon.AuditConsole decide     --state <dir> --request-id <id> --approver <who>
++                                             --decision <approve|reject>
++          TradeRecon.AuditConsole export     --state <dir> --from <yyyy-MM-dd> --to <yyyy-MM-dd>
++                                             --output <path>
++        """;
++
++    public static Task<int> Main(string[] args)
++        => RunAsync(args, System.Console.Out, System.Console.Error);
++
++    /// <summary>Entry point with injectable streams so the CLI contract is directly testable.</summary>
++    public static async Task<int> RunAsync(string[] args, TextWriter stdout, TextWriter stderr)
++    {
++        ArgumentNullException.ThrowIfNull(args);
++        ArgumentNullException.ThrowIfNull(stdout);
++        ArgumentNullException.ThrowIfNull(stderr);
++
++        if (args.Length == 0 || args.Contains("--help") || args.Contains("-h"))
++        {
++            await stdout.WriteLineAsync(Usage).ConfigureAwait(false);
++            return args.Length == 0 ? ExitError : ExitOk;
++        }
++
++        AuditCliCommand command;
++        try
++        {
++            command = AuditCliCommand.Parse(args);
++        }
++        catch (ArgumentException ex)
++        {
++            return await FailAsync(stdout, stderr, ex.Message).ConfigureAwait(false);
++        }
++
++        try
++        {
++            return await DispatchAsync(command, stdout, stderr).ConfigureAwait(false);
++        }
++        catch (ArgumentException ex)
++        {
++            return await FailAsync(stdout, stderr, ex.Message).ConfigureAwait(false);
++        }
++        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or TimeoutException or InvalidOperationException)
++        {
++            return await FailAsync(stdout, stderr, $"Audit state is unavailable: {ex.GetType().Name}.").ConfigureAwait(false);
++        }
++    }
++
++    private static async Task<int> DispatchAsync(AuditCliCommand command, TextWriter stdout, TextWriter stderr)
++    {
++        var services = new ServiceCollection();
++        services.AddTradeReconAudit(command.RequireOption("state", "state-directory", "state-dir"));
++
++        await using var provider = services.BuildServiceProvider();
++        var workflow = provider.GetRequiredService<ResolutionWorkflowService>();
++
++        switch (command.Verb)
++        {
++            case "initialize":
++                return await WriteResultAsync(stdout, stderr, command.Verb, await workflow.InitializeAsync().ConfigureAwait(false)).ConfigureAwait(false);
++
++            case "propose":
++            {
++                var result = await workflow.ProposeAsync(new ProposeCommand
++                {
++                    RequestId = command.RequireOption("request-id", "request", "id"),
++                    Proposer = command.RequireOption("proposer", "maker"),
++                    BusinessDate = ParseDate(command.RequireOption("business-date", "date"), "--business-date"),
++                    Reason = command.RequireOption("reason"),
++                    Evidence = command.RequireOption("evidence")
++                }).ConfigureAwait(false);
++
++                return await WriteResultAsync(stdout, stderr, command.Verb, result).ConfigureAwait(false);
++            }
++
++            case "decide":
++            {
++                var raw = command.RequireOption("decision", "outcome");
++                if (!TryParseDecision(raw, out var decision))
++                {
++                    var refusal = new WorkflowResult
++                    {
++                        Ok = false,
++                        Outcome = WorkflowOutcome.InvalidDecision,
++                        Error = WorkflowOutcome.InvalidDecision,
++                        RequestId = command.RequireOption("request-id", "request", "id"),
++                        IdempotentReplay = false,
++                        Message = "The decision must be either approve or reject."
++                    };
++
++                    return await WriteResultAsync(stdout, stderr, command.Verb, refusal).ConfigureAwait(false);
++                }
++
++                var result = await workflow.DecideAsync(new DecideCommand
++                {
++                    RequestId = command.RequireOption("request-id", "request", "id"),
++                    Approver = command.RequireOption("approver", "checker", "decider"),
++                    Decision = decision
++                }).ConfigureAwait(false);
++
++                return await WriteResultAsync(stdout, stderr, command.Verb, result).ConfigureAwait(false);
++            }
++
++            case "export":
++            {
++                var from = ParseDate(command.RequireOption("from", "from-date"), "--from");
++                var to = ParseDate(command.RequireOption("to", "to-date"), "--to");
++                if (to < from)
++                {
++                    throw new ArgumentException("The --to date precedes the --from date.");
++                }
++
++                var exportPath = Path.GetFullPath(command.RequireOption("output", "export-path", "out"));
++                var export = await workflow.ExportAsync(from, to).ConfigureAwait(false);
++                var json = AuditJson.Serialize(export);
++
++                var directory = Path.GetDirectoryName(exportPath);
++                if (!string.IsNullOrEmpty(directory))
++                {
++                    Directory.CreateDirectory(directory);
++                }
++
++                await File.WriteAllTextAsync(exportPath, json + "\n").ConfigureAwait(false);
++                await stdout.WriteLineAsync(json).ConfigureAwait(false);
++                return ExitOk;
++            }
++
++            default:
++                return await FailAsync(stdout, stderr, $"Unknown command '{command.Verb}'.").ConfigureAwait(false);
++        }
++    }
++
++    private static async Task<int> WriteResultAsync(
++        TextWriter stdout,
++        TextWriter stderr,
++        string verb,
++        WorkflowResult result)
++    {
++        await stdout.WriteLineAsync(AuditJson.Serialize(new AuditCommandResponse
++        {
++            SchemaVersion = AuditExportBuilder.SchemaVersion,
++            Command = verb,
++            Result = result
++        })).ConfigureAwait(false);
++
++        if (result.Ok)
++        {
++            return ExitOk;
++        }
++
++        await stderr.WriteLineAsync($"{verb}: refused ({result.Outcome}).").ConfigureAwait(false);
++        return ExitRefused;
++    }
++
++    private static async Task<int> FailAsync(TextWriter stdout, TextWriter stderr, string message)
++    {
++        await stdout.WriteLineAsync(AuditJson.Serialize(new AuditCommandResponse
++        {
++            SchemaVersion = AuditExportBuilder.SchemaVersion,
++            Command = "unknown",
++            Result = new WorkflowResult
++            {
++                Ok = false,
++                Outcome = "invalid-arguments",
++                Error = "invalid-arguments",
++                IdempotentReplay = false,
++                Message = message
++            }
++        })).ConfigureAwait(false);
++
++        await stderr.WriteLineAsync(message).ConfigureAwait(false);
++        await stderr.WriteLineAsync(Usage).ConfigureAwait(false);
++        return ExitError;
++    }
++
++    private static DateOnly ParseDate(string value, string option)
++    {
++        if (DateOnly.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
++        {
++            return date;
++        }
++
++        if (DateTimeOffset.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var instant))
++        {
++            return DateOnly.FromDateTime(instant.UtcDateTime);
++        }
++
++        throw new ArgumentException($"Option {option} requires an ISO date (yyyy-MM-dd).");
++    }
++
++    private static bool TryParseDecision(string value, out ResolutionAction decision)
++    {
++        switch (value.Trim().ToLowerInvariant())
++        {
++            case "approve":
++            case "approved":
++            case "accept":
++            case "accepted":
++                decision = ResolutionAction.Approved;
++                return true;
++
++            case "reject":
++            case "rejected":
++            case "decline":
++            case "declined":
++            case "deny":
++            case "denied":
++                decision = ResolutionAction.Rejected;
++                return true;
++
++            default:
++                decision = ResolutionAction.Proposed;
++                return false;
++        }
++    }
++}
++
++/// <summary>Envelope written to stdout by every audit command except <c>export</c>.</summary>
++public sealed record AuditCommandResponse
++{
++    public required string SchemaVersion { get; init; }
++    public required string Command { get; init; }
++    public required WorkflowResult Result { get; init; }
++}
+diff --git a/src/TradeRecon.AuditConsole/TradeRecon.AuditConsole.csproj b/src/TradeRecon.AuditConsole/TradeRecon.AuditConsole.csproj
+new file mode 100644
+index 0000000..d852f1e
+--- /dev/null
++++ b/src/TradeRecon.AuditConsole/TradeRecon.AuditConsole.csproj
+@@ -0,0 +1,15 @@
++<Project Sdk="Microsoft.NET.Sdk">
++  <PropertyGroup>
++    <OutputType>Exe</OutputType>
++    <RootNamespace>TradeRecon.AuditConsole</RootNamespace>
++    <AssemblyName>TradeRecon.AuditConsole</AssemblyName>
++  </PropertyGroup>
++  <ItemGroup>
++    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
++  </ItemGroup>
++  <ItemGroup>
++    <ProjectReference Include="..\TradeRecon.Domain\TradeRecon.Domain.csproj" />
++    <ProjectReference Include="..\TradeRecon.Application\TradeRecon.Application.csproj" />
++    <ProjectReference Include="..\TradeRecon.Infrastructure\TradeRecon.Infrastructure.csproj" />
++  </ItemGroup>
++</Project>
+diff --git a/src/TradeRecon.Domain/Audit/ActorRole.cs b/src/TradeRecon.Domain/Audit/ActorRole.cs
+new file mode 100644
+index 0000000..24c89ad
+--- /dev/null
++++ b/src/TradeRecon.Domain/Audit/ActorRole.cs
+@@ -0,0 +1,13 @@
++namespace TradeRecon.Domain.Audit;
++
++/// <summary>
++/// The maker-checker role an actor held when an audit entry was written.
++/// </summary>
++public enum ActorRole
++{
++    /// <summary>The maker: the analyst who proposed the resolution.</summary>
++    Proposer,
++
++    /// <summary>The checker: the second person who approved or rejected it.</summary>
++    Checker
++}
+diff --git a/src/TradeRecon.Domain/Audit/AuditEntry.cs b/src/TradeRecon.Domain/Audit/AuditEntry.cs
+new file mode 100644
+index 0000000..008c3fd
+--- /dev/null
++++ b/src/TradeRecon.Domain/Audit/AuditEntry.cs
+@@ -0,0 +1,64 @@
++namespace TradeRecon.Domain.Audit;
++
++/// <summary>
++/// One immutable record in the append-only resolution audit trail.
++///
++/// An entry carries the request identity, the lifecycle action, the recognised actor and the
++/// role they acted in, plus tamper-evidence and ordering metadata (<see cref="Sequence"/>,
++/// <see cref="Version"/>, <see cref="Timestamp"/>, <see cref="PreviousHash"/> and
++/// <see cref="EntryHash"/>) so a Compliance reader can prove ordering and detect edits.
++///
++/// Free text supplied by a human (reason, evidence) is never stored verbatim: only a redacted
++/// projection and a cryptographic digest are persisted, so account identifiers and trade
++/// amounts cannot leak into the trail or into any export taken from it.
++/// </summary>
++public sealed record AuditEntry
++{
++    /// <summary>Monotonic, gap-free position of the entry in the whole trail (1-based).</summary>
++    public required long Sequence { get; init; }
++
++    /// <summary>Per-request revision. 1 for the proposal, 2 for its final decision.</summary>
++    public required int Version { get; init; }
++
++    /// <summary>Caller-supplied identity of the resolution request.</summary>
++    public required string RequestId { get; init; }
++
++    /// <summary>Lifecycle action this entry records.</summary>
++    public required ResolutionAction Action { get; init; }
++
++    /// <summary>The recognised person who performed <see cref="Action"/>.</summary>
++    public required string Actor { get; init; }
++
++    /// <summary>Maker-checker role <see cref="Actor"/> held for this entry.</summary>
++    public required ActorRole ActorRole { get; init; }
++
++    /// <summary>The proposer (maker) of the request this entry belongs to.</summary>
++    public required string Proposer { get; init; }
++
++    /// <summary>The deciding checker, when this entry is a decision; otherwise <c>null</c>.</summary>
++    public string? Checker { get; init; }
++
++    /// <summary>Business date the underlying reconciliation break belongs to.</summary>
++    public required DateOnly BusinessDate { get; init; }
++
++    /// <summary>UTC instant the entry was durably appended.</summary>
++    public required DateTimeOffset Timestamp { get; init; }
++
++    /// <summary>Reason for the proposal with sensitive tokens masked.</summary>
++    public required string ReasonRedacted { get; init; }
++
++    /// <summary>SHA-256 of the original reason text, so the raw text stays provable.</summary>
++    public required string ReasonHash { get; init; }
++
++    /// <summary>Evidence reference for the proposal with sensitive tokens masked.</summary>
++    public required string EvidenceRedacted { get; init; }
++
++    /// <summary>SHA-256 of the original evidence text.</summary>
++    public required string EvidenceHash { get; init; }
++
++    /// <summary>Hash of the preceding entry, chaining the trail. Genesis is all zeroes.</summary>
++    public required string PreviousHash { get; init; }
++
++    /// <summary>SHA-256 over this entry's canonical form and <see cref="PreviousHash"/>.</summary>
++    public required string EntryHash { get; init; }
++}
+diff --git a/src/TradeRecon.Domain/Audit/ResolutionAction.cs b/src/TradeRecon.Domain/Audit/ResolutionAction.cs
+new file mode 100644
+index 0000000..0486f7c
+--- /dev/null
++++ b/src/TradeRecon.Domain/Audit/ResolutionAction.cs
+@@ -0,0 +1,16 @@
++namespace TradeRecon.Domain.Audit;
++
++/// <summary>
++/// Lifecycle action recorded in the append-only resolution audit trail.
++/// </summary>
++public enum ResolutionAction
++{
++    /// <summary>An analyst proposed a resolution for a reconciliation break.</summary>
++    Proposed,
++
++    /// <summary>A checker approved the proposal. Terminal.</summary>
++    Approved,
++
++    /// <summary>A checker rejected the proposal. Terminal.</summary>
++    Rejected
++}
+diff --git a/src/TradeRecon.Domain/Audit/ResolutionStatus.cs b/src/TradeRecon.Domain/Audit/ResolutionStatus.cs
+new file mode 100644
+index 0000000..e0e0b5d
+--- /dev/null
++++ b/src/TradeRecon.Domain/Audit/ResolutionStatus.cs
+@@ -0,0 +1,16 @@
++namespace TradeRecon.Domain.Audit;
++
++/// <summary>
++/// Current lifecycle state of a resolution request, derived from its audit entries.
++/// </summary>
++public enum ResolutionStatus
++{
++    /// <summary>Proposed and awaiting a checker decision.</summary>
++    Pending,
++
++    /// <summary>Approved by a checker distinct from the proposer. Terminal.</summary>
++    Approved,
++
++    /// <summary>Rejected by a checker distinct from the proposer. Terminal.</summary>
++    Rejected
++}
+diff --git a/src/TradeRecon.Infrastructure/Audit/FileAuditTrailStore.cs b/src/TradeRecon.Infrastructure/Audit/FileAuditTrailStore.cs
+new file mode 100644
+index 0000000..65b9f3d
+--- /dev/null
++++ b/src/TradeRecon.Infrastructure/Audit/FileAuditTrailStore.cs
+@@ -0,0 +1,204 @@
++using System.Text;
++using TradeRecon.Application.Abstractions;
++using TradeRecon.Application.Audit;
++using TradeRecon.Domain.Audit;
++
++namespace TradeRecon.Infrastructure.Audit;
++
++/// <summary>Location of the durable audit trail on disk.</summary>
++public sealed record FileAuditTrailStoreOptions
++{
++    /// <summary>Directory that holds the trail, its lock and its marker file.</summary>
++    public required string StateDirectory { get; init; }
++}
++
++/// <summary>
++/// Append-only, file-backed audit trail.
++///
++/// Entries are stored as line-delimited JSON and are only ever appended: a new decision never
++/// rewrites an existing byte, and each line is hash-chained to its predecessor so an edit or a
++/// deletion is detectable on read.
++///
++/// Mutations are serialised through an operating-system file lock held for the whole
++/// read-decide-append cycle. The lock is honoured across processes, so two agents deciding the
++/// same request concurrently — whether in one process or in two — are ordered, and the second
++/// one observes the first one's durable decision instead of overwriting it.
++/// </summary>
++public sealed class FileAuditTrailStore : IAuditTrailStore
++{
++    /// <summary>Name of the append-only trail file inside the state directory.</summary>
++    public const string TrailFileName = "resolution-audit-trail.jsonl";
++
++    /// <summary>Name of the cross-process lock file.</summary>
++    public const string LockFileName = "resolution-audit-trail.lock";
++
++    /// <summary>Name of the marker written by <c>initialize</c>.</summary>
++    public const string MarkerFileName = "audit-state.json";
++
++    private const string MarkerContent =
++        "{\n  \"schemaVersion\": \"1.0\",\n  \"trailFile\": \"" + TrailFileName + "\"\n}\n";
++
++    private static readonly TimeSpan LockTimeout = TimeSpan.FromSeconds(60);
++    private static readonly UTF8Encoding Utf8NoBom = new(encoderShouldEmitUTF8Identifier: false);
++
++    private readonly string _stateDirectory;
++    private readonly string _trailPath;
++    private readonly string _lockPath;
++    private readonly string _markerPath;
++
++    public FileAuditTrailStore(FileAuditTrailStoreOptions options)
++    {
++        ArgumentNullException.ThrowIfNull(options);
++        ArgumentException.ThrowIfNullOrWhiteSpace(options.StateDirectory);
++
++        _stateDirectory = Path.GetFullPath(options.StateDirectory);
++        _trailPath = Path.Combine(_stateDirectory, TrailFileName);
++        _lockPath = Path.Combine(_stateDirectory, LockFileName);
++        _markerPath = Path.Combine(_stateDirectory, MarkerFileName);
++    }
++
++    /// <summary>Full path of the append-only trail file.</summary>
++    public string TrailPath => _trailPath;
++
++    /// <inheritdoc />
++    public async Task InitializeAsync(CancellationToken cancellationToken = default)
++    {
++        Directory.CreateDirectory(_stateDirectory);
++
++        using var guard = await AcquireLockAsync(cancellationToken).ConfigureAwait(false);
++
++        if (!File.Exists(_trailPath))
++        {
++            await File.WriteAllTextAsync(_trailPath, string.Empty, Utf8NoBom, cancellationToken).ConfigureAwait(false);
++        }
++
++        if (!File.Exists(_markerPath))
++        {
++            await File.WriteAllTextAsync(_markerPath, MarkerContent, Utf8NoBom, cancellationToken).ConfigureAwait(false);
++        }
++    }
++
++    /// <inheritdoc />
++    public async Task<AuditTrailSnapshot> ReadAsync(CancellationToken cancellationToken = default)
++    {
++        Directory.CreateDirectory(_stateDirectory);
++
++        using var guard = await AcquireLockAsync(cancellationToken).ConfigureAwait(false);
++        return await ReadUnlockedAsync(cancellationToken).ConfigureAwait(false);
++    }
++
++    /// <inheritdoc />
++    public async Task<TResult> ExecuteAsync<TResult>(
++        Func<AuditTrailSnapshot, AuditTransaction<TResult>> decide,
++        CancellationToken cancellationToken = default)
++    {
++        ArgumentNullException.ThrowIfNull(decide);
++        Directory.CreateDirectory(_stateDirectory);
++
++        using var guard = await AcquireLockAsync(cancellationToken).ConfigureAwait(false);
++
++        var snapshot = await ReadUnlockedAsync(cancellationToken).ConfigureAwait(false);
++        var transaction = decide(snapshot);
++
++        if (transaction.Append is { } entry)
++        {
++            Validate(entry, snapshot);
++            await AppendUnlockedAsync(entry, cancellationToken).ConfigureAwait(false);
++        }
++
++        return transaction.Result;
++    }
++
++    private static void Validate(AuditEntry entry, AuditTrailSnapshot snapshot)
++    {
++        if (entry.Sequence != snapshot.NextSequence
++            || !string.Equals(entry.PreviousHash, snapshot.HeadHash, StringComparison.Ordinal)
++            || !AuditHashing.HasValidHash(entry))
++        {
++            throw new InvalidOperationException(
++                "Refusing to append an audit entry that does not extend the current trail head.");
++        }
++    }
++
++    private async Task<AuditTrailSnapshot> ReadUnlockedAsync(CancellationToken cancellationToken)
++    {
++        if (!File.Exists(_trailPath))
++        {
++            return AuditTrailSnapshot.Create([]);
++        }
++
++        var lines = await File.ReadAllLinesAsync(_trailPath, Utf8NoBom, cancellationToken).ConfigureAwait(false);
++        var entries = new List<AuditEntry>(lines.Length);
++
++        for (var i = 0; i < lines.Length; i++)
++        {
++            if (string.IsNullOrWhiteSpace(lines[i]))
++            {
++                continue;
++            }
++
++            try
++            {
++                entries.Add(AuditEntrySerializer.Deserialize(lines[i]));
++            }
++            catch (Exception ex) when (ex is FormatException or System.Text.Json.JsonException or ArgumentException)
++            {
++                throw new InvalidDataException(
++                    $"The audit trail is unreadable at line {i + 1}; it may have been tampered with.", ex);
++            }
++        }
++
++        return AuditTrailSnapshot.Create(entries);
++    }
++
++    private async Task AppendUnlockedAsync(AuditEntry entry, CancellationToken cancellationToken)
++    {
++        var line = AuditEntrySerializer.Serialize(entry) + "\n";
++        var bytes = Utf8NoBom.GetBytes(line);
++
++        await using var stream = new FileStream(
++            _trailPath,
++            FileMode.Append,
++            FileAccess.Write,
++            FileShare.Read,
++            bufferSize: 4096,
++            FileOptions.WriteThrough);
++
++        await stream.WriteAsync(bytes, cancellationToken).ConfigureAwait(false);
++        await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
++        stream.Flush(flushToDisk: true);
++    }
++
++    private async Task<FileStream> AcquireLockAsync(CancellationToken cancellationToken)
++    {
++        var deadline = DateTime.UtcNow + LockTimeout;
++        var delayMilliseconds = 2;
++
++        while (true)
++        {
++            cancellationToken.ThrowIfCancellationRequested();
++
++            try
++            {
++                return new FileStream(
++                    _lockPath,
++                    FileMode.OpenOrCreate,
++                    FileAccess.ReadWrite,
++                    FileShare.None,
++                    bufferSize: 1,
++                    FileOptions.None);
++            }
++            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
++            {
++                if (DateTime.UtcNow >= deadline)
++                {
++                    throw new TimeoutException(
++                        "Timed out waiting for exclusive access to the audit trail.", ex);
++                }
++
++                await Task.Delay(delayMilliseconds, cancellationToken).ConfigureAwait(false);
++                delayMilliseconds = Math.Min(delayMilliseconds * 2, 50);
++            }
++        }
++    }
++}
+diff --git a/src/TradeRecon.Infrastructure/ServiceCollectionExtensions.cs b/src/TradeRecon.Infrastructure/ServiceCollectionExtensions.cs
+index b051c5f..a3334f3 100644
+--- a/src/TradeRecon.Infrastructure/ServiceCollectionExtensions.cs
++++ b/src/TradeRecon.Infrastructure/ServiceCollectionExtensions.cs
+@@ -1,7 +1,9 @@
+ using Microsoft.Extensions.DependencyInjection;
+ using TradeRecon.Application.Abstractions;
++using TradeRecon.Application.Audit;
+ using TradeRecon.Application.Reconciliation;
+ using TradeRecon.Application.Reporting;
++using TradeRecon.Infrastructure.Audit;
+ using TradeRecon.Infrastructure.Persistence;
+ using TradeRecon.Infrastructure.Reporting;
+ using TradeRecon.Infrastructure.Sources;
+@@ -38,4 +40,19 @@ public static class ServiceCollectionExtensions
+         services.AddSingleton<IReportWriter, FileReportWriter>();
+         return services;
+     }
++
++    /// <summary>
++    /// Registers the maker-checker resolution workflow over a file-backed, append-only audit
++    /// trail rooted at <paramref name="stateDirectory"/>.
++    /// </summary>
++    public static IServiceCollection AddTradeReconAudit(
++        this IServiceCollection services,
++        string stateDirectory)
++    {
++        services.AddSingleton(new FileAuditTrailStoreOptions { StateDirectory = stateDirectory });
++        services.AddSingleton<IAuditTrailStore, FileAuditTrailStore>();
++        services.AddSingleton(TimeProvider.System);
++        services.AddSingleton<ResolutionWorkflowService>();
++        return services;
++    }
+ }
+diff --git a/tests/TradeRecon.Tests/AuditAdapterContractTests.cs b/tests/TradeRecon.Tests/AuditAdapterContractTests.cs
+new file mode 100644
+index 0000000..6de0a9c
+--- /dev/null
++++ b/tests/TradeRecon.Tests/AuditAdapterContractTests.cs
+@@ -0,0 +1,165 @@
++using System.Text.Json;
++using Xunit;
++
++namespace TradeRecon.Tests;
++
++/// <summary>
++/// Guards the machine-readable contract a harness uses to drive the resolution workflow.
++///
++/// The adapter must stay shell-free: every command is an executable plus a fully separated
++/// argument array, so operator-supplied text (a reason, an evidence reference) can never be
++/// re-interpreted as shell syntax.
++/// </summary>
++public class AuditAdapterContractTests
++{
++    private static readonly string[] RequiredCommands = ["initialize", "propose", "decide", "export"];
++
++    private static readonly IReadOnlyDictionary<string, string[]> RequiredPlaceholders =
++        new Dictionary<string, string[]>(StringComparer.Ordinal)
++        {
++            ["initialize"] = ["{stateDirectory}"],
++            ["propose"] = ["{stateDirectory}", "{requestId}", "{proposer}", "{businessDate}", "{reason}", "{evidence}"],
++            ["decide"] = ["{stateDirectory}", "{requestId}", "{approver}", "{decision}"],
++            ["export"] = ["{stateDirectory}", "{fromDate}", "{toDate}", "{exportPath}"]
++        };
++
++    [Fact]
++    public void AdapterFileExistsAtTheCandidateRoot()
++    {
++        Assert.True(File.Exists(AdapterPath()), $"audit-adapter.json was not found at {AdapterPath()}.");
++    }
++
++    [Fact]
++    public void AdapterDeclaresTheFourWorkflowCommands()
++    {
++        using var document = ReadAdapter();
++        var root = document.RootElement;
++
++        Assert.Equal(JsonValueKind.Object, root.ValueKind);
++        Assert.False(string.IsNullOrWhiteSpace(root.GetProperty("schemaVersion").GetString()));
++        Assert.False(string.IsNullOrWhiteSpace(root.GetProperty("workingDirectory").GetString()));
++
++        foreach (var command in RequiredCommands)
++        {
++            Assert.True(root.TryGetProperty(command, out var element), $"Missing '{command}' command.");
++            Assert.Equal(JsonValueKind.Object, element.ValueKind);
++            Assert.Equal("dotnet", element.GetProperty("executable").GetString());
++            Assert.NotEmpty(Arguments(element));
++            Assert.Contains(0, ExitCodes(element));
++        }
++    }
++
++    [Theory]
++    [InlineData("initialize")]
++    [InlineData("propose")]
++    [InlineData("decide")]
++    [InlineData("export")]
++    public void EachCommandCarriesItsPlaceholdersAsStandaloneArguments(string command)
++    {
++        using var document = ReadAdapter();
++        var arguments = Arguments(document.RootElement.GetProperty(command));
++
++        foreach (var placeholder in RequiredPlaceholders[command])
++        {
++            // A placeholder occupying a whole argument cannot be split, quoted or concatenated
++            // into neighbouring text by the caller.
++            Assert.Contains(placeholder, arguments);
++        }
++    }
++
++    [Theory]
++    [InlineData("initialize")]
++    [InlineData("propose")]
++    [InlineData("decide")]
++    [InlineData("export")]
++    public void NoArgumentUsesShellSyntax(string command)
++    {
++        string[] metacharacters = ["&&", "||", ";", "|", ">", "<", "`", "$(", "\"", "'", "\n"];
++
++        using var document = ReadAdapter();
++
++        foreach (var argument in Arguments(document.RootElement.GetProperty(command)))
++        {
++            foreach (var metacharacter in metacharacters)
++            {
++                Assert.DoesNotContain(metacharacter, argument, StringComparison.Ordinal);
++            }
++        }
++    }
++
++    [Theory]
++    [InlineData("propose")]
++    [InlineData("decide")]
++    public void RefusableCommandsAllowThePolicyRefusalExitCode(string command)
++    {
++        using var document = ReadAdapter();
++
++        Assert.Contains(3, ExitCodes(document.RootElement.GetProperty(command)));
++    }
++
++    [Fact]
++    public void EveryCommandTargetsTheAuditConsoleProject()
++    {
++        using var document = ReadAdapter();
++
++        foreach (var command in RequiredCommands)
++        {
++            var arguments = Arguments(document.RootElement.GetProperty(command));
++
++            Assert.Contains("src/TradeRecon.AuditConsole/TradeRecon.AuditConsole.csproj", arguments);
++            Assert.Contains(command, arguments);
++
++            var separator = Array.IndexOf(arguments, "--");
++            var verb = Array.IndexOf(arguments, command);
++            Assert.True(separator >= 0, "The dotnet run separator '--' is required.");
++            Assert.True(verb > separator, $"The '{command}' verb must follow the '--' separator.");
++        }
++    }
++
++    [Fact]
++    public void TheBaselineAdapterIsStillIntact()
++    {
++        var path = Path.Combine(RepositoryRoot(), "benchmark-adapter.json");
++        using var document = JsonDocument.Parse(File.ReadAllText(path));
++        var root = document.RootElement;
++
++        foreach (var command in new[] { "build", "test", "run" })
++        {
++            Assert.True(root.TryGetProperty(command, out _), $"benchmark-adapter.json lost its '{command}' command.");
++        }
++
++        Assert.Equal(JsonValueKind.Array, root.GetProperty("outputs").ValueKind);
++    }
++
++    private static JsonDocument ReadAdapter() => JsonDocument.Parse(File.ReadAllText(AdapterPath()));
++
++    private static string AdapterPath() => Path.Combine(RepositoryRoot(), "audit-adapter.json");
++
++    private static string[] Arguments(JsonElement command) => command
++        .GetProperty("arguments")
++        .EnumerateArray()
++        .Select(a => a.GetString() ?? string.Empty)
++        .ToArray();
++
++    private static int[] ExitCodes(JsonElement command) => command
++        .GetProperty("allowedExitCodes")
++        .EnumerateArray()
++        .Select(a => a.GetInt32())
++        .ToArray();
++
++    private static string RepositoryRoot()
++    {
++        var directory = new DirectoryInfo(AppContext.BaseDirectory);
++        while (directory is not null)
++        {
++            if (File.Exists(Path.Combine(directory.FullName, "TradeRecon.sln")))
++            {
++                return directory.FullName;
++            }
++
++            directory = directory.Parent;
++        }
++
++        throw new InvalidOperationException("Could not locate the repository root from the test output directory.");
++    }
++}
+diff --git a/tests/TradeRecon.Tests/AuditCliTests.cs b/tests/TradeRecon.Tests/AuditCliTests.cs
+new file mode 100644
+index 0000000..18c8e9c
+--- /dev/null
++++ b/tests/TradeRecon.Tests/AuditCliTests.cs
+@@ -0,0 +1,273 @@
++using System.Text.Json;
++using TradeRecon.Application.Audit;
++using Xunit;
++using AuditProgram = TradeRecon.AuditConsole.Program;
++
++namespace TradeRecon.Tests;
++
++/// <summary>
++/// Black-box contract of the audit command-line host: one JSON document on stdout, documented
++/// exit codes, a durable export file, and no sensitive data anywhere in its output.
++/// </summary>
++public class AuditCliTests
++{
++    [Fact]
++    public async Task FullLifecycle_ProposeDecideExport_IsRecordedAndExplainable()
++    {
++        using var context = AuditTestContext.Create();
++        var exportPath = Path.Combine(context.Root, "export", "history.json");
++
++        var initialize = await RunAsync("initialize", "--state", context.StateDirectory);
++        Assert.Equal(AuditProgram.ExitOk, initialize.ExitCode);
++        Assert.Equal("initialized", Outcome(initialize.Stdout));
++
++        var propose = await RunAsync(
++            "propose",
++            "--state", context.StateDirectory,
++            "--request-id", "REQ-1",
++            "--proposer", "analyst.maker",
++            "--business-date", "2024-06-03",
++            "--reason", AuditTestContext.SensitiveReason,
++            "--evidence", AuditTestContext.SensitiveEvidence);
++
++        Assert.Equal(AuditProgram.ExitOk, propose.ExitCode);
++        Assert.Equal("proposed", Outcome(propose.Stdout));
++
++        var decide = await RunAsync(
++            "decide",
++            "--state", context.StateDirectory,
++            "--request-id", "REQ-1",
++            "--approver", "compliance.checker",
++            "--decision", "approve");
++
++        Assert.Equal(AuditProgram.ExitOk, decide.ExitCode);
++        Assert.Equal("approved", Outcome(decide.Stdout));
++
++        var export = await RunAsync(
++            "export",
++            "--state", context.StateDirectory,
++            "--from", "2024-06-01",
++            "--to", "2024-06-30",
++            "--output", exportPath);
++
++        Assert.Equal(AuditProgram.ExitOk, export.ExitCode);
++        Assert.True(File.Exists(exportPath));
++
++        var document = AuditJson.Deserialize<AuditExportDocument>(await File.ReadAllTextAsync(exportPath));
++        Assert.NotNull(document);
++        Assert.True(document!.ChainVerified);
++        Assert.Equal(2, document.EntryCount);
++
++        var request = Assert.Single(document.Requests);
++        Assert.Equal("Approved", request.Status);
++        Assert.Equal("analyst.maker", request.Proposer);
++        Assert.Equal("compliance.checker", request.FinalDecidedBy);
++        Assert.Equal(1, request.DecisionCount);
++        Assert.True(request.CheckerDistinctFromProposer);
++
++        // The exported entries carry identity, action, actor and ordering/tamper metadata.
++        foreach (var entry in document.Entries)
++        {
++            Assert.Equal("REQ-1", entry.RequestId);
++            Assert.False(string.IsNullOrWhiteSpace(entry.Action));
++            Assert.False(string.IsNullOrWhiteSpace(entry.Actor));
++            Assert.False(string.IsNullOrWhiteSpace(entry.Timestamp));
++            Assert.Equal(64, entry.EntryHash.Length);
++            Assert.True(entry.Sequence > 0);
++            Assert.True(entry.Version > 0);
++        }
++
++        foreach (var output in new[] { propose.Stdout, propose.Stderr, decide.Stdout, export.Stdout, export.Stderr })
++        {
++            AuditTestContext.AssertNoSensitiveData(output);
++        }
++
++        AuditTestContext.AssertNoSensitiveData(await File.ReadAllTextAsync(exportPath));
++    }
++
++    [Fact]
++    public async Task SelfApproval_IsRefusedWithTheDocumentedExitCode()
++    {
++        using var context = AuditTestContext.Create();
++        await ProposeAsync(context);
++
++        var decide = await RunAsync(
++            "decide",
++            "--state", context.StateDirectory,
++            "--request-id", "REQ-1",
++            "--approver", "analyst.maker",
++            "--decision", "approve");
++
++        Assert.Equal(AuditProgram.ExitRefused, decide.ExitCode);
++        Assert.Equal("self-approval-rejected", Outcome(decide.Stdout));
++
++        var exportPath = Path.Combine(context.Root, "history.json");
++        var export = await RunAsync(
++            "export",
++            "--state", context.StateDirectory,
++            "--from", "2024-06-03",
++            "--to", "2024-06-03",
++            "--output", exportPath);
++
++        var document = AuditJson.Deserialize<AuditExportDocument>(export.Stdout);
++        Assert.NotNull(document);
++        Assert.Equal(1, document!.EntryCount);
++        Assert.Equal("Pending", document.Requests[0].Status);
++        Assert.False(document.Requests[0].SelfApproved);
++    }
++
++    [Fact]
++    public async Task RetriedCommands_AreIdempotent()
++    {
++        using var context = AuditTestContext.Create();
++
++        var first = await ProposeAsync(context);
++        var again = await ProposeAsync(context);
++
++        Assert.Equal(AuditProgram.ExitOk, first.ExitCode);
++        Assert.Equal(AuditProgram.ExitOk, again.ExitCode);
++        Assert.Equal("proposal-replayed", Outcome(again.Stdout));
++
++        var decideArgs = new[]
++        {
++            "decide",
++            "--state", context.StateDirectory,
++            "--request-id", "REQ-1",
++            "--approver", "compliance.checker",
++            "--decision", "reject"
++        };
++
++        var decided = await RunAsync(decideArgs);
++        var redecided = await RunAsync(decideArgs);
++
++        Assert.Equal(AuditProgram.ExitOk, decided.ExitCode);
++        Assert.Equal("rejected", Outcome(decided.Stdout));
++        Assert.Equal(AuditProgram.ExitOk, redecided.ExitCode);
++        Assert.Equal("decision-replayed", Outcome(redecided.Stdout));
++
++        var export = await RunAsync(
++            "export",
++            "--state", context.StateDirectory,
++            "--from", "2024-06-03",
++            "--to", "2024-06-03",
++            "--output", Path.Combine(context.Root, "history.json"));
++
++        var document = AuditJson.Deserialize<AuditExportDocument>(export.Stdout);
++        Assert.Equal(2, document!.EntryCount);
++        Assert.Equal(1, document.Requests[0].DecisionCount);
++    }
++
++    [Fact]
++    public async Task ConflictingDecision_IsRefusedAfterTheFirstOne()
++    {
++        using var context = AuditTestContext.Create();
++        await ProposeAsync(context);
++
++        var accepted = await RunAsync(
++            "decide",
++            "--state", context.StateDirectory,
++            "--request-id", "REQ-1",
++            "--approver", "checker.one",
++            "--decision", "approve");
++
++        var refused = await RunAsync(
++            "decide",
++            "--state", context.StateDirectory,
++            "--request-id", "REQ-1",
++            "--approver", "checker.two",
++            "--decision", "reject");
++
++        Assert.Equal(AuditProgram.ExitOk, accepted.ExitCode);
++        Assert.Equal(AuditProgram.ExitRefused, refused.ExitCode);
++        Assert.Equal("already-decided", Outcome(refused.Stdout));
++    }
++
++    [Theory]
++    [InlineData("unknown-request", "REQ-missing", "compliance.checker", "approve")]
++    [InlineData("invalid-decision", "REQ-1", "compliance.checker", "maybe")]
++    public async Task RefusedDecisions_ReportAStableOutcomeCode(
++        string expectedOutcome,
++        string requestId,
++        string approver,
++        string decision)
++    {
++        using var context = AuditTestContext.Create();
++        await ProposeAsync(context);
++
++        var result = await RunAsync(
++            "decide",
++            "--state", context.StateDirectory,
++            "--request-id", requestId,
++            "--approver", approver,
++            "--decision", decision);
++
++        Assert.Equal(AuditProgram.ExitRefused, result.ExitCode);
++        Assert.Equal(expectedOutcome, Outcome(result.Stdout));
++    }
++
++    [Theory]
++    [InlineData("propose")]
++    [InlineData("decide")]
++    [InlineData("export")]
++    [InlineData("initialize")]
++    public async Task MissingRequiredOptions_ReturnTheDocumentedErrorCode(string verb)
++    {
++        var result = await RunAsync(verb);
++
++        Assert.Equal(AuditProgram.ExitError, result.ExitCode);
++        Assert.Equal("invalid-arguments", Outcome(result.Stdout));
++    }
++
++    [Fact]
++    public async Task UnknownCommand_ReturnsTheDocumentedErrorCode()
++    {
++        using var context = AuditTestContext.Create();
++
++        var result = await RunAsync("frobnicate", "--state", context.StateDirectory);
++
++        Assert.Equal(AuditProgram.ExitError, result.ExitCode);
++    }
++
++    [Fact]
++    public async Task ProposalReasonMayStartWithADash()
++    {
++        using var context = AuditTestContext.Create();
++
++        var result = await RunAsync(
++            "propose",
++            "--state", context.StateDirectory,
++            "--request-id", "REQ-DASH",
++            "--proposer", "analyst.maker",
++            "--business-date", "2024-06-03",
++            "--reason", "--custodian confirmed the timing difference",
++            "--evidence", "Ticket OPS-1");
++
++        Assert.Equal(AuditProgram.ExitOk, result.ExitCode);
++        Assert.Equal("proposed", Outcome(result.Stdout));
++    }
++
++    private static Task<CliRun> ProposeAsync(AuditTestContext context) => RunAsync(
++        "propose",
++        "--state", context.StateDirectory,
++        "--request-id", "REQ-1",
++        "--proposer", "analyst.maker",
++        "--business-date", "2024-06-03",
++        "--reason", AuditTestContext.SensitiveReason,
++        "--evidence", AuditTestContext.SensitiveEvidence);
++
++    private static async Task<CliRun> RunAsync(params string[] args)
++    {
++        var stdout = new StringWriter();
++        var stderr = new StringWriter();
++        var exitCode = await AuditProgram.RunAsync(args, stdout, stderr);
++        return new CliRun(exitCode, stdout.ToString(), stderr.ToString());
++    }
++
++    private static string Outcome(string stdout)
++    {
++        using var document = JsonDocument.Parse(stdout);
++        return document.RootElement.GetProperty("result").GetProperty("outcome").GetString() ?? string.Empty;
++    }
++
++    private sealed record CliRun(int ExitCode, string Stdout, string Stderr);
++}
+diff --git a/tests/TradeRecon.Tests/AuditTestContext.cs b/tests/TradeRecon.Tests/AuditTestContext.cs
+new file mode 100644
+index 0000000..8714de6
+--- /dev/null
++++ b/tests/TradeRecon.Tests/AuditTestContext.cs
+@@ -0,0 +1,87 @@
++using TradeRecon.Application.Audit;
++using TradeRecon.Infrastructure.Audit;
++
++namespace TradeRecon.Tests;
++
++/// <summary>
++/// Shared scaffolding for the audit tests: a throwaway state directory plus the sensitive
++/// sample text used to prove that nothing leaks into durable state or output.
++/// </summary>
++internal sealed class AuditTestContext : IDisposable
++{
++    private AuditTestContext(string root)
++    {
++        Root = root;
++        StateDirectory = Path.Combine(root, "state");
++        Store = new FileAuditTrailStore(new FileAuditTrailStoreOptions { StateDirectory = StateDirectory });
++        Workflow = new ResolutionWorkflowService(Store);
++    }
++
++    /// <summary>An account identifier that must never reach the trail, output or export.</summary>
++    public const string SensitiveAccount = "ACC002";
++
++    /// <summary>An instrument identifier from the break register.</summary>
++    public const string SensitiveInstrument = "DE0005140008";
++
++    /// <summary>A trade amount that must never reach the trail, output or export.</summary>
++    public const string SensitiveAmount = "1600500.00";
++
++    /// <summary>Operator text deliberately full of sensitive values.</summary>
++    public const string SensitiveReason =
++        "Custodian timing difference on account ACC002 instrument DE0005140008 for 1600500.00 EUR.";
++
++    /// <summary>Evidence reference that also embeds sensitive values.</summary>
++    public const string SensitiveEvidence =
++        "Ticket OPS-4471; custodian statement shows 1,600,500.00 EUR settled for ACC002.";
++
++    public string Root { get; }
++
++    public string StateDirectory { get; }
++
++    public FileAuditTrailStore Store { get; }
++
++    public ResolutionWorkflowService Workflow { get; }
++
++    public string TrailText => File.Exists(Store.TrailPath) ? File.ReadAllText(Store.TrailPath) : string.Empty;
++
++    public static AuditTestContext Create()
++        => new(Directory.CreateDirectory(
++            Path.Combine(Path.GetTempPath(), $"trade-recon-audit-{Guid.NewGuid():N}")).FullName);
++
++    public static DateOnly BusinessDate => new(2024, 6, 3);
++
++    public ProposeCommand Proposal(
++        string requestId = "REQ-1",
++        string proposer = "analyst.maker",
++        string? reason = null,
++        string? evidence = null)
++        => new()
++        {
++            RequestId = requestId,
++            Proposer = proposer,
++            BusinessDate = BusinessDate,
++            Reason = reason ?? SensitiveReason,
++            Evidence = evidence ?? SensitiveEvidence
++        };
++
++    /// <summary>Asserts that no sensitive token from the sample text appears in <paramref name="text"/>.</summary>
++    public static void AssertNoSensitiveData(string text)
++    {
++        Xunit.Assert.DoesNotContain(SensitiveAccount, text, StringComparison.OrdinalIgnoreCase);
++        Xunit.Assert.DoesNotContain(SensitiveInstrument, text, StringComparison.OrdinalIgnoreCase);
++        Xunit.Assert.DoesNotContain("1600500", text, StringComparison.Ordinal);
++        Xunit.Assert.DoesNotContain("1,600,500", text, StringComparison.Ordinal);
++    }
++
++    public void Dispose()
++    {
++        try
++        {
++            Directory.Delete(Root, recursive: true);
++        }
++        catch (IOException)
++        {
++            // A throwaway directory that cannot be removed must not fail the test run.
++        }
++    }
++}
+diff --git a/tests/TradeRecon.Tests/AuditWorkflowTests.cs b/tests/TradeRecon.Tests/AuditWorkflowTests.cs
+new file mode 100644
+index 0000000..52d255e
+--- /dev/null
++++ b/tests/TradeRecon.Tests/AuditWorkflowTests.cs
+@@ -0,0 +1,344 @@
++using TradeRecon.Application.Audit;
++using TradeRecon.Domain.Audit;
++using TradeRecon.Infrastructure.Audit;
++using Xunit;
++
++namespace TradeRecon.Tests;
++
++/// <summary>
++/// Behavioural guarantees of the maker-checker resolution workflow and of the append-only trail
++/// it writes.
++/// </summary>
++public class AuditWorkflowTests
++{
++    [Fact]
++    public async Task ProposeThenApprove_RecordsMakerAndCheckerAsDistinctPeople()
++    {
++        using var context = AuditTestContext.Create();
++        await context.Workflow.InitializeAsync();
++
++        var proposal = await context.Workflow.ProposeAsync(context.Proposal());
++        var decision = await context.Workflow.DecideAsync(new DecideCommand
++        {
++            RequestId = "REQ-1",
++            Approver = "compliance.checker",
++            Decision = ResolutionAction.Approved
++        });
++
++        Assert.True(proposal.Ok);
++        Assert.Equal(WorkflowOutcome.Proposed, proposal.Outcome);
++        Assert.Equal(ResolutionStatus.Pending, proposal.Status);
++
++        Assert.True(decision.Ok);
++        Assert.Equal(WorkflowOutcome.Approved, decision.Outcome);
++        Assert.Equal(ResolutionStatus.Approved, decision.Status);
++        Assert.Equal("analyst.maker", decision.Proposer);
++        Assert.Equal("compliance.checker", decision.Checker);
++
++        var snapshot = await context.Store.ReadAsync();
++        Assert.True(snapshot.ChainVerified);
++        Assert.Equal(2, snapshot.Entries.Count);
++        Assert.Equal(new long[] { 1, 2 }, snapshot.Entries.Select(e => e.Sequence).ToArray());
++        Assert.Equal(new[] { 1, 2 }, snapshot.Entries.Select(e => e.Version).ToArray());
++        Assert.Equal(ActorRole.Proposer, snapshot.Entries[0].ActorRole);
++        Assert.Equal(ActorRole.Checker, snapshot.Entries[1].ActorRole);
++    }
++
++    [Fact]
++    public async Task SelfApproval_IsRefusedAndLeavesNoDurableDecision()
++    {
++        using var context = AuditTestContext.Create();
++        await context.Workflow.ProposeAsync(context.Proposal());
++
++        var decision = await context.Workflow.DecideAsync(new DecideCommand
++        {
++            RequestId = "REQ-1",
++            Approver = "Analyst.Maker ",
++            Decision = ResolutionAction.Approved
++        });
++
++        Assert.False(decision.Ok);
++        Assert.Equal(WorkflowOutcome.SelfApprovalRejected, decision.Outcome);
++        Assert.Equal(ResolutionStatus.Pending, decision.Status);
++
++        var snapshot = await context.Store.ReadAsync();
++        Assert.Single(snapshot.Entries);
++        Assert.Null(snapshot.DecisionFor("REQ-1"));
++    }
++
++    [Fact]
++    public async Task RepeatedProposal_IsIdempotentAndAppendsNothing()
++    {
++        using var context = AuditTestContext.Create();
++
++        var first = await context.Workflow.ProposeAsync(context.Proposal());
++        var retry = await context.Workflow.ProposeAsync(context.Proposal());
++
++        Assert.True(retry.Ok);
++        Assert.True(retry.IdempotentReplay);
++        Assert.Equal(WorkflowOutcome.ProposalReplayed, retry.Outcome);
++        Assert.Equal(first.EntryHash, retry.EntryHash);
++        Assert.Single((await context.Store.ReadAsync()).Entries);
++    }
++
++    [Fact]
++    public async Task ReusingRequestIdForDifferentContent_IsRefused()
++    {
++        using var context = AuditTestContext.Create();
++        await context.Workflow.ProposeAsync(context.Proposal());
++
++        var conflicting = await context.Workflow.ProposeAsync(
++            context.Proposal(reason: "A different justification entirely."));
++
++        Assert.False(conflicting.Ok);
++        Assert.Equal(WorkflowOutcome.ProposalConflict, conflicting.Outcome);
++        Assert.Single((await context.Store.ReadAsync()).Entries);
++    }
++
++    [Fact]
++    public async Task RepeatedDecision_FromSameCheckerIsIdempotent()
++    {
++        using var context = AuditTestContext.Create();
++        await context.Workflow.ProposeAsync(context.Proposal());
++
++        var command = new DecideCommand
++        {
++            RequestId = "REQ-1",
++            Approver = "compliance.checker",
++            Decision = ResolutionAction.Rejected
++        };
++
++        var first = await context.Workflow.DecideAsync(command);
++        var retry = await context.Workflow.DecideAsync(command);
++
++        Assert.True(first.Ok);
++        Assert.True(retry.Ok);
++        Assert.True(retry.IdempotentReplay);
++        Assert.Equal(WorkflowOutcome.DecisionReplayed, retry.Outcome);
++        Assert.Equal(first.EntryHash, retry.EntryHash);
++        Assert.Equal(2, (await context.Store.ReadAsync()).Entries.Count);
++    }
++
++    [Fact]
++    public async Task ConflictingConcurrentDecisions_ProduceExactlyOneFinalDecision()
++    {
++        using var context = AuditTestContext.Create();
++        await context.Workflow.ProposeAsync(context.Proposal());
++
++        // Separate stores model separate agents: each takes the cross-process lock in turn.
++        var approver = NewWorkflow(context);
++        var rejecter = NewWorkflow(context);
++
++        var results = await Task.WhenAll(
++            Task.Run(() => approver.DecideAsync(new DecideCommand
++            {
++                RequestId = "REQ-1",
++                Approver = "checker.one",
++                Decision = ResolutionAction.Approved
++            })),
++            Task.Run(() => rejecter.DecideAsync(new DecideCommand
++            {
++                RequestId = "REQ-1",
++                Approver = "checker.two",
++                Decision = ResolutionAction.Rejected
++            })));
++
++        Assert.Single(results, r => r.Ok);
++        Assert.Single(results, r => !r.Ok && r.Outcome == WorkflowOutcome.AlreadyDecided);
++
++        var snapshot = await context.Store.ReadAsync();
++        Assert.True(snapshot.ChainVerified);
++        Assert.Equal(2, snapshot.Entries.Count);
++
++        var decisions = snapshot.Entries.Where(e => e.Action != ResolutionAction.Proposed).ToList();
++        var durable = Assert.Single(decisions);
++        Assert.NotEqual(durable.Actor, durable.Proposer);
++
++        var winner = results.Single(r => r.Ok);
++        Assert.Equal(winner.EntryHash, durable.EntryHash);
++        Assert.Equal(winner.Checker, durable.Actor);
++    }
++
++    [Fact]
++    public async Task ManyConcurrentRetries_AppendAtMostOneDecision()
++    {
++        using var context = AuditTestContext.Create();
++        await context.Workflow.ProposeAsync(context.Proposal());
++
++        var attempts = Enumerable.Range(0, 8).Select(i => Task.Run(() =>
++            NewWorkflow(context).DecideAsync(new DecideCommand
++            {
++                RequestId = "REQ-1",
++                Approver = i % 2 == 0 ? "checker.one" : "checker.two",
++                Decision = i % 3 == 0 ? ResolutionAction.Rejected : ResolutionAction.Approved
++            })));
++
++        await Task.WhenAll(attempts);
++
++        var snapshot = await context.Store.ReadAsync();
++        Assert.True(snapshot.ChainVerified);
++        Assert.Single(snapshot.Entries, e => e.Action != ResolutionAction.Proposed);
++    }
++
++    [Fact]
++    public async Task DecidingAnUnknownRequest_IsRefused()
++    {
++        using var context = AuditTestContext.Create();
++        await context.Workflow.InitializeAsync();
++
++        var decision = await context.Workflow.DecideAsync(new DecideCommand
++        {
++            RequestId = "REQ-does-not-exist",
++            Approver = "compliance.checker",
++            Decision = ResolutionAction.Approved
++        });
++
++        Assert.False(decision.Ok);
++        Assert.Equal(WorkflowOutcome.UnknownRequest, decision.Outcome);
++        Assert.Empty((await context.Store.ReadAsync()).Entries);
++    }
++
++    [Fact]
++    public async Task Trail_IsAppendOnlyAndNeverRewritesEarlierBytes()
++    {
++        using var context = AuditTestContext.Create();
++        await context.Workflow.ProposeAsync(context.Proposal());
++        var afterProposal = context.TrailText;
++
++        await context.Workflow.DecideAsync(new DecideCommand
++        {
++            RequestId = "REQ-1",
++            Approver = "compliance.checker",
++            Decision = ResolutionAction.Approved
++        });
++
++        var afterDecision = context.TrailText;
++
++        Assert.StartsWith(afterProposal, afterDecision, StringComparison.Ordinal);
++        Assert.True(afterDecision.Length > afterProposal.Length);
++    }
++
++    [Fact]
++    public async Task TrailStoresRedactedReasonAndEvidenceOnly()
++    {
++        using var context = AuditTestContext.Create();
++        await context.Workflow.ProposeAsync(context.Proposal());
++
++        AuditTestContext.AssertNoSensitiveData(context.TrailText);
++
++        var entry = (await context.Store.ReadAsync()).Entries[0];
++        Assert.Contains(SensitiveTextRedactor.IdentifierMask, entry.ReasonRedacted, StringComparison.Ordinal);
++        Assert.Equal(64, entry.ReasonHash.Length);
++        Assert.Equal(64, entry.EvidenceHash.Length);
++    }
++
++    [Fact]
++    public async Task EditingTheTrailBreaksTheHashChain()
++    {
++        using var context = AuditTestContext.Create();
++        await context.Workflow.ProposeAsync(context.Proposal());
++        await context.Workflow.DecideAsync(new DecideCommand
++        {
++            RequestId = "REQ-1",
++            Approver = "compliance.checker",
++            Decision = ResolutionAction.Approved
++        });
++
++        Assert.True((await context.Store.ReadAsync()).ChainVerified);
++
++        var lines = await File.ReadAllLinesAsync(context.Store.TrailPath);
++        lines[0] = lines[0].Replace("\"actor\":\"analyst.maker\"", "\"actor\":\"someone.else\"", StringComparison.Ordinal);
++        await File.WriteAllLinesAsync(context.Store.TrailPath, lines);
++
++        var tampered = await context.Store.ReadAsync();
++        Assert.False(tampered.ChainVerified);
++
++        var export = AuditExportBuilder.Build(tampered, AuditTestContext.BusinessDate, AuditTestContext.BusinessDate);
++        Assert.False(export.ChainVerified);
++    }
++
++    [Fact]
++    public async Task Export_ProvesOneFinalDecisionByADistinctChecker()
++    {
++        using var context = AuditTestContext.Create();
++        await context.Workflow.ProposeAsync(context.Proposal("REQ-A"));
++        await context.Workflow.ProposeAsync(context.Proposal("REQ-B", proposer: "second.maker"));
++        await context.Workflow.DecideAsync(new DecideCommand
++        {
++            RequestId = "REQ-A",
++            Approver = "compliance.checker",
++            Decision = ResolutionAction.Approved
++        });
++
++        var export = await context.Workflow.ExportAsync(
++            AuditTestContext.BusinessDate,
++            AuditTestContext.BusinessDate);
++
++        Assert.True(export.ChainVerified);
++        Assert.Equal(3, export.EntryCount);
++        Assert.Equal(2, export.RequestCount);
++
++        var approved = export.Requests.Single(r => r.RequestId == "REQ-A");
++        Assert.Equal("Approved", approved.Status);
++        Assert.Equal(1, approved.DecisionCount);
++        Assert.Equal("compliance.checker", approved.FinalDecidedBy);
++        Assert.True(approved.CheckerDistinctFromProposer);
++        Assert.False(approved.SelfApproved);
++
++        var pending = export.Requests.Single(r => r.RequestId == "REQ-B");
++        Assert.Equal("Pending", pending.Status);
++        Assert.Equal(0, pending.DecisionCount);
++        Assert.Null(pending.FinalDecidedBy);
++
++        AuditTestContext.AssertNoSensitiveData(AuditJson.Serialize(export));
++    }
++
++    [Fact]
++    public async Task Export_OnlyCoversTheRequestedBusinessDateRange()
++    {
++        using var context = AuditTestContext.Create();
++        await context.Workflow.ProposeAsync(context.Proposal("REQ-IN"));
++        await context.Workflow.ProposeAsync(new ProposeCommand
++        {
++            RequestId = "REQ-OUT",
++            Proposer = "analyst.maker",
++            BusinessDate = new DateOnly(2024, 7, 1),
++            Reason = "Outside the exported range.",
++            Evidence = "Ticket OPS-9000."
++        });
++
++        var export = await context.Workflow.ExportAsync(new DateOnly(2024, 6, 1), new DateOnly(2024, 6, 30));
++
++        Assert.Equal(1, export.RequestCount);
++        Assert.Equal("REQ-IN", export.Requests[0].RequestId);
++        Assert.All(export.Entries, e => Assert.Equal("2024-06-03", e.BusinessDate));
++    }
++
++    [Fact]
++    public async Task Export_RejectsAnInvertedRange()
++    {
++        using var context = AuditTestContext.Create();
++        await context.Workflow.InitializeAsync();
++
++        await Assert.ThrowsAsync<ArgumentException>(() =>
++            context.Workflow.ExportAsync(new DateOnly(2024, 6, 30), new DateOnly(2024, 6, 1)));
++    }
++
++    [Fact]
++    public async Task InitializeIsIdempotentAndCreatesTheTrail()
++    {
++        using var context = AuditTestContext.Create();
++
++        var first = await context.Workflow.InitializeAsync();
++        var second = await context.Workflow.InitializeAsync();
++
++        Assert.True(first.Ok);
++        Assert.True(second.Ok);
++        Assert.True(File.Exists(context.Store.TrailPath));
++        Assert.True(File.Exists(Path.Combine(context.StateDirectory, FileAuditTrailStore.MarkerFileName)));
++        Assert.Empty((await context.Store.ReadAsync()).Entries);
++    }
++
++    private static ResolutionWorkflowService NewWorkflow(AuditTestContext context)
++        => new(new FileAuditTrailStore(new FileAuditTrailStoreOptions { StateDirectory = context.StateDirectory }));
++}
+diff --git a/tests/TradeRecon.Tests/TradeRecon.Tests.csproj b/tests/TradeRecon.Tests/TradeRecon.Tests.csproj
+index 9b5af11..b03c4f4 100644
+--- a/tests/TradeRecon.Tests/TradeRecon.Tests.csproj
++++ b/tests/TradeRecon.Tests/TradeRecon.Tests.csproj
+@@ -12,6 +12,7 @@
+     <ProjectReference Include="..\..\src\TradeRecon.Application\TradeRecon.Application.csproj" />
+     <ProjectReference Include="..\..\src\TradeRecon.Infrastructure\TradeRecon.Infrastructure.csproj" />
+     <ProjectReference Include="..\..\src\TradeRecon.Console\TradeRecon.Console.csproj" />
++    <ProjectReference Include="..\..\src\TradeRecon.AuditConsole\TradeRecon.AuditConsole.csproj" />
+   </ItemGroup>
+   <ItemGroup>
+     <Content Include="..\..\fixtures\*.csv" Link="fixtures\%(Filename)%(Extension)">

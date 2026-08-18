@@ -1,0 +1,896 @@
+diff --git a/TradeRecon.sln b/TradeRecon.sln
+index 8d36e6f..14fba98 100644
+--- a/TradeRecon.sln
++++ b/TradeRecon.sln
+@@ -17,6 +17,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0C386F45
+ EndProject
+ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradeRecon.Tests", "tests\TradeRecon.Tests\TradeRecon.Tests.csproj", "{470AC8FD-BDF3-4EB5-A899-8FA77E3EE9E0}"
+ EndProject
++Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradeRecon.AuditCli", "src\TradeRecon.AuditCli\TradeRecon.AuditCli.csproj", "{506BDC2E-481D-476C-8DA4-CB413082B43E}"
++EndProject
+ Global
+ 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+ 		Debug|Any CPU = Debug|Any CPU
+@@ -46,6 +48,10 @@ Global
+ 		{470AC8FD-BDF3-4EB5-A899-8FA77E3EE9E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+ 		{470AC8FD-BDF3-4EB5-A899-8FA77E3EE9E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+ 		{470AC8FD-BDF3-4EB5-A899-8FA77E3EE9E0}.Release|Any CPU.Build.0 = Release|Any CPU
++		{506BDC2E-481D-476C-8DA4-CB413082B43E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
++		{506BDC2E-481D-476C-8DA4-CB413082B43E}.Debug|Any CPU.Build.0 = Debug|Any CPU
++		{506BDC2E-481D-476C-8DA4-CB413082B43E}.Release|Any CPU.ActiveCfg = Release|Any CPU
++		{506BDC2E-481D-476C-8DA4-CB413082B43E}.Release|Any CPU.Build.0 = Release|Any CPU
+ 	EndGlobalSection
+ 	GlobalSection(NestedProjects) = preSolution
+ 		{64960CF1-46A3-4FE0-A36D-40D30676AA89} = {57A3EB5F-B78E-45ED-BF2A-5182DB5EB91F}
+@@ -53,5 +59,6 @@ Global
+ 		{62DFDE00-84D6-468D-86A2-B87D49AEDB98} = {57A3EB5F-B78E-45ED-BF2A-5182DB5EB91F}
+ 		{B3572F63-FC90-4345-B03F-BBF50773E5D7} = {57A3EB5F-B78E-45ED-BF2A-5182DB5EB91F}
+ 		{470AC8FD-BDF3-4EB5-A899-8FA77E3EE9E0} = {0C386F45-138C-488A-A35E-731729F3C973}
++		{506BDC2E-481D-476C-8DA4-CB413082B43E} = {57A3EB5F-B78E-45ED-BF2A-5182DB5EB91F}
+ 	EndGlobalSection
+ EndGlobal
+diff --git a/audit-adapter.json b/audit-adapter.json
+new file mode 100644
+index 0000000..cdc5274
+--- /dev/null
++++ b/audit-adapter.json
+@@ -0,0 +1,77 @@
++{
++  "schemaVersion": "1.0.0",
++  "workingDirectory": ".",
++  "commands": {
++    "initialize": {
++      "executable": "dotnet",
++      "arguments": [
++        "run",
++        "--project",
++        "src/TradeRecon.AuditCli/TradeRecon.AuditCli.csproj",
++        "--configuration",
++        "Release",
++        "--no-build",
++        "--",
++        "initialize",
++        "{stateDirectory}"
++      ],
++      "allowedExitCodes": [0]
++    },
++    "propose": {
++      "executable": "dotnet",
++      "arguments": [
++        "run",
++        "--project",
++        "src/TradeRecon.AuditCli/TradeRecon.AuditCli.csproj",
++        "--configuration",
++        "Release",
++        "--no-build",
++        "--",
++        "propose",
++        "{stateDirectory}",
++        "{requestId}",
++        "{proposer}",
++        "{businessDate}",
++        "{reason}",
++        "{evidence}"
++      ],
++      "allowedExitCodes": [0]
++    },
++    "decide": {
++      "executable": "dotnet",
++      "arguments": [
++        "run",
++        "--project",
++        "src/TradeRecon.AuditCli/TradeRecon.AuditCli.csproj",
++        "--configuration",
++        "Release",
++        "--no-build",
++        "--",
++        "decide",
++        "{stateDirectory}",
++        "{requestId}",
++        "{approver}",
++        "{decision}"
++      ],
++      "allowedExitCodes": [0, 1]
++    },
++    "export": {
++      "executable": "dotnet",
++      "arguments": [
++        "run",
++        "--project",
++        "src/TradeRecon.AuditCli/TradeRecon.AuditCli.csproj",
++        "--configuration",
++        "Release",
++        "--no-build",
++        "--",
++        "export",
++        "{stateDirectory}",
++        "{fromDate}",
++        "{toDate}",
++        "{exportPath}"
++      ],
++      "allowedExitCodes": [0]
++    }
++  }
++}
+diff --git a/contracts/audit-adapter.schema.json b/contracts/audit-adapter.schema.json
+new file mode 100644
+index 0000000..8781e47
+--- /dev/null
++++ b/contracts/audit-adapter.schema.json
+@@ -0,0 +1,49 @@
++{
++  "$schema": "https://json-schema.org/draft/2020-12/schema",
++  "title": "Audit Adapter",
++  "type": "object",
++  "required": ["schemaVersion", "workingDirectory", "commands"],
++  "properties": {
++    "schemaVersion": {
++      "type": "string"
++    },
++    "workingDirectory": {
++      "type": "string"
++    },
++    "commands": {
++      "type": "object",
++      "required": ["initialize", "propose", "decide", "export"],
++      "properties": {
++        "initialize": { "$ref": "#/$defs/command" },
++        "propose": { "$ref": "#/$defs/command" },
++        "decide": { "$ref": "#/$defs/command" },
++        "export": { "$ref": "#/$defs/command" }
++      },
++      "additionalProperties": false
++    }
++  },
++  "$defs": {
++    "command": {
++      "type": "object",
++      "required": ["executable", "arguments"],
++      "properties": {
++        "executable": {
++          "type": "string"
++        },
++        "arguments": {
++          "type": "array",
++          "items": {
++            "type": "string"
++          }
++        },
++        "allowedExitCodes": {
++          "type": "array",
++          "items": {
++            "type": "integer"
++          }
++        }
++      },
++      "additionalProperties": true
++    }
++  }
++}
+diff --git a/src/TradeRecon.AuditCli/Program.cs b/src/TradeRecon.AuditCli/Program.cs
+new file mode 100644
+index 0000000..2233b17
+--- /dev/null
++++ b/src/TradeRecon.AuditCli/Program.cs
+@@ -0,0 +1,537 @@
++using System.Globalization;
++using System.Security.Cryptography;
++using System.Text;
++using System.Text.Json;
++using System.Text.Json.Serialization;
++using System.Text.RegularExpressions;
++
++namespace TradeRecon.AuditCli;
++
++public static partial class Program
++{
++    private static readonly JsonSerializerOptions JsonOptions = new()
++    {
++        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
++        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
++        WriteIndented = true
++    };
++
++    public static async Task<int> Main(string[] args)
++    {
++        try
++        {
++            if (args.Length == 0 || args.Contains("--help", StringComparer.Ordinal) || args.Contains("-h", StringComparer.Ordinal))
++            {
++                Console.WriteLine(JsonSerializer.Serialize(new
++                {
++                    ok = true,
++                    usage = "initialize <stateDirectory> | propose <stateDirectory> <requestId> <proposer> <businessDate> <reason> <evidence> | decide <stateDirectory> <requestId> <approver> <decision> | export <stateDirectory> <fromDate> <toDate> <exportPath>",
++                    commands = new[]
++                    {
++                        "initialize",
++                        "propose",
++                        "decide",
++                        "export"
++                    }
++                }, JsonOptions));
++                return 0;
++            }
++
++            var result = await ExecuteAsync(args).ConfigureAwait(false);
++            var json = JsonSerializer.Serialize(result, JsonOptions);
++            Console.WriteLine(json);
++            using var document = JsonDocument.Parse(json);
++            return document.RootElement.TryGetProperty("ok", out var ok) && ok.ValueKind == JsonValueKind.True ? 0 : 1;
++        }
++        catch (Exception ex)
++        {
++            Console.WriteLine(JsonSerializer.Serialize(new { ok = false, error = ex.Message }, JsonOptions));
++            return 1;
++        }
++    }
++
++    private static async Task<object> ExecuteAsync(string[] args)
++    {
++        var command = args[0];
++
++        return command switch
++        {
++            "initialize" => await InitializeAsync(GetArgument(args, 1, "stateDirectory")).ConfigureAwait(false),
++            "propose" => await ProposeAsync(
++                GetArgument(args, 1, "stateDirectory"),
++                GetArgument(args, 2, "requestId"),
++                GetArgument(args, 3, "proposer"),
++                GetArgument(args, 4, "businessDate"),
++                GetArgument(args, 5, "reason"),
++                GetArgument(args, 6, "evidence")).ConfigureAwait(false),
++            "decide" => await DecideAsync(
++                GetArgument(args, 1, "stateDirectory"),
++                GetArgument(args, 2, "requestId"),
++                GetArgument(args, 3, "approver"),
++                GetArgument(args, 4, "decision")).ConfigureAwait(false),
++            "export" => await ExportAsync(
++                GetArgument(args, 1, "stateDirectory"),
++                GetArgument(args, 2, "fromDate"),
++                GetArgument(args, 3, "toDate"),
++                GetArgument(args, 4, "exportPath")).ConfigureAwait(false),
++            _ => throw new ArgumentException($"Unknown command '{command}'.")
++        };
++    }
++
++    private static async Task<object> InitializeAsync(string stateDirectory)
++    {
++        var fullDirectory = ResolveDirectory(stateDirectory);
++        return await WithStateLockAsync<object>(fullDirectory, state =>
++        {
++            state.SchemaVersion ??= "1.0";
++            state.Requests ??= new Dictionary<string, RequestRecord>(StringComparer.Ordinal);
++            state.Entries ??= new List<AuditEntry>();
++
++            return Task.FromResult<object>(new
++            {
++                ok = true,
++                stateDirectory = fullDirectory,
++                initialized = true,
++                requests = state.Requests.Count,
++                entries = state.Entries.Count,
++                schemaVersion = state.SchemaVersion
++            });
++        }).ConfigureAwait(false);
++    }
++
++    private static async Task<object> ProposeAsync(string stateDirectory, string requestId, string proposer, string businessDateText, string reason, string evidence)
++    {
++        if (string.IsNullOrWhiteSpace(requestId))
++        {
++            throw new ArgumentException("requestId is required.");
++        }
++
++        if (string.IsNullOrWhiteSpace(proposer))
++        {
++            throw new ArgumentException("proposer is required.");
++        }
++
++        var businessDate = ParseBusinessDate(businessDateText);
++        var sanitizedReason = SanitizeText(reason);
++        var sanitizedEvidence = SanitizeText(evidence);
++
++        return await WithStateLockAsync<object>(ResolveDirectory(stateDirectory), state =>
++        {
++            state.Requests ??= new Dictionary<string, RequestRecord>(StringComparer.Ordinal);
++            state.Entries ??= new List<AuditEntry>();
++
++            if (state.Requests.TryGetValue(requestId, out var existing))
++            {
++                if (string.Equals(existing.Proposer, proposer, StringComparison.Ordinal) &&
++                    existing.BusinessDate == businessDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) &&
++                    string.Equals(existing.Reason, sanitizedReason, StringComparison.Ordinal) &&
++                    string.Equals(existing.Evidence, sanitizedEvidence, StringComparison.Ordinal))
++                {
++                    return Task.FromResult<object>(new
++                    {
++                        ok = true,
++                        idempotent = true,
++                        requestId,
++                        proposer,
++                        businessDate = existing.BusinessDate,
++                        status = existing.Status,
++                        reason = existing.Reason,
++                        evidence = existing.Evidence,
++                        version = existing.Version,
++                        finalDecision = existing.FinalDecision,
++                        checker = existing.Checker
++                    });
++                }
++
++                throw new InvalidOperationException($"Request '{requestId}' already exists with conflicting proposal details.");
++            }
++
++            var request = new RequestRecord
++            {
++                RequestId = requestId,
++                Proposer = proposer,
++                BusinessDate = businessDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
++                Reason = sanitizedReason,
++                Evidence = sanitizedEvidence,
++                ProposedAtUtc = DateTimeOffset.UtcNow,
++                Version = 1,
++                Status = "proposed"
++            };
++
++            state.Requests[requestId] = request;
++            var sequence = state.NextSequence++;
++            var previousHash = state.Entries.Count == 0 ? null : state.Entries[^1].Hash;
++            var timestamp = DateTimeOffset.UtcNow;
++            var entry = new AuditEntry
++            {
++                RequestId = requestId,
++                BusinessDate = request.BusinessDate,
++                Action = "proposed",
++                Actor = proposer,
++                Decision = null,
++                TimestampUtc = timestamp,
++                Sequence = sequence,
++                Version = 1,
++                PreviousHash = previousHash,
++                Hash = ComputeHash(requestId, "proposed", proposer, null, sequence, 1, previousHash, timestamp)
++            };
++            state.Entries.Add(entry);
++
++            return Task.FromResult<object>(new
++            {
++                ok = true,
++                requestId,
++                proposer,
++                businessDate = request.BusinessDate,
++                status = request.Status,
++                reason = request.Reason,
++                evidence = request.Evidence,
++                version = request.Version,
++                sequence = entry.Sequence,
++                timestampUtc = entry.TimestampUtc,
++                hash = entry.Hash
++            });
++        }).ConfigureAwait(false);
++    }
++
++    private static async Task<object> DecideAsync(string stateDirectory, string requestId, string approver, string decisionText)
++    {
++        if (string.IsNullOrWhiteSpace(requestId))
++        {
++            throw new ArgumentException("requestId is required.");
++        }
++
++        if (string.IsNullOrWhiteSpace(approver))
++        {
++            throw new ArgumentException("approver is required.");
++        }
++
++        var decision = NormalizeDecision(decisionText);
++
++        return await WithStateLockAsync<object>(ResolveDirectory(stateDirectory), state =>
++        {
++            state.Requests ??= new Dictionary<string, RequestRecord>(StringComparer.Ordinal);
++            state.Entries ??= new List<AuditEntry>();
++
++            if (!state.Requests.TryGetValue(requestId, out var request))
++            {
++                throw new InvalidOperationException($"Request '{requestId}' was not found.");
++            }
++
++            if (string.Equals(request.Proposer, approver, StringComparison.Ordinal))
++            {
++                return Task.FromResult<object>(new
++                {
++                    ok = false,
++                    code = "self_approval_blocked",
++                    requestId,
++                    proposer = request.Proposer,
++                    approver,
++                    message = "Self-approval is not allowed for a resolution request."
++                });
++            }
++
++            if (!string.IsNullOrEmpty(request.FinalDecision))
++            {
++                if (string.Equals(request.FinalDecision, decision, StringComparison.OrdinalIgnoreCase))
++                {
++                    return Task.FromResult<object>(new
++                    {
++                        ok = true,
++                        idempotent = true,
++                        requestId,
++                        proposer = request.Proposer,
++                        approver = request.Checker,
++                        businessDate = request.BusinessDate,
++                        finalDecision = request.FinalDecision,
++                        status = request.Status,
++                        version = request.Version,
++                        timestampUtc = request.DecidedAtUtc,
++                        message = $"Decision '{request.FinalDecision}' is already durable for this request."
++                    });
++                }
++
++                return Task.FromResult<object>(new
++                {
++                    ok = false,
++                    code = "final_decision_conflict",
++                    requestId,
++                    currentDecision = request.FinalDecision,
++                    requestedDecision = decision,
++                    message = "A final decision already exists for this request and cannot be overwritten."
++                });
++            }
++
++            var version = request.Version + 1;
++            var timestamp = DateTimeOffset.UtcNow;
++            request.FinalDecision = decision;
++            request.Checker = approver;
++            request.DecidedAtUtc = timestamp;
++            request.Status = decision;
++            request.Version = version;
++
++            var sequence = state.NextSequence++;
++            var previousHash = state.Entries.Count == 0 ? null : state.Entries[^1].Hash;
++            var entry = new AuditEntry
++            {
++                RequestId = requestId,
++                BusinessDate = request.BusinessDate,
++                Action = decision,
++                Actor = approver,
++                Decision = decision,
++                TimestampUtc = timestamp,
++                Sequence = sequence,
++                Version = version,
++                PreviousHash = previousHash,
++                Hash = ComputeHash(requestId, decision, approver, decision, sequence, version, previousHash, timestamp)
++            };
++            state.Entries.Add(entry);
++
++            return Task.FromResult<object>(new
++            {
++                ok = true,
++                requestId,
++                proposer = request.Proposer,
++                approver,
++                businessDate = request.BusinessDate,
++                finalDecision = request.FinalDecision,
++                status = request.Status,
++                version = request.Version,
++                sequence = entry.Sequence,
++                timestampUtc = entry.TimestampUtc,
++                hash = entry.Hash
++            });
++        }).ConfigureAwait(false);
++    }
++
++    private static async Task<object> ExportAsync(string stateDirectory, string fromDateText, string toDateText, string exportPath)
++    {
++        var fromDate = ParseBusinessDate(fromDateText);
++        var toDate = ParseBusinessDate(toDateText);
++        var exportDirectory = ResolveDirectory(Path.GetDirectoryName(exportPath) ?? stateDirectory);
++        var normalizedExportPath = Path.Combine(exportDirectory, Path.GetFileName(exportPath));
++
++        return await WithStateLockAsync<object>(ResolveDirectory(stateDirectory), async state =>
++        {
++            var entries = state.Entries
++                .Where(e =>
++                {
++                    var entryDate = string.IsNullOrWhiteSpace(e.BusinessDate)
++                        ? DateOnly.FromDateTime(e.TimestampUtc.UtcDateTime)
++                        : DateOnly.ParseExact(e.BusinessDate, "yyyy-MM-dd", CultureInfo.InvariantCulture);
++                    return entryDate >= fromDate && entryDate <= toDate;
++                })
++                .Select(e => new
++                {
++                    requestId = e.RequestId,
++                    businessDate = e.BusinessDate,
++                    action = e.Action,
++                    actor = e.Actor,
++                    decision = e.Decision,
++                    timestampUtc = e.TimestampUtc,
++                    sequence = e.Sequence,
++                    version = e.Version,
++                    previousHash = e.PreviousHash,
++                    hash = e.Hash
++                })
++                .ToList();
++
++            var result = new { ok = true, fromDate = fromDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), toDate = toDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), entries };
++
++            var json = JsonSerializer.Serialize(result, JsonOptions);
++            if (!string.IsNullOrWhiteSpace(exportPath))
++            {
++                Directory.CreateDirectory(exportDirectory);
++                await File.WriteAllTextAsync(normalizedExportPath, json + Environment.NewLine, Encoding.UTF8).ConfigureAwait(false);
++            }
++
++            return result;
++        }).ConfigureAwait(false);
++    }
++
++    private static async Task<T> WithStateLockAsync<T>(string stateDirectory, Func<AuditState, Task<T>> action)
++    {
++        Directory.CreateDirectory(stateDirectory);
++        var lockPath = Path.Combine(stateDirectory, ".audit.lock");
++
++        await using var lockStream = new FileStream(lockPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
++        if (!OperatingSystem.IsMacOS())
++        {
++            lockStream.Lock(0, 0);
++        }
++
++        try
++        {
++            var state = await LoadStateAsync(stateDirectory).ConfigureAwait(false);
++            var result = await action(state).ConfigureAwait(false);
++            await PersistStateAsync(stateDirectory, state).ConfigureAwait(false);
++            return result;
++        }
++        finally
++        {
++            if (!OperatingSystem.IsMacOS())
++            {
++                lockStream.Unlock(0, 0);
++            }
++        }
++    }
++
++    private static async Task<AuditState> LoadStateAsync(string stateDirectory)
++    {
++        var statePath = Path.Combine(stateDirectory, "audit-state.json");
++        if (!File.Exists(statePath))
++        {
++            var state = new AuditState();
++            await PersistStateAsync(stateDirectory, state).ConfigureAwait(false);
++            return state;
++        }
++
++        var json = await File.ReadAllTextAsync(statePath).ConfigureAwait(false);
++        if (string.IsNullOrWhiteSpace(json))
++        {
++            var state = new AuditState();
++            await PersistStateAsync(stateDirectory, state).ConfigureAwait(false);
++            return state;
++        }
++
++        var stateObject = JsonSerializer.Deserialize<AuditState>(json, JsonOptions) ?? new AuditState();
++        stateObject.Requests ??= new Dictionary<string, RequestRecord>(StringComparer.Ordinal);
++        stateObject.Entries ??= new List<AuditEntry>();
++        stateObject.SchemaVersion ??= "1.0";
++        return stateObject;
++    }
++
++    private static async Task PersistStateAsync(string stateDirectory, AuditState state)
++    {
++        var statePath = Path.Combine(stateDirectory, "audit-state.json");
++        var tempPath = statePath + ".tmp";
++        var json = JsonSerializer.Serialize(state, JsonOptions);
++        await File.WriteAllTextAsync(tempPath, json, Encoding.UTF8).ConfigureAwait(false);
++        File.Move(tempPath, statePath, overwrite: true);
++    }
++
++    private static string ResolveDirectory(string stateDirectory)
++    {
++        if (string.IsNullOrWhiteSpace(stateDirectory))
++        {
++            throw new ArgumentException("stateDirectory is required.");
++        }
++
++        return Path.GetFullPath(stateDirectory);
++    }
++
++    private static string GetArgument(string[] args, int keyIndex, string keyName)
++    {
++        if (args.Length <= keyIndex)
++        {
++            throw new ArgumentException($"Missing required argument '{keyName}'.");
++        }
++
++        var value = args[keyIndex];
++        if (string.IsNullOrWhiteSpace(value) || value.StartsWith("--", StringComparison.Ordinal))
++        {
++            throw new ArgumentException($"Missing required argument '{keyName}'.");
++        }
++
++        return value;
++    }
++
++    private static DateOnly ParseBusinessDate(string value)
++    {
++        if (string.IsNullOrWhiteSpace(value))
++        {
++            throw new ArgumentException("businessDate is required.");
++        }
++
++        return DateOnly.ParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture);
++    }
++
++    private static string NormalizeDecision(string decisionText)
++    {
++        var trimmed = decisionText?.Trim();
++        if (string.IsNullOrWhiteSpace(trimmed))
++        {
++            throw new ArgumentException("decision is required.");
++        }
++
++        return trimmed.ToLowerInvariant() switch
++        {
++            "approve" or "approved" or "accept" => "approved",
++            "reject" or "rejected" or "decline" => "rejected",
++            _ => throw new ArgumentException($"Unsupported decision '{decisionText}'.")
++        };
++    }
++
++    private static string SanitizeText(string? input)
++    {
++        if (string.IsNullOrEmpty(input))
++        {
++            return string.Empty;
++        }
++
++        var sanitized = input.Trim();
++        sanitized = Regex.Replace(sanitized, @"(?i)\b(?:account|acct|accountid|customer|client|portfolio|trade|tradeid|settlement|instrument)\s*[:=]?\s*[A-Z0-9-]{3,}\b", "[REDACTED_IDENTIFIER]");
++        sanitized = Regex.Replace(sanitized, @"(?i)\b(?:amount|notional|principal|balance|value|trade(?:[- ]value)?|total)\s*[:=]?\s*[$€£¥]?[0-9][0-9,]*(?:\.[0-9]+)?\b", "amount=[REDACTED_AMOUNT]");
++        sanitized = Regex.Replace(sanitized, @"[$€£¥][0-9][0-9,]*(?:\.[0-9]+)?", "[REDACTED_AMOUNT]");
++        sanitized = Regex.Replace(sanitized, @"\b\d{4}-\d{4,}\b", "[REDACTED_IDENTIFIER]");
++        sanitized = Regex.Replace(sanitized, @"\b\d{3,}\b", "[REDACTED_IDENTIFIER]");
++        return sanitized;
++    }
++
++    private static string ComputeHash(string requestId, string action, string actor, string? decision, long sequence, int version, string? previousHash, DateTimeOffset timestampUtc)
++    {
++        var payload = JsonSerializer.Serialize(new
++        {
++            requestId,
++            action,
++            actor,
++            decision,
++            sequence,
++            version,
++            previousHash,
++            timestampUtc
++        }, JsonOptions);
++
++        using var sha256 = SHA256.Create();
++        var bytes = Encoding.UTF8.GetBytes(payload);
++        var hash = sha256.ComputeHash(bytes);
++        return Convert.ToHexString(hash).ToLowerInvariant();
++    }
++
++    private sealed class AuditState
++    {
++        public string? SchemaVersion { get; set; } = "1.0";
++        public long NextSequence { get; set; } = 1;
++        public Dictionary<string, RequestRecord> Requests { get; set; } = new(StringComparer.Ordinal);
++        public List<AuditEntry> Entries { get; set; } = new();
++    }
++
++    private sealed class RequestRecord
++    {
++        public string RequestId { get; set; } = string.Empty;
++        public string Proposer { get; set; } = string.Empty;
++        public string BusinessDate { get; set; } = string.Empty;
++        public string Reason { get; set; } = string.Empty;
++        public string Evidence { get; set; } = string.Empty;
++        public string? FinalDecision { get; set; }
++        public string? Checker { get; set; }
++        public DateTimeOffset ProposedAtUtc { get; set; }
++        public DateTimeOffset? DecidedAtUtc { get; set; }
++        public int Version { get; set; } = 1;
++        public string Status { get; set; } = "proposed";
++    }
++
++    private sealed class AuditEntry
++    {
++        public string RequestId { get; set; } = string.Empty;
++        public string BusinessDate { get; set; } = string.Empty;
++        public string Action { get; set; } = string.Empty;
++        public string Actor { get; set; } = string.Empty;
++        public string? Decision { get; set; }
++        public DateTimeOffset TimestampUtc { get; set; }
++        public long Sequence { get; set; }
++        public int Version { get; set; }
++        public string? PreviousHash { get; set; }
++        public string Hash { get; set; } = string.Empty;
++    }
++}
+diff --git a/src/TradeRecon.AuditCli/TradeRecon.AuditCli.csproj b/src/TradeRecon.AuditCli/TradeRecon.AuditCli.csproj
+new file mode 100644
+index 0000000..206b89a
+--- /dev/null
++++ b/src/TradeRecon.AuditCli/TradeRecon.AuditCli.csproj
+@@ -0,0 +1,10 @@
++﻿<Project Sdk="Microsoft.NET.Sdk">
++
++  <PropertyGroup>
++    <OutputType>Exe</OutputType>
++    <TargetFramework>net8.0</TargetFramework>
++    <ImplicitUsings>enable</ImplicitUsings>
++    <Nullable>enable</Nullable>
++  </PropertyGroup>
++
++</Project>
+diff --git a/tests/TradeRecon.Tests/AuditCliTests.cs b/tests/TradeRecon.Tests/AuditCliTests.cs
+new file mode 100644
+index 0000000..31a33bf
+--- /dev/null
++++ b/tests/TradeRecon.Tests/AuditCliTests.cs
+@@ -0,0 +1,150 @@
++using System.Diagnostics;
++using System.Text.Json;
++using AuditCliProgram = TradeRecon.AuditCli.Program;
++using Xunit;
++
++namespace TradeRecon.Tests;
++
++public class AuditCliTests
++{
++    [Fact]
++    public async Task ProposeAndDecide_Workflow_IsIdempotentAndSanitized()
++    {
++        var stateDirectory = Path.Combine(Path.GetTempPath(), "audit-cli-" + Guid.NewGuid().ToString("N"));
++        Directory.CreateDirectory(stateDirectory);
++
++        try
++        {
++            var initialize = await InvokeAsync("initialize", stateDirectory);
++            using var initDoc = JsonDocument.Parse(initialize);
++            Assert.True(initDoc.RootElement.GetProperty("ok").GetBoolean());
++
++            var propose = await InvokeAsync(
++                "propose",
++                stateDirectory,
++                "REQ-001",
++                "analyst",
++                "2024-06-03",
++                "Trade amount mismatch due to account ACC-00042.",
++                "Trade amount $123.45 for account ACC-00042; settlement should match.");
++
++            using var proposeDoc = JsonDocument.Parse(propose);
++            Assert.Equal("proposed", proposeDoc.RootElement.GetProperty("status").GetString());
++            Assert.DoesNotContain("ACC-00042", propose);
++            Assert.DoesNotContain("$123.45", propose);
++
++            var approve = await InvokeAsync("decide", stateDirectory, "REQ-001", "checker", "approved");
++            using var approveDoc = JsonDocument.Parse(approve);
++            Assert.True(approveDoc.RootElement.GetProperty("ok").GetBoolean());
++            Assert.Equal("approved", approveDoc.RootElement.GetProperty("finalDecision").GetString());
++            Assert.Equal("checker", approveDoc.RootElement.GetProperty("approver").GetString());
++
++            var retry = await InvokeAsync("decide", stateDirectory, "REQ-001", "checker", "approved");
++            using var retryDoc = JsonDocument.Parse(retry);
++            Assert.True(retryDoc.RootElement.GetProperty("idempotent").GetBoolean());
++
++            var exportPath = Path.Combine(stateDirectory, "history.json");
++            var export = await InvokeAsync("export", stateDirectory, "2024-06-03", "2024-06-03", exportPath);
++            using var exportDoc = JsonDocument.Parse(export);
++            var entries = exportDoc.RootElement.GetProperty("entries");
++            Assert.Equal(2, entries.GetArrayLength());
++            Assert.Equal("proposed", entries[0].GetProperty("action").GetString());
++            Assert.Equal("approved", entries[1].GetProperty("action").GetString());
++            Assert.DoesNotContain("ACC-00042", export);
++            Assert.DoesNotContain("$123.45", export);
++            Assert.True(File.Exists(exportPath));
++        }
++        finally
++        {
++            Directory.Delete(stateDirectory, recursive: true);
++        }
++    }
++
++    [Fact]
++    public async Task SelfApproval_IsRejected()
++    {
++        var stateDirectory = Path.Combine(Path.GetTempPath(), "audit-cli-" + Guid.NewGuid().ToString("N"));
++        Directory.CreateDirectory(stateDirectory);
++
++        try
++        {
++            await InvokeAsync("propose", stateDirectory, "REQ-002", "analyst", "2024-06-03", "Reason", "Evidence");
++            var result = await InvokeAsync("decide", stateDirectory, "REQ-002", "analyst", "approved");
++
++            using var doc = JsonDocument.Parse(result);
++            Assert.False(doc.RootElement.GetProperty("ok").GetBoolean());
++            Assert.Equal("self_approval_blocked", doc.RootElement.GetProperty("code").GetString());
++        }
++        finally
++        {
++            Directory.Delete(stateDirectory, recursive: true);
++        }
++    }
++
++    [Fact]
++    public async Task ConflictingDecision_IsBlocked_AfterFinalDecision()
++    {
++        var stateDirectory = Path.Combine(Path.GetTempPath(), "audit-cli-" + Guid.NewGuid().ToString("N"));
++        Directory.CreateDirectory(stateDirectory);
++
++        try
++        {
++            await InvokeAsync("propose", stateDirectory, "REQ-003", "analyst", "2024-06-03", "Reason", "Evidence");
++            var approved = await InvokeAsync("decide", stateDirectory, "REQ-003", "checker", "approved");
++            using var approvedDoc = JsonDocument.Parse(approved);
++            Assert.True(approvedDoc.RootElement.GetProperty("ok").GetBoolean());
++
++            var rejected = await InvokeAsync("decide", stateDirectory, "REQ-003", "other-checker", "rejected");
++            using var rejectedDoc = JsonDocument.Parse(rejected);
++            Assert.False(rejectedDoc.RootElement.GetProperty("ok").GetBoolean());
++            Assert.Equal("final_decision_conflict", rejectedDoc.RootElement.GetProperty("code").GetString());
++        }
++        finally
++        {
++            Directory.Delete(stateDirectory, recursive: true);
++        }
++    }
++
++    private static async Task<string> InvokeAsync(params string[] args)
++    {
++        var assemblyPath = typeof(AuditCliProgram).Assembly.Location;
++        var dotnetPath = Environment.GetEnvironmentVariable("DOTNET_ROOT") is { Length: > 0 } dotnetRoot
++            ? Path.Combine(dotnetRoot, "dotnet.exe")
++            : "dotnet";
++
++        var process = new Process
++        {
++            StartInfo = new ProcessStartInfo
++            {
++                FileName = dotnetPath,
++                Arguments = $"\"{assemblyPath}\" {string.Join(' ', args.Select(EscapeArg))}",
++                RedirectStandardOutput = true,
++                RedirectStandardError = true,
++                UseShellExecute = false,
++                CreateNoWindow = true
++            }
++        };
++
++        process.Start();
++        var stdoutTask = process.StandardOutput.ReadToEndAsync();
++        var stderrTask = process.StandardError.ReadToEndAsync();
++        await process.WaitForExitAsync();
++
++        var stdout = await stdoutTask;
++        var stderr = await stderrTask;
++        Assert.True(process.ExitCode == 0 || process.ExitCode == 1, $"Unexpected exit code {process.ExitCode} for {string.Join(' ', args)}. stderr='{stderr}'.");
++        return stdout.Trim();
++    }
++
++    private static string EscapeArg(string value)
++    {
++        if (string.IsNullOrEmpty(value))
++        {
++            return "\"\"";
++        }
++
++        return value.Contains(' ') || value.Contains('"')
++            ? $"\"{value.Replace("\"", "\\\"")}\""
++            : value;
++    }
++}
+diff --git a/tests/TradeRecon.Tests/TradeRecon.Tests.csproj b/tests/TradeRecon.Tests/TradeRecon.Tests.csproj
+index 9b5af11..bc0a05d 100644
+--- a/tests/TradeRecon.Tests/TradeRecon.Tests.csproj
++++ b/tests/TradeRecon.Tests/TradeRecon.Tests.csproj
+@@ -12,6 +12,7 @@
+     <ProjectReference Include="..\..\src\TradeRecon.Application\TradeRecon.Application.csproj" />
+     <ProjectReference Include="..\..\src\TradeRecon.Infrastructure\TradeRecon.Infrastructure.csproj" />
+     <ProjectReference Include="..\..\src\TradeRecon.Console\TradeRecon.Console.csproj" />
++    <ProjectReference Include="..\..\src\TradeRecon.AuditCli\TradeRecon.AuditCli.csproj" />
+   </ItemGroup>
+   <ItemGroup>
+     <Content Include="..\..\fixtures\*.csv" Link="fixtures\%(Filename)%(Extension)">

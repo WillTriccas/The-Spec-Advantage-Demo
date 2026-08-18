@@ -1,0 +1,2826 @@
+diff --git a/README.md b/README.md
+index f3899db..331c70b 100644
+--- a/README.md
++++ b/README.md
+@@ -231,3 +231,84 @@ BusinessDate,Account,Instrument,Currency,NetQuantity
+ invariant culture (`.` decimal separator). Trade and settlement quantities and amounts must
+ be greater than zero; position net quantities may be zero or signed. The `TradeId` column on
+ a settlement may be blank.
++
++## Break-resolution audit trail
++
++Break resolutions are governed by a maker-checker workflow that keeps an explainable,
++tamper-evident record of every proposal and decision. It ships as a second console host,
++`src/TradeRecon.AuditConsole`, driven through `audit-adapter.json` at the repository root.
++The reconciliation pipeline and `benchmark-adapter.json` are untouched by this feature.
++
++### Commands
++
++| Command | Purpose |
++| --- | --- |
++| `initialize --state <dir>` | Creates the durable audit state under `<dir>/audit/`. Safe to re-run. |
++| `propose --state <dir> --request-id <id> --proposer <actor> --business-date <yyyy-MM-dd> --reason <text> --evidence <text>` | Records a maker's proposal to resolve a break. |
++| `decide --state <dir> --request-id <id> --approver <actor> --decision approve\|reject` | Records the checker's decision. |
++| `export --state <dir> --from <yyyy-MM-dd> --to <yyyy-MM-dd> --export-path <file>` | Writes the audit history for an inclusive business-date range. |
++
++Every invocation writes exactly one JSON document to stdout and nothing else, so the output
++is machine readable without post-processing.
++
++### Exit codes
++
++| Code | Meaning |
++| --- | --- |
++| `0` | Accepted. Also returned for an idempotent retry that matches the recorded outcome. |
++| `3` | Refused by a control rule: invalid input, self-approval, unknown request, or a request that already has a final decision. Nothing is written. |
++| `1` | Usage error or unexpected failure. |
++
++### Controls
++
++- **Separation of duties.** A proposer can never decide their own request. Identities are
++  compared case-insensitively after trimming, so `Maker-A` cannot approve `maker-a`.
++- **Exactly one final decision.** Proposal and decision are serialised across processes by a
++  lock file, so concurrent approve/reject attempts leave one durable decision and the loser
++  is refused with exit `3`.
++- **Idempotent retries.** Re-sending a decision that matches the recorded one succeeds and
++  returns the original entry rather than appending a duplicate.
++- **Append-only history.** `<state>/audit/history.jsonl` is only ever appended to. Entries are
++  never updated or deleted; a superseding view is expressed by a later entry.
++- **Tamper evidence.** Each entry carries `sequence` (contiguous, 1-based), `previousHash` and
++  `hash`. `hash` is the lowercase SHA-256 of the canonical JSON of the entry with the `hash`
++  field removed; canonical JSON is compact with recursively ordinal-sorted keys. Any edit to a
++  historical entry breaks the chain and is rejected on the next read.
++- **No sensitive data.** `reason` and `evidence` are redacted on the way in, before anything is
++  persisted, so account identifiers become `[REDACTED-IDENTIFIER]` and monetary amounts become
++  `[REDACTED-AMOUNT]` in history, exports and stdout alike. Request ids and actor identities are
++  preserved byte for byte; ordinary prose, ISO dates and ticket references survive unchanged.
++
++### Export shape
++
++```json
++{
++  "schemaVersion": "1.0",
++  "command": "export",
++  "status": "exported",
++  "fromDate": "2024-06-01",
++  "toDate": "2024-06-30",
++  "entryCount": 2,
++  "hashAlgorithm": "sha256",
++  "canonicalization": "sorted-keys-compact-json-without-hash",
++  "entries": [
++    {
++      "sequence": 1,
++      "requestId": "REQ-1",
++      "action": "PROPOSED",
++      "actor": "maker-a",
++      "proposer": "maker-a",
++      "checker": null,
++      "businessDate": "2024-06-03",
++      "reason": "Break on [REDACTED-IDENTIFIER] confirmed with broker",
++      "evidence": "ticket/RES-77",
++      "previousHash": null,
++      "hash": "d98522a1..."
++    }
++  ]
++}
++```
++
++The same document is written to `--export-path` in indented form. Decisions inherit the
++business date of the proposal they resolve, so a date-range export always contains a
++request's proposal and its decision together.
+diff --git a/TradeRecon.sln b/TradeRecon.sln
+index 8d36e6f..ac5fcd4 100644
+--- a/TradeRecon.sln
++++ b/TradeRecon.sln
+@@ -13,6 +13,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradeRecon.Infrastructure",
+ EndProject
+ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradeRecon.Console", "src\TradeRecon.Console\TradeRecon.Console.csproj", "{B3572F63-FC90-4345-B03F-BBF50773E5D7}"
+ EndProject
++Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradeRecon.Audit", "src\TradeRecon.Audit\TradeRecon.Audit.csproj", "{A1D2C3B4-0001-4E7A-9C31-6E5B7A1D0001}"
++EndProject
++Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradeRecon.AuditConsole", "src\TradeRecon.AuditConsole\TradeRecon.AuditConsole.csproj", "{A1D2C3B4-0002-4E7A-9C31-6E5B7A1D0002}"
++EndProject
+ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0C386F45-138C-488A-A35E-731729F3C973}"
+ EndProject
+ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradeRecon.Tests", "tests\TradeRecon.Tests\TradeRecon.Tests.csproj", "{470AC8FD-BDF3-4EB5-A899-8FA77E3EE9E0}"
+@@ -42,6 +46,14 @@ Global
+ 		{B3572F63-FC90-4345-B03F-BBF50773E5D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+ 		{B3572F63-FC90-4345-B03F-BBF50773E5D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+ 		{B3572F63-FC90-4345-B03F-BBF50773E5D7}.Release|Any CPU.Build.0 = Release|Any CPU
++		{A1D2C3B4-0001-4E7A-9C31-6E5B7A1D0001}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
++		{A1D2C3B4-0001-4E7A-9C31-6E5B7A1D0001}.Debug|Any CPU.Build.0 = Debug|Any CPU
++		{A1D2C3B4-0001-4E7A-9C31-6E5B7A1D0001}.Release|Any CPU.ActiveCfg = Release|Any CPU
++		{A1D2C3B4-0001-4E7A-9C31-6E5B7A1D0001}.Release|Any CPU.Build.0 = Release|Any CPU
++		{A1D2C3B4-0002-4E7A-9C31-6E5B7A1D0002}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
++		{A1D2C3B4-0002-4E7A-9C31-6E5B7A1D0002}.Debug|Any CPU.Build.0 = Debug|Any CPU
++		{A1D2C3B4-0002-4E7A-9C31-6E5B7A1D0002}.Release|Any CPU.ActiveCfg = Release|Any CPU
++		{A1D2C3B4-0002-4E7A-9C31-6E5B7A1D0002}.Release|Any CPU.Build.0 = Release|Any CPU
+ 		{470AC8FD-BDF3-4EB5-A899-8FA77E3EE9E0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+ 		{470AC8FD-BDF3-4EB5-A899-8FA77E3EE9E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+ 		{470AC8FD-BDF3-4EB5-A899-8FA77E3EE9E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+@@ -52,6 +64,8 @@ Global
+ 		{459DBD8F-401B-4FC8-BD50-84F9AE687828} = {57A3EB5F-B78E-45ED-BF2A-5182DB5EB91F}
+ 		{62DFDE00-84D6-468D-86A2-B87D49AEDB98} = {57A3EB5F-B78E-45ED-BF2A-5182DB5EB91F}
+ 		{B3572F63-FC90-4345-B03F-BBF50773E5D7} = {57A3EB5F-B78E-45ED-BF2A-5182DB5EB91F}
++		{A1D2C3B4-0001-4E7A-9C31-6E5B7A1D0001} = {57A3EB5F-B78E-45ED-BF2A-5182DB5EB91F}
++		{A1D2C3B4-0002-4E7A-9C31-6E5B7A1D0002} = {57A3EB5F-B78E-45ED-BF2A-5182DB5EB91F}
+ 		{470AC8FD-BDF3-4EB5-A899-8FA77E3EE9E0} = {0C386F45-138C-488A-A35E-731729F3C973}
+ 	EndGlobalSection
+ EndGlobal
+diff --git a/audit-adapter.json b/audit-adapter.json
+new file mode 100644
+index 0000000..f209c22
+--- /dev/null
++++ b/audit-adapter.json
+@@ -0,0 +1,91 @@
++{
++  "schemaVersion": "1.0.0",
++  "workingDirectory": ".",
++  "initialize": {
++    "executable": "dotnet",
++    "arguments": [
++      "run",
++      "--project",
++      "src/TradeRecon.AuditConsole/TradeRecon.AuditConsole.csproj",
++      "--configuration",
++      "Release",
++      "--verbosity",
++      "quiet",
++      "--",
++      "initialize",
++      "--state",
++      "{stateDirectory}"
++    ],
++    "allowedExitCodes": [0]
++  },
++  "propose": {
++    "executable": "dotnet",
++    "arguments": [
++      "run",
++      "--project",
++      "src/TradeRecon.AuditConsole/TradeRecon.AuditConsole.csproj",
++      "--configuration",
++      "Release",
++      "--no-build",
++      "--",
++      "propose",
++      "--state",
++      "{stateDirectory}",
++      "--request-id",
++      "{requestId}",
++      "--proposer",
++      "{proposer}",
++      "--business-date",
++      "{businessDate}",
++      "--reason",
++      "{reason}",
++      "--evidence",
++      "{evidence}"
++    ],
++    "allowedExitCodes": [0, 3]
++  },
++  "decide": {
++    "executable": "dotnet",
++    "arguments": [
++      "run",
++      "--project",
++      "src/TradeRecon.AuditConsole/TradeRecon.AuditConsole.csproj",
++      "--configuration",
++      "Release",
++      "--no-build",
++      "--",
++      "decide",
++      "--state",
++      "{stateDirectory}",
++      "--request-id",
++      "{requestId}",
++      "--approver",
++      "{approver}",
++      "--decision",
++      "{decision}"
++    ],
++    "allowedExitCodes": [0, 3]
++  },
++  "export": {
++    "executable": "dotnet",
++    "arguments": [
++      "run",
++      "--project",
++      "src/TradeRecon.AuditConsole/TradeRecon.AuditConsole.csproj",
++      "--configuration",
++      "Release",
++      "--no-build",
++      "--",
++      "export",
++      "--state",
++      "{stateDirectory}",
++      "--from",
++      "{fromDate}",
++      "--to",
++      "{toDate}",
++      "--export-path",
++      "{exportPath}"
++    ],
++    "allowedExitCodes": [0]
++  }
++}
+diff --git a/contracts/audit-adapter.schema.json b/contracts/audit-adapter.schema.json
+new file mode 100644
+index 0000000..7f52547
+--- /dev/null
++++ b/contracts/audit-adapter.schema.json
+@@ -0,0 +1,74 @@
++{
++  "$schema": "https://json-schema.org/draft/2020-12/schema",
++  "$id": "https://benchmark.local/contracts/audit-adapter.schema.json",
++  "title": "Audit adapter contract",
++  "description": "Data-only, shell-free command contract exposing the maker-checker break-resolution audit workflow to an external evaluator. The evaluator owns every path and substitutes the documented placeholders into the argument arrays.",
++  "type": "object",
++  "required": [
++    "schemaVersion",
++    "initialize",
++    "propose",
++    "decide",
++    "export"
++  ],
++  "properties": {
++    "schemaVersion": {
++      "type": "string",
++      "description": "Version of this adapter contract."
++    },
++    "workingDirectory": {
++      "type": "string",
++      "description": "Directory, relative to the candidate root, that every command is executed from.",
++      "default": "."
++    },
++    "initialize": {
++      "$ref": "#/$defs/command",
++      "description": "Creates durable workflow state. Placeholders: {stateDirectory}."
++    },
++    "propose": {
++      "$ref": "#/$defs/command",
++      "description": "Records a maker's proposed resolution. Placeholders: {stateDirectory}, {requestId}, {proposer}, {businessDate}, {reason}, {evidence}."
++    },
++    "decide": {
++      "$ref": "#/$defs/command",
++      "description": "Records a checker's approval or rejection. Placeholders: {stateDirectory}, {requestId}, {approver}, {decision}."
++    },
++    "export": {
++      "$ref": "#/$defs/command",
++      "description": "Exports durable history for an inclusive business-date range. Placeholders: {stateDirectory}, {fromDate}, {toDate}, {exportPath}."
++    }
++  },
++  "$defs": {
++    "command": {
++      "type": "object",
++      "required": [
++        "executable",
++        "arguments"
++      ],
++      "properties": {
++        "executable": {
++          "type": "string",
++          "minLength": 1,
++          "description": "Executable name or path; never a shell string."
++        },
++        "arguments": {
++          "type": "array",
++          "items": {
++            "type": "string"
++          },
++          "description": "Argument vector passed verbatim to the executable after placeholder substitution."
++        },
++        "allowedExitCodes": {
++          "type": "array",
++          "items": {
++            "type": "integer"
++          },
++          "default": [
++            0
++          ],
++          "description": "Exit codes that represent a completed command. Every allowed exit code still produces parseable JSON on stdout (or, for export, at {exportPath})."
++        }
++      }
++    }
++  }
++}
+diff --git a/src/TradeRecon.Audit/AuditCommandResult.cs b/src/TradeRecon.Audit/AuditCommandResult.cs
+new file mode 100644
+index 0000000..bc3ec18
+--- /dev/null
++++ b/src/TradeRecon.Audit/AuditCommandResult.cs
+@@ -0,0 +1,29 @@
++using System.Text.Json.Nodes;
++
++namespace TradeRecon.Audit;
++
++/// <summary>
++/// The machine-readable outcome of one audit workflow command.
++/// Every command produces one of these, for accepted and rejected outcomes alike, so the
++/// adapter contract always has parseable JSON to report (NFR-5).
++/// </summary>
++public sealed record AuditCommandResult
++{
++    /// <summary>Command completed and the requested state change is durable (or already was).</summary>
++    public const int ExitAccepted = 0;
++
++    /// <summary>Command completed but the request was refused by a control rule.</summary>
++    public const int ExitRejected = 3;
++
++    public required string Command { get; init; }
++
++    public required string Status { get; init; }
++
++    public required bool Accepted { get; init; }
++
++    public required JsonObject Payload { get; init; }
++
++    public int ExitCode => Accepted ? ExitAccepted : ExitRejected;
++
++    public string ToJson() => Payload.ToJsonString(AuditJson.CompactOptions);
++}
+diff --git a/src/TradeRecon.Audit/AuditEntry.cs b/src/TradeRecon.Audit/AuditEntry.cs
+new file mode 100644
+index 0000000..68c1b21
+--- /dev/null
++++ b/src/TradeRecon.Audit/AuditEntry.cs
+@@ -0,0 +1,142 @@
++using System.Globalization;
++using System.Security.Cryptography;
++using System.Text;
++using System.Text.Json.Nodes;
++
++namespace TradeRecon.Audit;
++
++/// <summary>Lifecycle actions recorded in the append-only audit history.</summary>
++public static class AuditActions
++{
++    public const string Proposed = "PROPOSED";
++    public const string Approved = "APPROVED";
++    public const string Rejected = "REJECTED";
++
++    public static bool IsTerminal(string action)
++        => string.Equals(action, Approved, StringComparison.Ordinal)
++           || string.Equals(action, Rejected, StringComparison.Ordinal);
++}
++
++/// <summary>
++/// One immutable entry of the append-only maker-checker history.
++///
++/// Every entry carries the request identity, the lifecycle action, the recognised
++/// proposer/checker identities and the tamper-evidence metadata (contiguous 1-based
++/// <see cref="Sequence"/>, <see cref="PreviousHash"/> link and SHA-256 <see cref="Hash"/>).
++/// Only allow-listed fields are serialised; no reconciliation payload is ever attached.
++/// </summary>
++public sealed record AuditEntry
++{
++    public const string EntrySchemaVersion = "1.0";
++
++    public required int Sequence { get; init; }
++
++    public required int RequestSequence { get; init; }
++
++    public required string RequestId { get; init; }
++
++    public required string Action { get; init; }
++
++    public required string Actor { get; init; }
++
++    public required string Proposer { get; init; }
++
++    public string? Checker { get; init; }
++
++    public required string BusinessDate { get; init; }
++
++    public required string Reason { get; init; }
++
++    public required string Evidence { get; init; }
++
++    public required string Timestamp { get; init; }
++
++    public string? PreviousHash { get; init; }
++
++    public string Hash { get; init; } = string.Empty;
++
++    public string? Decision => AuditActions.IsTerminal(Action) ? Action : null;
++
++    /// <summary>Builds the allow-listed JSON projection of this entry.</summary>
++    public JsonObject ToJsonObject(bool includeHash = true)
++    {
++        var obj = new JsonObject
++        {
++            ["schemaVersion"] = EntrySchemaVersion,
++            ["sequence"] = Sequence,
++            ["requestSequence"] = RequestSequence,
++            ["version"] = RequestSequence,
++            ["requestId"] = RequestId,
++            ["action"] = Action,
++            ["eventType"] = Action,
++            ["status"] = Action,
++            ["decision"] = Decision,
++            ["actor"] = Actor,
++            ["proposer"] = Proposer,
++            ["checker"] = Checker,
++            ["businessDate"] = BusinessDate,
++            ["reason"] = Reason,
++            ["evidence"] = Evidence,
++            ["timestamp"] = Timestamp,
++            ["previousHash"] = PreviousHash
++        };
++
++        if (includeHash)
++        {
++            obj["hash"] = Hash;
++        }
++
++        return obj;
++    }
++
++    /// <summary>
++    /// Lowercase SHA-256 over the canonical JSON of this entry without its <c>hash</c>
++    /// property, with object keys sorted recursively.
++    /// </summary>
++    public string ComputeHash()
++    {
++        var canonical = CanonicalJson.Serialize(ToJsonObject(includeHash: false));
++        var digest = SHA256.HashData(Encoding.UTF8.GetBytes(canonical));
++        return Convert.ToHexString(digest).ToLowerInvariant();
++    }
++
++    public AuditEntry WithComputedHash() => this with { Hash = ComputeHash() };
++
++    public static AuditEntry FromJson(string line)
++    {
++        var node = JsonNode.Parse(line) as JsonObject
++                   ?? throw new FormatException("Audit history line is not a JSON object.");
++
++        return new AuditEntry
++        {
++            Sequence = ReadInt(node, "sequence"),
++            RequestSequence = ReadInt(node, "requestSequence"),
++            RequestId = ReadString(node, "requestId"),
++            Action = ReadString(node, "action"),
++            Actor = ReadString(node, "actor"),
++            Proposer = ReadString(node, "proposer"),
++            Checker = ReadOptionalString(node, "checker"),
++            BusinessDate = ReadString(node, "businessDate"),
++            Reason = ReadString(node, "reason"),
++            Evidence = ReadString(node, "evidence"),
++            Timestamp = ReadString(node, "timestamp"),
++            PreviousHash = ReadOptionalString(node, "previousHash"),
++            Hash = ReadString(node, "hash")
++        };
++    }
++
++    public DateOnly BusinessDateValue
++        => DateOnly.ParseExact(BusinessDate, "yyyy-MM-dd", CultureInfo.InvariantCulture);
++
++    private static string ReadString(JsonObject node, string name)
++        => ReadOptionalString(node, name)
++           ?? throw new FormatException($"Audit history entry is missing required field '{name}'.");
++
++    private static string? ReadOptionalString(JsonObject node, string name)
++        => node.TryGetPropertyValue(name, out var value) ? value?.GetValue<string>() : null;
++
++    private static int ReadInt(JsonObject node, string name)
++        => node.TryGetPropertyValue(name, out var value) && value is not null
++            ? value.GetValue<int>()
++            : throw new FormatException($"Audit history entry is missing required field '{name}'.");
++}
+diff --git a/src/TradeRecon.Audit/AuditHistoryStore.cs b/src/TradeRecon.Audit/AuditHistoryStore.cs
+new file mode 100644
+index 0000000..a10a541
+--- /dev/null
++++ b/src/TradeRecon.Audit/AuditHistoryStore.cs
+@@ -0,0 +1,242 @@
++using System.Globalization;
++using System.Text;
++
++namespace TradeRecon.Audit;
++
++/// <summary>
++/// Append-only, cross-process durable store for the maker-checker lifecycle history.
++///
++/// The history is a JSON-lines file beneath the evaluator-owned state directory. Entries
++/// are only ever appended; existing lines are never rewritten (INV-2). All read-modify-append
++/// sequences run under an exclusive OS file lock so that concurrent processes cannot
++/// interleave a decision check with its append (INV-3, RISK-3).
++/// </summary>
++public sealed class AuditHistoryStore
++{
++    public const string AuditDirectoryName = "audit";
++    public const string HistoryFileName = "history.jsonl";
++    private const string LockFileName = ".audit.lock";
++
++    private static readonly TimeSpan DefaultLockTimeout = TimeSpan.FromSeconds(60);
++
++    private readonly string _stateDirectory;
++    private readonly string _auditDirectory;
++
++    public AuditHistoryStore(string stateDirectory)
++    {
++        if (string.IsNullOrWhiteSpace(stateDirectory))
++        {
++            throw new ArgumentException("A state directory is required.", nameof(stateDirectory));
++        }
++
++        _stateDirectory = Path.GetFullPath(stateDirectory);
++        _auditDirectory = Path.Combine(_stateDirectory, AuditDirectoryName);
++        HistoryPath = Path.Combine(_auditDirectory, HistoryFileName);
++        LockPath = Path.Combine(_auditDirectory, LockFileName);
++    }
++
++    public string StateDirectory => _stateDirectory;
++
++    public string HistoryPath { get; }
++
++    public string LockPath { get; }
++
++    /// <summary>Creates the durable layout. Safe to call repeatedly and from several processes.</summary>
++    public void EnsureCreated()
++    {
++        Directory.CreateDirectory(_auditDirectory);
++
++        if (File.Exists(HistoryPath))
++        {
++            return;
++        }
++
++        try
++        {
++            using var stream = new FileStream(HistoryPath, FileMode.CreateNew, FileAccess.Write, FileShare.ReadWrite);
++        }
++        catch (IOException) when (File.Exists(HistoryPath))
++        {
++            // Another process created the history first; that is the desired end state.
++        }
++    }
++
++    public bool IsInitialized => File.Exists(HistoryPath);
++
++    /// <summary>Takes the exclusive cross-process gate protecting read-modify-append sequences.</summary>
++    public IDisposable AcquireExclusiveAccess(TimeSpan? timeout = null)
++    {
++        EnsureCreated();
++
++        var deadline = DateTime.UtcNow + (timeout ?? DefaultLockTimeout);
++        var delayMilliseconds = 5;
++
++        while (true)
++        {
++            try
++            {
++                return new FileLease(new FileStream(
++                    LockPath,
++                    FileMode.OpenOrCreate,
++                    FileAccess.ReadWrite,
++                    FileShare.None,
++                    bufferSize: 1,
++                    FileOptions.None));
++            }
++            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
++            {
++                if (DateTime.UtcNow >= deadline)
++                {
++                    throw new TimeoutException("Timed out waiting for exclusive access to the audit history.");
++                }
++
++                Thread.Sleep(delayMilliseconds);
++                delayMilliseconds = Math.Min(delayMilliseconds * 2, 50);
++            }
++        }
++    }
++
++    /// <summary>Reads the full ordered history and verifies its sequence and hash chain.</summary>
++    public IReadOnlyList<AuditEntry> ReadAll()
++    {
++        if (!File.Exists(HistoryPath))
++        {
++            return Array.Empty<AuditEntry>();
++        }
++
++        var entries = new List<AuditEntry>();
++        foreach (var line in File.ReadAllLines(HistoryPath))
++        {
++            if (string.IsNullOrWhiteSpace(line))
++            {
++                continue;
++            }
++
++            entries.Add(AuditEntry.FromJson(line));
++        }
++
++        VerifyChain(entries);
++        return entries;
++    }
++
++    /// <summary>
++    /// Appends one entry to the history. The caller must already hold
++    /// <see cref="AcquireExclusiveAccess"/> and must pass the history it validated against.
++    /// </summary>
++    public AuditEntry Append(IReadOnlyList<AuditEntry> current, AuditEntryDraft draft)
++    {
++        ArgumentNullException.ThrowIfNull(current);
++        ArgumentNullException.ThrowIfNull(draft);
++
++        var previous = current.Count == 0 ? null : current[^1];
++        var timestamp = NextTimestamp(previous?.Timestamp);
++
++        var entry = new AuditEntry
++        {
++            Sequence = current.Count + 1,
++            RequestSequence = draft.RequestSequence,
++            RequestId = draft.RequestId,
++            Action = draft.Action,
++            Actor = draft.Actor,
++            Proposer = draft.Proposer,
++            Checker = draft.Checker,
++            BusinessDate = draft.BusinessDate,
++            Reason = draft.Reason,
++            Evidence = draft.Evidence,
++            Timestamp = timestamp,
++            PreviousHash = previous?.Hash
++        }.WithComputedHash();
++
++        var line = System.Text.Json.JsonSerializer.Serialize(
++            entry.ToJsonObject(),
++            AuditJson.CompactOptions);
++
++        using var stream = new FileStream(
++            HistoryPath,
++            FileMode.Append,
++            FileAccess.Write,
++            FileShare.Read,
++            bufferSize: 4096,
++            FileOptions.None);
++        using var writer = new StreamWriter(stream, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
++        writer.Write(line);
++        writer.Write('\n');
++        writer.Flush();
++        stream.Flush(flushToDisk: true);
++
++        return entry;
++    }
++
++    /// <summary>Verifies contiguous 1-based ordering and the SHA-256 previous-hash chain.</summary>
++    public static void VerifyChain(IReadOnlyList<AuditEntry> entries)
++    {
++        string? previousHash = null;
++        for (var i = 0; i < entries.Count; i++)
++        {
++            var entry = entries[i];
++            if (entry.Sequence != i + 1)
++            {
++                throw new InvalidDataException(
++                    $"Audit history is not contiguous: expected sequence {i + 1} but found {entry.Sequence}.");
++            }
++
++            if (!string.Equals(entry.PreviousHash, previousHash, StringComparison.Ordinal))
++            {
++                throw new InvalidDataException(
++                    $"Audit history hash chain is broken at sequence {entry.Sequence}.");
++            }
++
++            if (!string.Equals(entry.Hash, entry.ComputeHash(), StringComparison.Ordinal))
++            {
++                throw new InvalidDataException(
++                    $"Audit history entry {entry.Sequence} does not match its recorded hash.");
++            }
++
++            previousHash = entry.Hash;
++        }
++    }
++
++    private static string NextTimestamp(string? previousTimestamp)
++    {
++        var now = DateTime.UtcNow;
++        if (previousTimestamp is not null
++            && DateTime.TryParse(
++                previousTimestamp,
++                CultureInfo.InvariantCulture,
++                DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal,
++                out var previous)
++            && now <= previous)
++        {
++            now = previous.AddTicks(1);
++        }
++
++        return now.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture);
++    }
++
++    private sealed class FileLease(FileStream stream) : IDisposable
++    {
++        public void Dispose() => stream.Dispose();
++    }
++}
++
++/// <summary>The mutable inputs of a new history entry; ordering metadata is assigned by the store.</summary>
++public sealed class AuditEntryDraft
++{
++    public required string RequestId { get; init; }
++
++    public required string Action { get; init; }
++
++    public required string Actor { get; init; }
++
++    public required string Proposer { get; init; }
++
++    public string? Checker { get; init; }
++
++    public required string BusinessDate { get; init; }
++
++    public required string Reason { get; init; }
++
++    public required string Evidence { get; init; }
++
++    public required int RequestSequence { get; init; }
++}
+diff --git a/src/TradeRecon.Audit/AuditJson.cs b/src/TradeRecon.Audit/AuditJson.cs
+new file mode 100644
+index 0000000..3ff053c
+--- /dev/null
++++ b/src/TradeRecon.Audit/AuditJson.cs
+@@ -0,0 +1,20 @@
++using System.Text.Encodings.Web;
++using System.Text.Json;
++
++namespace TradeRecon.Audit;
++
++/// <summary>Shared serializer options for every audit document written by the workflow.</summary>
++public static class AuditJson
++{
++    public static readonly JsonSerializerOptions CompactOptions = new()
++    {
++        WriteIndented = false,
++        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
++    };
++
++    public static readonly JsonSerializerOptions IndentedOptions = new()
++    {
++        WriteIndented = true,
++        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
++    };
++}
+diff --git a/src/TradeRecon.Audit/AuditWorkflowService.cs b/src/TradeRecon.Audit/AuditWorkflowService.cs
+new file mode 100644
+index 0000000..a5e2438
+--- /dev/null
++++ b/src/TradeRecon.Audit/AuditWorkflowService.cs
+@@ -0,0 +1,421 @@
++using System.Globalization;
++using System.Text;
++using System.Text.Json;
++using System.Text.Json.Nodes;
++
++namespace TradeRecon.Audit;
++
++/// <summary>
++/// Maker-checker break-resolution workflow over the append-only audit history.
++///
++/// Behaviour is intentionally black-box friendly: every command returns a deterministic
++/// <see cref="AuditCommandResult"/>, state lives entirely beneath the caller-supplied state
++/// directory and survives across separate processes, and no reconciliation payload
++/// (account identifiers, trade amounts) is ever emitted.
++/// </summary>
++public sealed class AuditWorkflowService(AuditHistoryStore store)
++{
++    public const string SchemaVersion = "1.0";
++
++    private readonly AuditHistoryStore _store = store;
++
++    public AuditWorkflowService(string stateDirectory)
++        : this(new AuditHistoryStore(stateDirectory))
++    {
++    }
++
++    public AuditHistoryStore Store => _store;
++
++    /// <summary>Creates (or confirms) durable workflow state beneath the state directory.</summary>
++    public AuditCommandResult Initialize()
++    {
++        _store.EnsureCreated();
++
++        using var gate = _store.AcquireExclusiveAccess();
++        var entries = _store.ReadAll();
++
++        var payload = NewPayload("initialize", "initialized", accepted: true);
++        payload["stateDirectory"] = _store.StateDirectory;
++        payload["historyPath"] = _store.HistoryPath;
++        payload["entryCount"] = entries.Count;
++
++        return new AuditCommandResult
++        {
++            Command = "initialize",
++            Status = "initialized",
++            Accepted = true,
++            Payload = payload
++        };
++    }
++
++    /// <summary>Records a maker's proposed resolution for a reconciliation break.</summary>
++    public AuditCommandResult Propose(
++        string? requestId,
++        string? proposer,
++        string? businessDate,
++        string? reason,
++        string? evidence)
++    {
++        requestId = Normalize(requestId);
++        proposer = Normalize(proposer);
++
++        if (requestId.Length == 0)
++        {
++            return Invalid("propose", "missing_request_id", "A non-empty requestId is required.");
++        }
++
++        if (proposer.Length == 0)
++        {
++            return Invalid("propose", "missing_proposer", "A non-empty proposer identity is required.");
++        }
++
++        if (!TryParseDate(businessDate, out var parsedDate))
++        {
++            return Invalid("propose", "invalid_business_date", "businessDate must be an ISO yyyy-MM-dd date.");
++        }
++
++        if (string.IsNullOrWhiteSpace(reason))
++        {
++            return Invalid("propose", "missing_reason", "A non-empty reason is required.", requestId);
++        }
++
++        if (string.IsNullOrWhiteSpace(evidence))
++        {
++            return Invalid("propose", "missing_evidence", "A non-empty evidence reference is required.", requestId);
++        }
++
++        var safeReason = SensitiveDataRedactor.Redact(reason.Trim());
++        var safeEvidence = SensitiveDataRedactor.Redact(evidence.Trim());
++        var isoDate = parsedDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
++
++        _store.EnsureCreated();
++        using var gate = _store.AcquireExclusiveAccess();
++        var entries = _store.ReadAll();
++
++        var existing = FindProposal(entries, requestId);
++        if (existing is not null)
++        {
++            if (!SameIdentity(existing.Proposer, proposer))
++            {
++                var conflict = NewPayload("propose", "duplicate_request_conflict", accepted: false);
++                conflict["requestId"] = requestId;
++                conflict["proposer"] = existing.Proposer;
++                conflict["message"] = "requestId is already owned by a different proposer.";
++                return new AuditCommandResult
++                {
++                    Command = "propose",
++                    Status = "duplicate_request_conflict",
++                    Accepted = false,
++                    Payload = conflict
++                };
++            }
++
++            var duplicate = NewPayload("propose", "duplicate", accepted: true);
++            Describe(duplicate, existing);
++            duplicate["idempotent"] = true;
++            return new AuditCommandResult
++            {
++                Command = "propose",
++                Status = "duplicate",
++                Accepted = true,
++                Payload = duplicate
++            };
++        }
++
++        var entry = _store.Append(entries, new AuditEntryDraft
++        {
++            RequestId = requestId,
++            Action = AuditActions.Proposed,
++            Actor = proposer,
++            Proposer = proposer,
++            Checker = null,
++            BusinessDate = isoDate,
++            Reason = safeReason,
++            Evidence = safeEvidence,
++            RequestSequence = 1
++        });
++
++        var payload = NewPayload("propose", "proposed", accepted: true);
++        Describe(payload, entry);
++        payload["idempotent"] = false;
++
++        return new AuditCommandResult
++        {
++            Command = "propose",
++            Status = "proposed",
++            Accepted = true,
++            Payload = payload
++        };
++    }
++
++    /// <summary>Records a checker's terminal approval or rejection of a proposed resolution.</summary>
++    public AuditCommandResult Decide(string? requestId, string? approver, string? decision)
++    {
++        requestId = Normalize(requestId);
++        approver = Normalize(approver);
++
++        if (requestId.Length == 0)
++        {
++            return Invalid("decide", "missing_request_id", "A non-empty requestId is required.");
++        }
++
++        if (approver.Length == 0)
++        {
++            return Invalid("decide", "missing_approver", "A non-empty approver identity is required.");
++        }
++
++        if (!TryNormalizeDecision(decision, out var action))
++        {
++            return Invalid("decide", "invalid_decision", "decision must be approve/approved or reject/rejected.", requestId);
++        }
++
++        _store.EnsureCreated();
++        using var gate = _store.AcquireExclusiveAccess();
++        var entries = _store.ReadAll();
++
++        var proposal = FindProposal(entries, requestId);
++        if (proposal is null)
++        {
++            var unknown = NewPayload("decide", "unknown_request", accepted: false);
++            unknown["requestId"] = requestId;
++            unknown["decision"] = action;
++            unknown["message"] = "No durable proposal exists for the supplied requestId.";
++            return new AuditCommandResult
++            {
++                Command = "decide",
++                Status = "unknown_request",
++                Accepted = false,
++                Payload = unknown
++            };
++        }
++
++        // INV-1: the checker is always compared against the durable proposer, never against
++        // an actor supplied on this command.
++        if (SameIdentity(proposal.Proposer, approver))
++        {
++            var denied = NewPayload("decide", "self_approval_denied", accepted: false);
++            denied["requestId"] = requestId;
++            denied["proposer"] = proposal.Proposer;
++            denied["attemptedDecision"] = action;
++            denied["message"] = "A proposer may not decide their own request; no decision was recorded.";
++            return new AuditCommandResult
++            {
++                Command = "decide",
++                Status = "self_approval_denied",
++                Accepted = false,
++                Payload = denied
++            };
++        }
++
++        var terminal = FindTerminal(entries, requestId);
++        if (terminal is not null)
++        {
++            var isSameDecision = SameIdentity(terminal.Checker, approver)
++                                 && string.Equals(terminal.Action, action, StringComparison.Ordinal);
++
++            var status = isSameDecision ? "duplicate" : "conflict";
++            var payload = NewPayload("decide", status, accepted: isSameDecision);
++            Describe(payload, terminal);
++            payload["idempotent"] = isSameDecision;
++            payload["attemptedDecision"] = action;
++            payload["finalDecision"] = terminal.Action;
++            payload["finalChecker"] = terminal.Checker;
++            if (!isSameDecision)
++            {
++                payload["message"] = "The request already has a durable final decision.";
++            }
++
++            return new AuditCommandResult
++            {
++                Command = "decide",
++                Status = status,
++                Accepted = isSameDecision,
++                Payload = payload
++            };
++        }
++
++        var requestSequence = entries.Count(e => SameRequest(e.RequestId, requestId)) + 1;
++        var entry = _store.Append(entries, new AuditEntryDraft
++        {
++            RequestId = requestId,
++            Action = action,
++            Actor = approver,
++            Proposer = proposal.Proposer,
++            Checker = approver,
++            BusinessDate = proposal.BusinessDate,
++            Reason = proposal.Reason,
++            Evidence = proposal.Evidence,
++            RequestSequence = requestSequence
++        });
++
++        var accepted = NewPayload("decide", action == AuditActions.Approved ? "approved" : "rejected", accepted: true);
++        Describe(accepted, entry);
++        accepted["idempotent"] = false;
++        accepted["finalDecision"] = entry.Action;
++        accepted["finalChecker"] = entry.Checker;
++
++        return new AuditCommandResult
++        {
++            Command = "decide",
++            Status = action == AuditActions.Approved ? "approved" : "rejected",
++            Accepted = true,
++            Payload = accepted
++        };
++    }
++
++    /// <summary>Exports the durable lifecycle history for an inclusive business-date range.</summary>
++    public AuditCommandResult Export(string? fromDate, string? toDate, string? exportPath)
++    {
++        if (!TryParseDate(fromDate, out var from))
++        {
++            return Invalid("export", "invalid_from_date", "fromDate must be an ISO yyyy-MM-dd date.");
++        }
++
++        if (!TryParseDate(toDate, out var to))
++        {
++            return Invalid("export", "invalid_to_date", "toDate must be an ISO yyyy-MM-dd date.");
++        }
++
++        if (string.IsNullOrWhiteSpace(exportPath))
++        {
++            return Invalid("export", "missing_export_path", "An export path is required.");
++        }
++
++        _store.EnsureCreated();
++
++        IReadOnlyList<AuditEntry> entries;
++        using (var gate = _store.AcquireExclusiveAccess())
++        {
++            entries = _store.ReadAll();
++        }
++
++        var selected = entries
++            .Where(entry => entry.BusinessDateValue >= from && entry.BusinessDateValue <= to)
++            .OrderBy(entry => entry.Sequence)
++            .ToList();
++
++        var resolvedExportPath = Path.GetFullPath(exportPath);
++
++        var document = new JsonObject
++        {
++            ["schemaVersion"] = SchemaVersion,
++            ["command"] = "export",
++            ["status"] = "exported",
++            ["accepted"] = true,
++            ["fromDate"] = from.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
++            ["toDate"] = to.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
++            ["entryCount"] = selected.Count,
++            ["count"] = selected.Count,
++            ["hashAlgorithm"] = "sha256",
++            ["canonicalization"] = "sorted-keys-compact-json-without-hash",
++            ["exportPath"] = resolvedExportPath,
++            ["entries"] = new JsonArray(selected.Select(entry => (JsonNode)entry.ToJsonObject()).ToArray())
++        };
++
++        var directory = Path.GetDirectoryName(resolvedExportPath);
++        if (!string.IsNullOrEmpty(directory))
++        {
++            Directory.CreateDirectory(directory);
++        }
++
++        File.WriteAllText(
++            resolvedExportPath,
++            JsonSerializer.Serialize(document, AuditJson.IndentedOptions) + "\n",
++            new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
++
++        return new AuditCommandResult
++        {
++            Command = "export",
++            Status = "exported",
++            Accepted = true,
++            Payload = document
++        };
++    }
++
++    private static AuditEntry? FindProposal(IReadOnlyList<AuditEntry> entries, string requestId)
++        => entries.FirstOrDefault(e =>
++            SameRequest(e.RequestId, requestId)
++            && string.Equals(e.Action, AuditActions.Proposed, StringComparison.Ordinal));
++
++    private static AuditEntry? FindTerminal(IReadOnlyList<AuditEntry> entries, string requestId)
++        => entries.FirstOrDefault(e => SameRequest(e.RequestId, requestId) && AuditActions.IsTerminal(e.Action));
++
++    private static bool SameRequest(string left, string right)
++        => string.Equals(left, right, StringComparison.Ordinal);
++
++    private static bool SameIdentity(string? left, string? right)
++        => left is not null
++           && right is not null
++           && string.Equals(left.Trim(), right.Trim(), StringComparison.OrdinalIgnoreCase);
++
++    private static bool TryParseDate(string? value, out DateOnly date)
++        => DateOnly.TryParseExact(
++            (value ?? string.Empty).Trim(),
++            "yyyy-MM-dd",
++            CultureInfo.InvariantCulture,
++            DateTimeStyles.None,
++            out date);
++
++    private static bool TryNormalizeDecision(string? value, out string action)
++    {
++        switch ((value ?? string.Empty).Trim().ToUpperInvariant())
++        {
++            case "APPROVE":
++            case "APPROVED":
++            case "APPROVAL":
++                action = AuditActions.Approved;
++                return true;
++            case "REJECT":
++            case "REJECTED":
++            case "REJECTION":
++                action = AuditActions.Rejected;
++                return true;
++            default:
++                action = string.Empty;
++                return false;
++        }
++    }
++
++    private static string Normalize(string? value) => (value ?? string.Empty).Trim();
++
++    private static JsonObject NewPayload(string command, string status, bool accepted) => new()
++    {
++        ["schemaVersion"] = SchemaVersion,
++        ["command"] = command,
++        ["status"] = status,
++        ["accepted"] = accepted
++    };
++
++    private static void Describe(JsonObject payload, AuditEntry entry)
++    {
++        payload["requestId"] = entry.RequestId;
++        payload["action"] = entry.Action;
++        payload["proposer"] = entry.Proposer;
++        payload["checker"] = entry.Checker;
++        payload["businessDate"] = entry.BusinessDate;
++        payload["sequence"] = entry.Sequence;
++        payload["requestSequence"] = entry.RequestSequence;
++        payload["previousHash"] = entry.PreviousHash;
++        payload["hash"] = entry.Hash;
++        payload["timestamp"] = entry.Timestamp;
++    }
++
++    private static AuditCommandResult Invalid(string command, string status, string message, string? requestId = null)
++    {
++        var payload = NewPayload(command, status, accepted: false);
++        if (requestId is not null)
++        {
++            payload["requestId"] = requestId;
++        }
++
++        payload["message"] = message;
++
++        return new AuditCommandResult
++        {
++            Command = command,
++            Status = status,
++            Accepted = false,
++            Payload = payload
++        };
++    }
++}
+diff --git a/src/TradeRecon.Audit/CanonicalJson.cs b/src/TradeRecon.Audit/CanonicalJson.cs
+new file mode 100644
+index 0000000..a14311c
+--- /dev/null
++++ b/src/TradeRecon.Audit/CanonicalJson.cs
+@@ -0,0 +1,180 @@
++using System.Text;
++using System.Text.Json;
++using System.Text.Json.Nodes;
++
++namespace TradeRecon.Audit;
++
++/// <summary>
++/// Canonical JSON serialization used for the tamper-evidence hash chain.
++///
++/// The canonical form is deterministic and interoperable:
++///   * object keys are sorted recursively using ordinal (code-unit) ordering;
++///   * no insignificant whitespace is emitted ("," and ":" separators only);
++///   * strings escape only <c>"</c>, <c>\</c> and control characters, matching
++///     the escaping used by <c>JSON.stringify</c> and <c>json.dumps</c> for ASCII text;
++///   * numbers are emitted exactly as they appear in the source document.
++/// </summary>
++public static class CanonicalJson
++{
++    public static string Serialize(JsonNode? node)
++    {
++        var builder = new StringBuilder();
++        Write(builder, node);
++        return builder.ToString();
++    }
++
++    private static void Write(StringBuilder builder, JsonNode? node)
++    {
++        switch (node)
++        {
++            case null:
++                builder.Append("null");
++                return;
++            case JsonObject obj:
++                WriteObject(builder, obj);
++                return;
++            case JsonArray array:
++                WriteArray(builder, array);
++                return;
++            case JsonValue value:
++                WriteValue(builder, value);
++                return;
++            default:
++                throw new NotSupportedException($"Unsupported JSON node type '{node.GetType().Name}'.");
++        }
++    }
++
++    private static void WriteObject(StringBuilder builder, JsonObject obj)
++    {
++        builder.Append('{');
++        var first = true;
++        foreach (var property in obj.OrderBy(p => p.Key, StringComparer.Ordinal))
++        {
++            if (!first)
++            {
++                builder.Append(',');
++            }
++
++            first = false;
++            WriteString(builder, property.Key);
++            builder.Append(':');
++            Write(builder, property.Value);
++        }
++
++        builder.Append('}');
++    }
++
++    private static void WriteArray(StringBuilder builder, JsonArray array)
++    {
++        builder.Append('[');
++        for (var i = 0; i < array.Count; i++)
++        {
++            if (i > 0)
++            {
++                builder.Append(',');
++            }
++
++            Write(builder, array[i]);
++        }
++
++        builder.Append(']');
++    }
++
++    private static void WriteValue(StringBuilder builder, JsonValue value)
++    {
++        if (value.TryGetValue(out JsonElement element))
++        {
++            switch (element.ValueKind)
++            {
++                case JsonValueKind.String:
++                    WriteString(builder, element.GetString() ?? string.Empty);
++                    return;
++                case JsonValueKind.Number:
++                    builder.Append(element.GetRawText());
++                    return;
++                case JsonValueKind.True:
++                    builder.Append("true");
++                    return;
++                case JsonValueKind.False:
++                    builder.Append("false");
++                    return;
++                case JsonValueKind.Null:
++                    builder.Append("null");
++                    return;
++                default:
++                    throw new NotSupportedException($"Unsupported JSON value kind '{element.ValueKind}'.");
++            }
++        }
++
++        if (value.TryGetValue(out string? text))
++        {
++            WriteString(builder, text ?? string.Empty);
++            return;
++        }
++
++        if (value.TryGetValue(out bool flag))
++        {
++            builder.Append(flag ? "true" : "false");
++            return;
++        }
++
++        if (value.TryGetValue(out int number))
++        {
++            builder.Append(number.ToString(System.Globalization.CultureInfo.InvariantCulture));
++            return;
++        }
++
++        if (value.TryGetValue(out long longNumber))
++        {
++            builder.Append(longNumber.ToString(System.Globalization.CultureInfo.InvariantCulture));
++            return;
++        }
++
++        throw new NotSupportedException("Unsupported JSON scalar value.");
++    }
++
++    private static void WriteString(StringBuilder builder, string value)
++    {
++        builder.Append('"');
++        foreach (var c in value)
++        {
++            switch (c)
++            {
++                case '"':
++                    builder.Append("\\\"");
++                    break;
++                case '\\':
++                    builder.Append("\\\\");
++                    break;
++                case '\b':
++                    builder.Append("\\b");
++                    break;
++                case '\f':
++                    builder.Append("\\f");
++                    break;
++                case '\n':
++                    builder.Append("\\n");
++                    break;
++                case '\r':
++                    builder.Append("\\r");
++                    break;
++                case '\t':
++                    builder.Append("\\t");
++                    break;
++                default:
++                    if (c < ' ')
++                    {
++                        builder.Append("\\u").Append(((int)c).ToString("x4", System.Globalization.CultureInfo.InvariantCulture));
++                    }
++                    else
++                    {
++                        builder.Append(c);
++                    }
++
++                    break;
++            }
++        }
++
++        builder.Append('"');
++    }
++}
+diff --git a/src/TradeRecon.Audit/SensitiveDataRedactor.cs b/src/TradeRecon.Audit/SensitiveDataRedactor.cs
+new file mode 100644
+index 0000000..8efbbdc
+--- /dev/null
++++ b/src/TradeRecon.Audit/SensitiveDataRedactor.cs
+@@ -0,0 +1,114 @@
++using System.Text.RegularExpressions;
++
++namespace TradeRecon.Audit;
++
++/// <summary>
++/// Masks account identifiers and monetary amounts out of free-text audit fields.
++///
++/// Reason and evidence are caller supplied, so they are the only channel through which
++/// account numbers or trade amounts could reach durable audit history, an export or a
++/// diagnostic message. Values are redacted once, on the way in, so no downstream
++/// consumer can leak them (INV-5 / NFR-1).
++///
++/// Redaction is deliberately conservative: ordinary prose, ISO business dates and small
++/// counts survive untouched, so a clean reason such as "Client confirmed the break" is
++/// exported verbatim.
++/// </summary>
++public static partial class SensitiveDataRedactor
++{
++    public const string IdentifierMask = "[REDACTED-IDENTIFIER]";
++    public const string AmountMask = "[REDACTED-AMOUNT]";
++
++    /// <summary>Returns <paramref name="value"/> with account-like and amount-like tokens masked.</summary>
++    public static string Redact(string? value)
++    {
++        if (string.IsNullOrEmpty(value))
++        {
++            return string.Empty;
++        }
++
++        return TokenPattern().Replace(value, match => Classify(match.Value));
++    }
++
++    private static string Classify(string token)
++    {
++        var trimmed = token.TrimEnd('.', ',', '-', '/', '_');
++        var suffix = token[trimmed.Length..];
++
++        if (trimmed.Length == 0)
++        {
++            return token;
++        }
++
++        if (IsoDatePattern().IsMatch(trimmed))
++        {
++            return token;
++        }
++
++        var letters = 0;
++        var digits = 0;
++        foreach (var c in trimmed)
++        {
++            if (char.IsLetter(c))
++            {
++                letters++;
++            }
++            else if (char.IsDigit(c))
++            {
++                digits++;
++            }
++        }
++
++        if (digits == 0)
++        {
++            return token;
++        }
++
++        if (letters > 0)
++        {
++            // Mixed alphanumeric tokens that carry an account keyword, or three or more
++            // digits, look like account or ledger identifiers (ACC001, ACCT-42,
++            // SENTINEL-ACCOUNT-9911). Sparse references such as "ticket/RES-77" are
++            // explanatory rather than sensitive and are left intact.
++            if (HasAccountKeyword(trimmed) || digits >= 3)
++            {
++                return IdentifierMask + suffix;
++            }
++
++            return token;
++        }
++
++        var hasFraction = FractionPattern().IsMatch(trimmed);
++        var hasGrouping = trimmed.Contains(',', StringComparison.Ordinal);
++        if (hasFraction || hasGrouping || digits >= 4)
++        {
++            return AmountMask + suffix;
++        }
++
++        return token;
++    }
++
++    private static bool HasAccountKeyword(string token)
++    {
++        foreach (var keyword in AccountKeywords)
++        {
++            if (token.Contains(keyword, StringComparison.OrdinalIgnoreCase))
++            {
++                return true;
++            }
++        }
++
++        return false;
++    }
++
++    private static readonly string[] AccountKeywords = ["acct", "account", "acc", "iban", "ledger", "custody"];
++
++    [GeneratedRegex(@"[A-Za-z0-9][A-Za-z0-9_.,\-/]*", RegexOptions.CultureInvariant)]
++    private static partial Regex TokenPattern();
++
++    [GeneratedRegex(@"^\d{4}-\d{2}-\d{2}$", RegexOptions.CultureInvariant)]
++    private static partial Regex IsoDatePattern();
++
++    [GeneratedRegex(@"\.\d", RegexOptions.CultureInvariant)]
++    private static partial Regex FractionPattern();
++}
+diff --git a/src/TradeRecon.Audit/TradeRecon.Audit.csproj b/src/TradeRecon.Audit/TradeRecon.Audit.csproj
+new file mode 100644
+index 0000000..64d45c3
+--- /dev/null
++++ b/src/TradeRecon.Audit/TradeRecon.Audit.csproj
+@@ -0,0 +1,6 @@
++<Project Sdk="Microsoft.NET.Sdk">
++  <PropertyGroup>
++    <RootNamespace>TradeRecon.Audit</RootNamespace>
++    <AssemblyName>TradeRecon.Audit</AssemblyName>
++  </PropertyGroup>
++</Project>
+diff --git a/src/TradeRecon.AuditConsole/Program.cs b/src/TradeRecon.AuditConsole/Program.cs
+new file mode 100644
+index 0000000..357ec6f
+--- /dev/null
++++ b/src/TradeRecon.AuditConsole/Program.cs
+@@ -0,0 +1,216 @@
++using System.Text.Json.Nodes;
++using TradeRecon.Audit;
++
++namespace TradeRecon.AuditConsole;
++
++/// <summary>
++/// Console host for the explainable break-resolution audit workflow.
++///
++/// The host is a shell-free, black-box command contract used by <c>audit-adapter.json</c>:
++///
++///   initialize --state &lt;dir&gt;
++///   propose    --state &lt;dir&gt; --request-id &lt;id&gt; --proposer &lt;id&gt; --business-date &lt;yyyy-MM-dd&gt;
++///              --reason &lt;text&gt; --evidence &lt;text&gt;
++///   decide     --state &lt;dir&gt; --request-id &lt;id&gt; --approver &lt;id&gt; --decision &lt;approve|reject&gt;
++///   export     --state &lt;dir&gt; --from &lt;yyyy-MM-dd&gt; --to &lt;yyyy-MM-dd&gt; --export-path &lt;file&gt;
++///
++/// Every invocation writes exactly one parseable JSON document to stdout; <c>export</c> also
++/// writes the same document to the export path. Nothing else is written to stdout and no
++/// caller-supplied reason or evidence text is ever written to stderr, so account identifiers
++/// and trade amounts cannot leak through operational output.
++///
++/// Exit codes: 0 = accepted (including idempotent repeats), 3 = refused by a control rule,
++/// 1 = usage or unexpected error.
++/// </summary>
++public static class Program
++{
++    public const int ExitAccepted = AuditCommandResult.ExitAccepted;
++    public const int ExitRejected = AuditCommandResult.ExitRejected;
++    public const int ExitError = 1;
++
++    private const string Usage =
++        "Usage: TradeRecon.AuditConsole <initialize|propose|decide|export> [options]\n" +
++        "  initialize --state <dir>\n" +
++        "  propose    --state <dir> --request-id <id> --proposer <id> --business-date <yyyy-MM-dd> --reason <text> --evidence <text>\n" +
++        "  decide     --state <dir> --request-id <id> --approver <id> --decision <approve|reject>\n" +
++        "  export     --state <dir> --from <yyyy-MM-dd> --to <yyyy-MM-dd> --export-path <file>";
++
++    public static int Main(string[] args) => Run(args, System.Console.Out);
++
++    public static int Run(string[] args, TextWriter stdout)
++    {
++        if (args.Length == 0 || args[0] is "--help" or "-h" or "help")
++        {
++            Write(stdout, Failure("help", "usage", Usage));
++            return args.Length == 0 ? ExitError : ExitAccepted;
++        }
++
++        var command = args[0].Trim().ToLowerInvariant();
++
++        Dictionary<string, string> options;
++        try
++        {
++            options = ParseOptions(args.AsSpan(1));
++        }
++        catch (ArgumentException ex)
++        {
++            Write(stdout, Failure(command, "invalid_arguments", ex.Message));
++            return ExitError;
++        }
++
++        try
++        {
++            var result = Execute(command, options);
++            if (result is null)
++            {
++                Write(stdout, Failure(command, "unknown_command", $"Unknown command '{command}'."));
++                return ExitError;
++            }
++
++            Write(stdout, result.Payload);
++            return result.ExitCode;
++        }
++        catch (Exception ex) when (ex is IOException
++                                      or UnauthorizedAccessException
++                                      or TimeoutException
++                                      or InvalidDataException
++                                      or FormatException
++                                      or ArgumentException
++                                      or NotSupportedException)
++        {
++            // Only the exception category is reported: caller-supplied free text never
++            // reaches stdout or stderr through a diagnostic message.
++            Write(stdout, Failure(command, "command_failed", $"{ex.GetType().Name} while executing '{command}'."));
++            System.Console.Error.WriteLine($"audit: {ex.GetType().Name} while executing '{command}'.");
++            return ExitError;
++        }
++    }
++
++    private static AuditCommandResult? Execute(string command, Dictionary<string, string> options)
++    {
++        switch (command)
++        {
++            case "initialize":
++            case "init":
++            {
++                var service = CreateService(options);
++                return service.Initialize();
++            }
++
++            case "propose":
++            {
++                var service = CreateService(options);
++                return service.Propose(
++                    Option(options, "request-id", "requestid", "request"),
++                    Option(options, "proposer", "maker", "actor"),
++                    Option(options, "business-date", "businessdate", "date"),
++                    Option(options, "reason"),
++                    Option(options, "evidence"));
++            }
++
++            case "decide":
++            case "decision":
++            {
++                var service = CreateService(options);
++                return service.Decide(
++                    Option(options, "request-id", "requestid", "request"),
++                    Option(options, "approver", "checker", "decider", "actor"),
++                    Option(options, "decision", "outcome"));
++            }
++
++            case "export":
++            {
++                var service = CreateService(options);
++                return service.Export(
++                    Option(options, "from", "from-date", "fromdate"),
++                    Option(options, "to", "to-date", "todate"),
++                    Option(options, "export-path", "exportpath", "out", "output"));
++            }
++
++            default:
++                return null;
++        }
++    }
++
++    private static AuditWorkflowService CreateService(Dictionary<string, string> options)
++    {
++        var stateDirectory = Option(options, "state", "state-directory", "statedirectory");
++        if (string.IsNullOrWhiteSpace(stateDirectory))
++        {
++            throw new ArgumentException("A --state directory is required.");
++        }
++
++        return new AuditWorkflowService(stateDirectory.Trim());
++    }
++
++    private static string? Option(Dictionary<string, string> options, params string[] names)
++    {
++        foreach (var name in names)
++        {
++            if (options.TryGetValue(name, out var value))
++            {
++                return value;
++            }
++        }
++
++        return null;
++    }
++
++    private static Dictionary<string, string> ParseOptions(ReadOnlySpan<string> args)
++    {
++        var options = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
++
++        for (var i = 0; i < args.Length; i++)
++        {
++            var token = args[i];
++            if (!token.StartsWith("--", StringComparison.Ordinal))
++            {
++                throw new ArgumentException($"Unexpected argument at position {i + 1}.");
++            }
++
++            var name = token[2..];
++            string value;
++
++            var separator = name.IndexOf('=', StringComparison.Ordinal);
++            if (separator >= 0)
++            {
++                value = name[(separator + 1)..];
++                name = name[..separator];
++            }
++            else
++            {
++                if (i + 1 >= args.Length)
++                {
++                    throw new ArgumentException($"Option --{name} requires a value.");
++                }
++
++                value = args[++i];
++            }
++
++            if (name.Length == 0)
++            {
++                throw new ArgumentException("An option name is required after '--'.");
++            }
++
++            options[name] = value;
++        }
++
++        return options;
++    }
++
++    private static JsonObject Failure(string command, string status, string message) => new()
++    {
++        ["schemaVersion"] = AuditWorkflowService.SchemaVersion,
++        ["command"] = command,
++        ["status"] = status,
++        ["accepted"] = false,
++        ["message"] = message
++    };
++
++    private static void Write(TextWriter stdout, JsonObject payload)
++    {
++        stdout.Write(payload.ToJsonString(AuditJson.CompactOptions));
++        stdout.Write('\n');
++        stdout.Flush();
++    }
++}
+diff --git a/src/TradeRecon.AuditConsole/TradeRecon.AuditConsole.csproj b/src/TradeRecon.AuditConsole/TradeRecon.AuditConsole.csproj
+new file mode 100644
+index 0000000..3c8a429
+--- /dev/null
++++ b/src/TradeRecon.AuditConsole/TradeRecon.AuditConsole.csproj
+@@ -0,0 +1,10 @@
++<Project Sdk="Microsoft.NET.Sdk">
++  <PropertyGroup>
++    <OutputType>Exe</OutputType>
++    <RootNamespace>TradeRecon.AuditConsole</RootNamespace>
++    <AssemblyName>TradeRecon.AuditConsole</AssemblyName>
++  </PropertyGroup>
++  <ItemGroup>
++    <ProjectReference Include="..\TradeRecon.Audit\TradeRecon.Audit.csproj" />
++  </ItemGroup>
++</Project>
+diff --git a/tests/TradeRecon.Tests/AuditAdapterContractTests.cs b/tests/TradeRecon.Tests/AuditAdapterContractTests.cs
+new file mode 100644
+index 0000000..465efba
+--- /dev/null
++++ b/tests/TradeRecon.Tests/AuditAdapterContractTests.cs
+@@ -0,0 +1,96 @@
++using System.Text.Json;
++using System.Text.Json.Nodes;
++using Xunit;
++
++namespace TradeRecon.Tests;
++
++/// <summary>
++/// The candidate-root adapter contracts stay data-only, shell-free and complete
++/// (REQ-1, REQ-9, AC-1, AC-11).
++/// </summary>
++public class AuditAdapterContractTests
++{
++    private static JsonObject Adapter(string fileName)
++    {
++        var path = Path.Combine(AuditTestHarness.CandidateRoot(), fileName);
++        Assert.True(File.Exists(path), $"{fileName} must exist at the candidate root.");
++        return (JsonObject)JsonNode.Parse(File.ReadAllText(path))!;
++    }
++
++    [Fact]
++    public void The_existing_benchmark_adapter_is_preserved()
++    {
++        var adapter = Adapter("benchmark-adapter.json");
++
++        Assert.Equal(".", (string?)adapter["workingDirectory"]);
++        foreach (var command in new[] { "build", "test", "run" })
++        {
++            Assert.True(adapter.ContainsKey(command), $"benchmark-adapter.json must keep its '{command}' command.");
++        }
++
++        var outputs = ((JsonArray)adapter["outputs"]!).Select(node => (string?)node).ToList();
++        Assert.Contains("{businessDate}/eod-summary.txt", outputs);
++        Assert.Contains("{businessDate}/eod-break-register.csv", outputs);
++        Assert.Contains("{businessDate}/eod-result.json", outputs);
++    }
++
++    [Theory]
++    [InlineData("initialize", new[] { "{stateDirectory}" })]
++    [InlineData("propose", new[] { "{stateDirectory}", "{requestId}", "{proposer}", "{businessDate}", "{reason}", "{evidence}" })]
++    [InlineData("decide", new[] { "{stateDirectory}", "{requestId}", "{approver}", "{decision}" })]
++    [InlineData("export", new[] { "{stateDirectory}", "{fromDate}", "{toDate}", "{exportPath}" })]
++    public void The_audit_adapter_declares_every_documented_placeholder(string command, string[] placeholders)
++    {
++        var adapter = Adapter("audit-adapter.json");
++        var definition = Assert.IsType<JsonObject>(adapter[command]);
++
++        var executable = (string?)definition["executable"];
++        Assert.False(string.IsNullOrWhiteSpace(executable));
++
++        var arguments = ((JsonArray)definition["arguments"]!).Select(node => (string?)node ?? string.Empty).ToList();
++        Assert.NotEmpty(arguments);
++
++        foreach (var placeholder in placeholders)
++        {
++            Assert.Contains(placeholder, arguments);
++        }
++
++        // Shell-free: no argument may smuggle in shell metacharacters.
++        Assert.All(arguments, argument => Assert.DoesNotContain('|', argument));
++        Assert.All(arguments, argument => Assert.DoesNotContain('&', argument));
++        Assert.All(arguments, argument => Assert.DoesNotContain('>', argument));
++        Assert.DoesNotContain(executable, new[] { "sh", "bash", "cmd", "cmd.exe", "powershell", "pwsh" });
++
++        var allowedExitCodes = ((JsonArray)definition["allowedExitCodes"]!).Select(node => (int)node!).ToList();
++        Assert.Contains(0, allowedExitCodes);
++    }
++
++    [Fact]
++    public void The_audit_adapter_matches_the_published_contract_schema()
++    {
++        var adapter = Adapter("audit-adapter.json");
++        var schemaPath = Path.Combine(AuditTestHarness.CandidateRoot(), "contracts", "audit-adapter.schema.json");
++        Assert.True(File.Exists(schemaPath));
++
++        var schema = (JsonObject)JsonNode.Parse(File.ReadAllText(schemaPath))!;
++        var required = ((JsonArray)schema["required"]!).Select(node => (string?)node ?? string.Empty);
++
++        Assert.Equal(".", (string?)adapter["workingDirectory"]);
++        Assert.False(string.IsNullOrWhiteSpace((string?)adapter["schemaVersion"]));
++        Assert.All(required, name => Assert.True(adapter.ContainsKey(name), $"audit-adapter.json is missing '{name}'."));
++
++        // Only contract-level properties are declared; no internal project details leak in.
++        var allowed = ((JsonObject)schema["properties"]!).Select(property => property.Key).ToHashSet(StringComparer.Ordinal);
++        Assert.All(adapter.Select(property => property.Key), key => Assert.Contains(key, allowed));
++    }
++
++    [Fact]
++    public void The_audit_adapter_is_data_only_json()
++    {
++        var path = Path.Combine(AuditTestHarness.CandidateRoot(), "audit-adapter.json");
++
++        using var document = JsonDocument.Parse(File.ReadAllText(path));
++
++        Assert.Equal(JsonValueKind.Object, document.RootElement.ValueKind);
++    }
++}
+diff --git a/tests/TradeRecon.Tests/AuditConcurrencyTests.cs b/tests/TradeRecon.Tests/AuditConcurrencyTests.cs
+new file mode 100644
+index 0000000..c6605d2
+--- /dev/null
++++ b/tests/TradeRecon.Tests/AuditConcurrencyTests.cs
+@@ -0,0 +1,184 @@
++using System.Text.Json.Nodes;
++using TradeRecon.Audit;
++using Xunit;
++
++namespace TradeRecon.Tests;
++
++/// <summary>
++/// Cross-process behaviour of the audit adapter commands: durable state between separate
++/// processes and exactly one final decision under concurrent conflicting decisions
++/// (REQ-6, INV-3, NFR-2, AC-8).
++/// </summary>
++public class AuditConcurrencyTests : IDisposable
++{
++    private readonly string _state = AuditTestHarness.NewStateDirectory();
++
++    public void Dispose()
++    {
++        if (Directory.Exists(_state))
++        {
++            Directory.Delete(_state, recursive: true);
++        }
++
++        GC.SuppressFinalize(this);
++    }
++
++    [Fact]
++    public void Workflow_state_survives_across_separate_processes()
++    {
++        var initialize = AuditTestHarness.RunProcess("initialize", "--state", _state);
++        Assert.Equal(0, initialize.ExitCode);
++        Assert.Equal("initialized", (string?)Parse(initialize.StdOut)["status"]);
++
++        var propose = AuditTestHarness.RunProcess(
++            "propose",
++            "--state", _state,
++            "--request-id", "REQ-CLI-1",
++            "--proposer", "maker-a",
++            "--business-date", "2024-06-03",
++            "--reason", "Broker confirmed the break",
++            "--evidence", "ticket/RES-9");
++        Assert.Equal(0, propose.ExitCode);
++        Assert.Equal("proposed", (string?)Parse(propose.StdOut)["status"]);
++
++        var decide = AuditTestHarness.RunProcess(
++            "decide",
++            "--state", _state,
++            "--request-id", "REQ-CLI-1",
++            "--approver", "checker-b",
++            "--decision", "approve");
++        Assert.Equal(0, decide.ExitCode);
++        Assert.Equal("approved", (string?)Parse(decide.StdOut)["status"]);
++
++        var exportPath = Path.Combine(_state, "export", "history.json");
++        var export = AuditTestHarness.RunProcess(
++            "export",
++            "--state", _state,
++            "--from", "2024-06-01",
++            "--to", "2024-06-30",
++            "--export-path", exportPath);
++
++        Assert.Equal(0, export.ExitCode);
++        Assert.True(File.Exists(exportPath));
++
++        foreach (var document in new[] { Parse(export.StdOut), (JsonObject)JsonNode.Parse(File.ReadAllText(exportPath))! })
++        {
++            var entries = AuditTestHarness.Entries(document);
++            Assert.Equal(2, entries.Count);
++            Assert.Equal("REQ-CLI-1", AuditTestHarness.Field((JsonObject)entries[0]!, "requestId"));
++            Assert.Equal("APPROVED", AuditTestHarness.Field((JsonObject)entries[1]!, "action"));
++            Assert.Equal("checker-b", AuditTestHarness.Field((JsonObject)entries[1]!, "checker"));
++        }
++    }
++
++    [Fact]
++    public void Self_approval_from_a_separate_process_is_refused_with_a_declared_outcome()
++    {
++        AuditTestHarness.RunProcess("initialize", "--state", _state);
++        AuditTestHarness.RunProcess(
++            "propose",
++            "--state", _state,
++            "--request-id", "REQ-CLI-2",
++            "--proposer", "maker-a",
++            "--business-date", "2024-06-03",
++            "--reason", "Broker confirmed the break",
++            "--evidence", "ticket/RES-9");
++
++        var denied = AuditTestHarness.RunProcess(
++            "decide",
++            "--state", _state,
++            "--request-id", "REQ-CLI-2",
++            "--approver", "maker-a",
++            "--decision", "approve");
++
++        Assert.Equal(AuditCommandResult.ExitRejected, denied.ExitCode);
++        Assert.Equal("self_approval_denied", (string?)Parse(denied.StdOut)["status"]);
++
++        var finals = AuditTestHarness.EntriesFor(AuditTestHarness.Export(_state), "REQ-CLI-2")
++            .Where(entry => AuditTestHarness.Field(entry, "action") is "APPROVED" or "REJECTED");
++        Assert.Empty(finals);
++    }
++
++    [Fact]
++    public async Task Concurrent_conflicting_decisions_leave_exactly_one_final_decision()
++    {
++        var service = AuditTestHarness.Service(_state);
++        service.Initialize();
++        service.Propose("REQ-RACE", "maker-a", "2024-06-03", "Broker confirmed the break", "ticket/RES-9");
++
++        var approve = Task.Run(() => AuditTestHarness.RunProcess(
++            "decide", "--state", _state, "--request-id", "REQ-RACE", "--approver", "checker-b", "--decision", "approve"));
++        var reject = Task.Run(() => AuditTestHarness.RunProcess(
++            "decide", "--state", _state, "--request-id", "REQ-RACE", "--approver", "checker-c", "--decision", "reject"));
++
++        var outcomes = await Task.WhenAll(approve, reject);
++
++        foreach (var outcome in outcomes)
++        {
++            Assert.Contains(outcome.ExitCode, new[] { AuditCommandResult.ExitAccepted, AuditCommandResult.ExitRejected });
++            Assert.NotNull(JsonNode.Parse(outcome.StdOut));
++        }
++
++        Assert.Equal(1, outcomes.Count(outcome => outcome.ExitCode == AuditCommandResult.ExitAccepted));
++
++        var finals = AuditTestHarness.EntriesFor(AuditTestHarness.Export(_state), "REQ-RACE")
++            .Where(entry => AuditTestHarness.Field(entry, "action") is "APPROVED" or "REJECTED")
++            .ToList();
++
++        var final = Assert.Single(finals);
++        Assert.False(string.IsNullOrWhiteSpace(AuditTestHarness.Field(final, "checker")));
++        Assert.NotEqual("maker-a", AuditTestHarness.Field(final, "checker"));
++        Assert.Equal(2, AuditTestHarness.EntriesFor(AuditTestHarness.Export(_state), "REQ-RACE").Count());
++    }
++
++    [Fact]
++    public async Task Concurrent_identical_approvals_stay_idempotent()
++    {
++        var service = AuditTestHarness.Service(_state);
++        service.Initialize();
++        service.Propose("REQ-RETRY", "maker-a", "2024-06-03", "Broker confirmed the break", "ticket/RES-9");
++
++        var attempts = Enumerable.Range(0, 4)
++            .Select(_ => Task.Run(() => AuditTestHarness.RunProcess(
++                "decide", "--state", _state, "--request-id", "REQ-RETRY", "--approver", "checker-b", "--decision", "approve")))
++            .ToArray();
++
++        var outcomes = await Task.WhenAll(attempts);
++
++        Assert.All(outcomes, outcome => Assert.Equal(AuditCommandResult.ExitAccepted, outcome.ExitCode));
++
++        var finals = AuditTestHarness.EntriesFor(AuditTestHarness.Export(_state), "REQ-RETRY")
++            .Where(entry => AuditTestHarness.Field(entry, "action") is "APPROVED" or "REJECTED")
++            .ToList();
++        Assert.Single(finals);
++    }
++
++    [Fact]
++    public async Task Concurrent_proposals_for_one_request_create_a_single_proposal()
++    {
++        AuditTestHarness.Service(_state).Initialize();
++
++        var attempts = Enumerable.Range(0, 4)
++            .Select(_ => Task.Run(() => AuditTestHarness.RunProcess(
++                "propose",
++                "--state", _state,
++                "--request-id", "REQ-PARALLEL",
++                "--proposer", "maker-a",
++                "--business-date", "2024-06-03",
++                "--reason", "Broker confirmed the break",
++                "--evidence", "ticket/RES-9")))
++            .ToArray();
++
++        var outcomes = await Task.WhenAll(attempts);
++
++        Assert.All(outcomes, outcome => Assert.Equal(AuditCommandResult.ExitAccepted, outcome.ExitCode));
++        Assert.Single(AuditTestHarness.EntriesFor(AuditTestHarness.Export(_state), "REQ-PARALLEL"));
++    }
++
++    private static JsonObject Parse(string stdout)
++    {
++        var node = JsonNode.Parse(stdout);
++        Assert.NotNull(node);
++        return (JsonObject)node!;
++    }
++}
+diff --git a/tests/TradeRecon.Tests/AuditHistoryChainTests.cs b/tests/TradeRecon.Tests/AuditHistoryChainTests.cs
+new file mode 100644
+index 0000000..6f931c2
+--- /dev/null
++++ b/tests/TradeRecon.Tests/AuditHistoryChainTests.cs
+@@ -0,0 +1,127 @@
++using System.Text.Json.Nodes;
++using TradeRecon.Audit;
++using Xunit;
++
++namespace TradeRecon.Tests;
++
++/// <summary>Append-only ordering and tamper evidence of the audit history (REQ-4, AC-6).</summary>
++public class AuditHistoryChainTests : IDisposable
++{
++    private readonly string _state = AuditTestHarness.NewStateDirectory();
++
++    public void Dispose()
++    {
++        if (Directory.Exists(_state))
++        {
++            Directory.Delete(_state, recursive: true);
++        }
++
++        GC.SuppressFinalize(this);
++    }
++
++    [Fact]
++    public void Exported_entries_are_contiguously_sequenced_and_hash_linked()
++    {
++        var service = AuditTestHarness.Service(_state);
++        service.Initialize();
++        service.Propose("REQ-700", "maker-a", "2024-06-03", "Broker confirmed", "ticket/RES-1");
++        service.Decide("REQ-700", "checker-b", "approve");
++        service.Propose("REQ-701", "maker-c", "2024-06-03", "Custodian confirmed", "ticket/RES-2");
++        service.Decide("REQ-701", "checker-d", "reject");
++
++        var entries = AuditTestHarness.Entries(AuditTestHarness.Export(_state)).Cast<JsonObject>().ToList();
++
++        Assert.Equal(4, entries.Count);
++
++        string? previousHash = null;
++        for (var i = 0; i < entries.Count; i++)
++        {
++            var entry = entries[i];
++            Assert.Equal(i + 1, (int)entry["sequence"]!);
++            Assert.Equal(previousHash, (string?)entry["previousHash"]);
++
++            var hash = AuditTestHarness.Field(entry, "hash");
++            Assert.Equal(64, hash.Length);
++            Assert.Equal(hash, hash.ToLowerInvariant());
++            Assert.Equal(hash, AuditTestHarness.RecomputeHash(entry));
++
++            previousHash = hash;
++        }
++    }
++
++    [Fact]
++    public void Lifecycle_entries_keep_their_original_order_per_request()
++    {
++        var service = AuditTestHarness.Service(_state);
++        service.Initialize();
++        service.Propose("REQ-702", "maker-a", "2024-06-03", "Broker confirmed", "ticket/RES-1");
++        service.Decide("REQ-702", "checker-b", "approve");
++
++        var entries = AuditTestHarness.EntriesFor(AuditTestHarness.Export(_state), "REQ-702").ToList();
++
++        Assert.Equal("PROPOSED", AuditTestHarness.Field(entries[0], "action"));
++        Assert.Equal(1, (int)entries[0]["requestSequence"]!);
++        Assert.Equal("APPROVED", AuditTestHarness.Field(entries[1], "action"));
++        Assert.Equal(2, (int)entries[1]["requestSequence"]!);
++        Assert.True(
++            string.CompareOrdinal(
++                AuditTestHarness.Field(entries[0], "timestamp"),
++                AuditTestHarness.Field(entries[1], "timestamp")) < 0);
++    }
++
++    [Fact]
++    public void Existing_history_lines_are_never_rewritten()
++    {
++        var service = AuditTestHarness.Service(_state);
++        service.Initialize();
++        service.Propose("REQ-703", "maker-a", "2024-06-03", "Broker confirmed", "ticket/RES-1");
++
++        var historyPath = service.Store.HistoryPath;
++        var afterProposal = File.ReadAllLines(historyPath);
++
++        service.Decide("REQ-703", "checker-b", "approve");
++        var afterDecision = File.ReadAllLines(historyPath);
++
++        Assert.Single(afterProposal);
++        Assert.Equal(2, afterDecision.Length);
++        Assert.Equal(afterProposal[0], afterDecision[0]);
++    }
++
++    [Fact]
++    public void A_tampered_history_line_is_detected()
++    {
++        var service = AuditTestHarness.Service(_state);
++        service.Initialize();
++        service.Propose("REQ-704", "maker-a", "2024-06-03", "Broker confirmed", "ticket/RES-1");
++        service.Decide("REQ-704", "checker-b", "approve");
++
++        var historyPath = service.Store.HistoryPath;
++        var lines = File.ReadAllLines(historyPath);
++        lines[0] = lines[0].Replace("maker-a", "maker-z", StringComparison.Ordinal);
++        File.WriteAllLines(historyPath, lines);
++
++        Assert.Throws<InvalidDataException>(() => new AuditHistoryStore(_state).ReadAll());
++    }
++
++    [Fact]
++    public void A_removed_history_line_is_detected()
++    {
++        var service = AuditTestHarness.Service(_state);
++        service.Initialize();
++        service.Propose("REQ-705", "maker-a", "2024-06-03", "Broker confirmed", "ticket/RES-1");
++        service.Decide("REQ-705", "checker-b", "approve");
++
++        var historyPath = service.Store.HistoryPath;
++        File.WriteAllLines(historyPath, File.ReadAllLines(historyPath).Skip(1));
++
++        Assert.Throws<InvalidDataException>(() => new AuditHistoryStore(_state).ReadAll());
++    }
++
++    [Fact]
++    public void Canonical_json_sorts_keys_recursively_and_stays_compact()
++    {
++        var node = JsonNode.Parse("""{"b":1,"a":{"z":true,"y":[3,{"q":null,"p":"x"}]}}""");
++
++        Assert.Equal("""{"a":{"y":[3,{"p":"x","q":null}],"z":true},"b":1}""", CanonicalJson.Serialize(node));
++    }
++}
+diff --git a/tests/TradeRecon.Tests/AuditSensitiveDataTests.cs b/tests/TradeRecon.Tests/AuditSensitiveDataTests.cs
+new file mode 100644
+index 0000000..3b9328e
+--- /dev/null
++++ b/tests/TradeRecon.Tests/AuditSensitiveDataTests.cs
+@@ -0,0 +1,135 @@
++using TradeRecon.Audit;
++using Xunit;
++
++namespace TradeRecon.Tests;
++
++/// <summary>Sensitive-data boundary of the audit workflow (REQ-8, INV-5, NFR-1, AC-10).</summary>
++public class AuditSensitiveDataTests : IDisposable
++{
++    private readonly string _state = AuditTestHarness.NewStateDirectory();
++
++    public void Dispose()
++    {
++        if (Directory.Exists(_state))
++        {
++            Directory.Delete(_state, recursive: true);
++        }
++
++        GC.SuppressFinalize(this);
++    }
++
++    [Theory]
++    [InlineData("ACC001")]
++    [InlineData("ACCT-SENTINEL-90210")]
++    [InlineData("account 4455-8899")]
++    [InlineData("8675309.42")]
++    [InlineData("1,600,500.00")]
++    [InlineData("EUR 1600500")]
++    public void Account_and_amount_shaped_tokens_are_masked(string text)
++    {
++        var redacted = SensitiveDataRedactor.Redact(text);
++
++        Assert.DoesNotContain("ACC001", redacted, StringComparison.OrdinalIgnoreCase);
++        Assert.DoesNotContain("90210", redacted, StringComparison.Ordinal);
++        Assert.DoesNotContain("8675309", redacted, StringComparison.Ordinal);
++        Assert.DoesNotContain("1600500", redacted, StringComparison.Ordinal);
++        Assert.DoesNotContain("4455", redacted, StringComparison.Ordinal);
++    }
++
++    [Theory]
++    [InlineData("Broker confirmed the break", "Broker confirmed the break")]
++    [InlineData("Confirmed on 2024-06-03 by operations", "Confirmed on 2024-06-03 by operations")]
++    [InlineData("Escalated twice within 24 hours", "Escalated twice within 24 hours")]
++    public void Ordinary_explanations_survive_redaction_unchanged(string text, string expected)
++    {
++        Assert.Equal(expected, SensitiveDataRedactor.Redact(text));
++    }
++
++    [Theory]
++    [InlineData("Break on ACC001 confirmed")]
++    [InlineData("Break on ACC-42 confirmed")]
++    [InlineData("Break on account ACC002 confirmed")]
++    public void Reconciliation_account_identifiers_are_masked(string text)
++    {
++        var redacted = SensitiveDataRedactor.Redact(text);
++
++        Assert.Contains(SensitiveDataRedactor.IdentifierMask, redacted, StringComparison.Ordinal);
++        Assert.DoesNotContain("ACC001", redacted, StringComparison.OrdinalIgnoreCase);
++        Assert.DoesNotContain("ACC002", redacted, StringComparison.OrdinalIgnoreCase);
++        Assert.DoesNotContain("ACC-42", redacted, StringComparison.OrdinalIgnoreCase);
++    }
++
++    [Theory]
++    [InlineData("ticket/RES-77")]
++    [InlineData("see ticket RES-9 for the approval trail")]
++    public void Explanatory_ticket_references_survive_redaction(string text)
++    {
++        Assert.Equal(text, SensitiveDataRedactor.Redact(text));
++    }
++
++    [Fact]
++    public void Sentinels_supplied_in_reason_and_evidence_never_reach_the_export_or_output()
++    {
++        var service = AuditTestHarness.Service(_state);
++        service.Initialize();
++
++        var reason = $"Break on account {AuditTestHarness.AccountSentinel} for {AuditTestHarness.AmountSentinel}";
++        var evidence = $"custodian statement lists {AuditTestHarness.AmountSentinel} against {AuditTestHarness.AccountSentinel}";
++
++        var proposal = service.Propose("REQ-800", "maker-a", "2024-06-03", reason, evidence);
++        var decision = service.Decide("REQ-800", "checker-b", "approve");
++        var export = service.Export("2024-06-01", "2024-06-30", AuditTestHarness.ExportPath(_state));
++
++        var surfaces = new[]
++        {
++            proposal.ToJson(),
++            decision.ToJson(),
++            export.ToJson(),
++            File.ReadAllText(AuditTestHarness.ExportPath(_state)),
++            File.ReadAllText(service.Store.HistoryPath)
++        };
++
++        foreach (var surface in surfaces)
++        {
++            Assert.DoesNotContain(AuditTestHarness.AccountSentinel, surface, StringComparison.OrdinalIgnoreCase);
++            Assert.DoesNotContain(AuditTestHarness.AmountSentinel, surface, StringComparison.Ordinal);
++            Assert.DoesNotContain("90210", surface, StringComparison.Ordinal);
++            Assert.DoesNotContain("8675309", surface, StringComparison.Ordinal);
++        }
++    }
++
++    [Fact]
++    public void Redacted_reason_and_evidence_remain_present_and_non_empty_in_the_export()
++    {
++        var service = AuditTestHarness.Service(_state);
++        service.Initialize();
++        service.Propose(
++            "REQ-801",
++            "maker-a",
++            "2024-06-03",
++            $"Break on {AuditTestHarness.AccountSentinel}",
++            AuditTestHarness.AmountSentinel);
++
++        var entry = Assert.Single(AuditTestHarness.EntriesFor(AuditTestHarness.Export(_state), "REQ-801"));
++
++        Assert.False(string.IsNullOrWhiteSpace(AuditTestHarness.Field(entry, "reason")));
++        Assert.False(string.IsNullOrWhiteSpace(AuditTestHarness.Field(entry, "evidence")));
++        Assert.Contains("Break on", AuditTestHarness.Field(entry, "reason"), StringComparison.Ordinal);
++        Assert.Equal(SensitiveDataRedactor.AmountMask, AuditTestHarness.Field(entry, "evidence"));
++    }
++
++    [Fact]
++    public void Request_and_actor_identities_are_preserved_exactly()
++    {
++        var service = AuditTestHarness.Service(_state);
++        service.Initialize();
++        service.Propose("REQ-802", "maker-a", "2024-06-03", "Broker confirmed", "ticket/RES-1");
++        service.Decide("REQ-802", "checker-b", "approve");
++
++        var entries = AuditTestHarness.EntriesFor(AuditTestHarness.Export(_state), "REQ-802").ToList();
++
++        Assert.All(entries, entry => Assert.Equal("REQ-802", AuditTestHarness.Field(entry, "requestId")));
++        Assert.All(entries, entry => Assert.Equal("maker-a", AuditTestHarness.Field(entry, "proposer")));
++        Assert.Equal("checker-b", AuditTestHarness.Field(entries[1], "checker"));
++    }
++}
+diff --git a/tests/TradeRecon.Tests/AuditTestHarness.cs b/tests/TradeRecon.Tests/AuditTestHarness.cs
+new file mode 100644
+index 0000000..09ee496
+--- /dev/null
++++ b/tests/TradeRecon.Tests/AuditTestHarness.cs
+@@ -0,0 +1,175 @@
++using System.Diagnostics;
++using System.Text;
++using System.Text.Json;
++using System.Text.Json.Nodes;
++using TradeRecon.Audit;
++using Xunit;
++
++namespace TradeRecon.Tests;
++
++/// <summary>Shared helpers for the audit workflow tests.</summary>
++internal static class AuditTestHarness
++{
++    public const string AccountSentinel = "ACCT-SENTINEL-90210";
++    public const string AmountSentinel = "8675309.42";
++
++    public static string NewStateDirectory()
++    {
++        var path = Path.Combine(Path.GetTempPath(), $"trade-recon-audit-{Guid.NewGuid():N}");
++        Directory.CreateDirectory(path);
++        return path;
++    }
++
++    public static AuditWorkflowService Service(string stateDirectory) => new(stateDirectory);
++
++    public static string ExportPath(string stateDirectory) => Path.Combine(stateDirectory, "export", "audit-history.json");
++
++    public static JsonObject Export(string stateDirectory, string from = "2000-01-01", string to = "2100-12-31")
++    {
++        var result = Service(stateDirectory).Export(from, to, ExportPath(stateDirectory));
++        Assert.True(result.Accepted);
++        return (JsonObject)JsonNode.Parse(File.ReadAllText(ExportPath(stateDirectory)))!;
++    }
++
++    public static JsonArray Entries(JsonObject export) => (JsonArray)export["entries"]!;
++
++    public static IEnumerable<JsonObject> EntriesFor(JsonObject export, string requestId)
++        => Entries(export)
++            .Cast<JsonObject>()
++            .Where(entry => (string?)entry["requestId"] == requestId);
++
++    public static string Field(JsonObject entry, string name) => (string?)entry[name] ?? string.Empty;
++
++    /// <summary>Locates the candidate root (the directory holding TradeRecon.sln).</summary>
++    public static string CandidateRoot()
++    {
++        var directory = new DirectoryInfo(AppContext.BaseDirectory);
++        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "TradeRecon.sln")))
++        {
++            directory = directory.Parent;
++        }
++
++        Assert.NotNull(directory);
++        return directory!.FullName;
++    }
++
++    /// <summary>
++    /// Resolves the built audit console assembly so tests can exercise it as a real,
++    /// separate operating-system process.
++    /// </summary>
++    public static string AuditConsolePath
++    {
++        get
++        {
++            var local = Path.Combine(AppContext.BaseDirectory, "TradeRecon.AuditConsole.dll");
++            if (IsRunnable(local))
++            {
++                return local;
++            }
++
++            var binRoot = Path.Combine(CandidateRoot(), "src", "TradeRecon.AuditConsole", "bin");
++            Assert.True(Directory.Exists(binRoot), $"The audit console has not been built ({binRoot} is missing).");
++
++            var configuration = new DirectoryInfo(AppContext.BaseDirectory).Parent?.Name;
++            var candidates = Directory
++                .GetFiles(binRoot, "TradeRecon.AuditConsole.dll", SearchOption.AllDirectories)
++                .Where(IsRunnable)
++                .OrderByDescending(path => configuration is not null
++                    && path.Contains(Path.DirectorySeparatorChar + configuration + Path.DirectorySeparatorChar, StringComparison.Ordinal))
++                .ThenByDescending(File.GetLastWriteTimeUtc)
++                .ToList();
++
++            Assert.NotEmpty(candidates);
++            return candidates[0];
++        }
++    }
++
++    private static bool IsRunnable(string assemblyPath)
++        => File.Exists(assemblyPath)
++           && File.Exists(Path.Combine(
++               Path.GetDirectoryName(assemblyPath)!,
++               Path.GetFileNameWithoutExtension(assemblyPath) + ".runtimeconfig.json"));
++
++    public static string HostPath =>
++        Environment.GetEnvironmentVariable("DOTNET_HOST_PATH") is { Length: > 0 } host && File.Exists(host)
++            ? host
++            : "dotnet";
++
++    /// <summary>Runs the audit console in a separate OS process and captures its JSON stdout.</summary>
++    public static (int ExitCode, string StdOut, string StdErr) RunProcess(params string[] arguments)
++    {
++        var startInfo = new ProcessStartInfo(HostPath)
++        {
++            RedirectStandardOutput = true,
++            RedirectStandardError = true,
++            UseShellExecute = false,
++            StandardOutputEncoding = Encoding.UTF8,
++            StandardErrorEncoding = Encoding.UTF8
++        };
++
++        startInfo.ArgumentList.Add(AuditConsolePath);
++        foreach (var argument in arguments)
++        {
++            startInfo.ArgumentList.Add(argument);
++        }
++
++        using var process = Process.Start(startInfo)
++                            ?? throw new InvalidOperationException("Unable to start the audit console process.");
++
++        var stdout = process.StandardOutput.ReadToEndAsync();
++        var stderr = process.StandardError.ReadToEndAsync();
++        Assert.True(process.WaitForExit(120_000), "The audit console process did not exit in time.");
++
++        return (process.ExitCode, stdout.GetAwaiter().GetResult(), stderr.GetAwaiter().GetResult());
++    }
++
++    /// <summary>
++    /// Independent re-implementation of the documented canonicalisation: lowercase SHA-256
++    /// over compact JSON with recursively sorted object keys and the hash field removed.
++    /// </summary>
++    public static string RecomputeHash(JsonObject entry)
++    {
++        var copy = (JsonObject)JsonNode.Parse(entry.ToJsonString())!;
++        copy.Remove("hash");
++
++        var canonical = Canonicalize(copy);
++        var digest = System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(canonical));
++        return Convert.ToHexString(digest).ToLowerInvariant();
++    }
++
++    private static readonly JsonSerializerOptions StringOptions = new()
++    {
++        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
++    };
++
++    private static string Canonicalize(JsonNode? node)
++    {
++        switch (node)
++        {
++            case null:
++                return "null";
++            case JsonObject obj:
++            {
++                var parts = new SortedDictionary<string, string>(StringComparer.Ordinal);
++                foreach (var property in obj)
++                {
++                    parts[property.Key] = Canonicalize(property.Value);
++                }
++
++                return "{" + string.Join(",", parts.Select(p => $"{JsonSerializer.Serialize(p.Key, StringOptions)}:{p.Value}")) + "}";
++            }
++
++            case JsonArray array:
++                return "[" + string.Join(",", array.Select(Canonicalize)) + "]";
++            default:
++            {
++                var element = node.GetValue<JsonElement>();
++                return element.ValueKind switch
++                {
++                    JsonValueKind.String => JsonSerializer.Serialize(element.GetString(), StringOptions),
++                    _ => element.GetRawText()
++                };
++            }
++        }
++    }
++}
+diff --git a/tests/TradeRecon.Tests/AuditWorkflowTests.cs b/tests/TradeRecon.Tests/AuditWorkflowTests.cs
+new file mode 100644
+index 0000000..4318cb5
+--- /dev/null
++++ b/tests/TradeRecon.Tests/AuditWorkflowTests.cs
+@@ -0,0 +1,315 @@
++using System.Text.Json.Nodes;
++using TradeRecon.Audit;
++using Xunit;
++
++namespace TradeRecon.Tests;
++
++/// <summary>
++/// Lifecycle behaviour of the maker-checker break-resolution workflow
++/// (REQ-2, REQ-3, REQ-5, REQ-7 and the matching acceptance criteria).
++/// </summary>
++public class AuditWorkflowTests : IDisposable
++{
++    private readonly string _state = AuditTestHarness.NewStateDirectory();
++
++    public void Dispose()
++    {
++        if (Directory.Exists(_state))
++        {
++            Directory.Delete(_state, recursive: true);
++        }
++
++        GC.SuppressFinalize(this);
++    }
++
++    [Fact]
++    public void Initialize_creates_durable_state_and_is_repeatable()
++    {
++        var service = AuditTestHarness.Service(_state);
++
++        var first = service.Initialize();
++        var second = service.Initialize();
++
++        Assert.True(first.Accepted);
++        Assert.True(second.Accepted);
++        Assert.Equal("initialized", second.Status);
++        Assert.True(File.Exists(Path.Combine(_state, "audit", "history.jsonl")));
++        Assert.Equal(0, (int)second.Payload["entryCount"]!);
++    }
++
++    [Fact]
++    public void Proposal_is_durably_recorded_for_its_maker()
++    {
++        var service = AuditTestHarness.Service(_state);
++        service.Initialize();
++
++        var result = service.Propose("REQ-100", "maker-a", "2024-06-03", "Broker confirmed the break", "ticket/RES-77");
++
++        Assert.True(result.Accepted);
++        Assert.Equal("proposed", result.Status);
++
++        var entries = AuditTestHarness.EntriesFor(AuditTestHarness.Export(_state), "REQ-100").ToList();
++        var proposal = Assert.Single(entries);
++        Assert.Equal("PROPOSED", AuditTestHarness.Field(proposal, "action"));
++        Assert.Equal("maker-a", AuditTestHarness.Field(proposal, "proposer"));
++        Assert.Equal("2024-06-03", AuditTestHarness.Field(proposal, "businessDate"));
++        Assert.Equal("Broker confirmed the break", AuditTestHarness.Field(proposal, "reason"));
++        Assert.Equal("ticket/RES-77", AuditTestHarness.Field(proposal, "evidence"));
++        Assert.Equal(1, (int)proposal["sequence"]!);
++        Assert.Null(proposal["previousHash"]?.GetValue<string?>());
++    }
++
++    [Theory]
++    [InlineData("", "ticket/RES-1")]
++    [InlineData("   ", "ticket/RES-1")]
++    [InlineData("Reason", "")]
++    [InlineData("Reason", "  ")]
++    public void Proposal_without_reason_or_evidence_writes_no_history(string reason, string evidence)
++    {
++        var service = AuditTestHarness.Service(_state);
++        service.Initialize();
++
++        var result = service.Propose("REQ-EMPTY", "maker-a", "2024-06-03", reason, evidence);
++
++        Assert.False(result.Accepted);
++        Assert.Equal(AuditCommandResult.ExitRejected, result.ExitCode);
++        Assert.Empty(AuditTestHarness.EntriesFor(AuditTestHarness.Export(_state), "REQ-EMPTY"));
++    }
++
++    [Fact]
++    public void Proposal_with_invalid_business_date_writes_no_history()
++    {
++        var service = AuditTestHarness.Service(_state);
++        service.Initialize();
++
++        var result = service.Propose("REQ-BADDATE", "maker-a", "03/06/2024", "Reason", "Evidence");
++
++        Assert.False(result.Accepted);
++        Assert.Equal("invalid_business_date", result.Status);
++        Assert.Empty(AuditTestHarness.Entries(AuditTestHarness.Export(_state)));
++    }
++
++    [Fact]
++    public void Repeated_proposal_by_the_same_maker_is_idempotent()
++    {
++        var service = AuditTestHarness.Service(_state);
++        service.Initialize();
++        service.Propose("REQ-101", "maker-a", "2024-06-03", "Broker confirmed", "ticket/RES-1");
++
++        var repeat = service.Propose("REQ-101", "maker-a", "2024-06-03", "Broker confirmed", "ticket/RES-1");
++
++        Assert.True(repeat.Accepted);
++        Assert.Equal("duplicate", repeat.Status);
++        Assert.Single(AuditTestHarness.EntriesFor(AuditTestHarness.Export(_state), "REQ-101"));
++    }
++
++    [Fact]
++    public void Proposal_reusing_another_makers_request_id_is_refused()
++    {
++        var service = AuditTestHarness.Service(_state);
++        service.Initialize();
++        service.Propose("REQ-102", "maker-a", "2024-06-03", "Broker confirmed", "ticket/RES-1");
++
++        var hijack = service.Propose("REQ-102", "maker-b", "2024-06-03", "Different story", "ticket/RES-2");
++
++        Assert.False(hijack.Accepted);
++        Assert.Single(AuditTestHarness.EntriesFor(AuditTestHarness.Export(_state), "REQ-102"));
++    }
++
++    [Fact]
++    public void Self_approval_is_refused_and_leaves_no_final_decision()
++    {
++        var service = AuditTestHarness.Service(_state);
++        service.Initialize();
++        service.Propose("REQ-200", "maker-a", "2024-06-03", "Broker confirmed", "ticket/RES-1");
++
++        var denied = service.Decide("REQ-200", "maker-a", "approve");
++
++        Assert.False(denied.Accepted);
++        Assert.Equal("self_approval_denied", denied.Status);
++
++        var entries = AuditTestHarness.EntriesFor(AuditTestHarness.Export(_state), "REQ-200").ToList();
++        Assert.Single(entries);
++        Assert.DoesNotContain(entries, e => AuditTestHarness.Field(e, "action") is "APPROVED" or "REJECTED");
++    }
++
++    [Fact]
++    public void Self_approval_is_refused_regardless_of_identity_casing_and_padding()
++    {
++        var service = AuditTestHarness.Service(_state);
++        service.Initialize();
++        service.Propose("REQ-201", "maker-a", "2024-06-03", "Broker confirmed", "ticket/RES-1");
++
++        var denied = service.Decide("REQ-201", "  MAKER-A ", "reject");
++
++        Assert.False(denied.Accepted);
++        Assert.Equal("self_approval_denied", denied.Status);
++        Assert.Single(AuditTestHarness.EntriesFor(AuditTestHarness.Export(_state), "REQ-201"));
++    }
++
++    [Fact]
++    public void Distinct_checker_creates_exactly_one_approved_entry()
++    {
++        var service = AuditTestHarness.Service(_state);
++        service.Initialize();
++        service.Propose("REQ-300", "maker-a", "2024-06-03", "Broker confirmed", "ticket/RES-1");
++
++        var approval = service.Decide("REQ-300", "checker-b", "approve");
++
++        Assert.True(approval.Accepted);
++        Assert.Equal("approved", approval.Status);
++
++        var entries = AuditTestHarness.EntriesFor(AuditTestHarness.Export(_state), "REQ-300").ToList();
++        Assert.Equal(2, entries.Count);
++
++        var final = Assert.Single(entries, e => AuditTestHarness.Field(e, "action") is "APPROVED" or "REJECTED");
++        Assert.Equal("APPROVED", AuditTestHarness.Field(final, "action"));
++        Assert.Equal("APPROVED", AuditTestHarness.Field(final, "eventType"));
++        Assert.Equal("APPROVED", AuditTestHarness.Field(final, "status"));
++        Assert.Equal("checker-b", AuditTestHarness.Field(final, "checker"));
++        Assert.Equal("maker-a", AuditTestHarness.Field(final, "proposer"));
++        Assert.NotEqual(
++            AuditTestHarness.Field(final, "proposer"),
++            AuditTestHarness.Field(final, "checker"));
++    }
++
++    [Fact]
++    public void Distinct_checker_can_reject()
++    {
++        var service = AuditTestHarness.Service(_state);
++        service.Initialize();
++        service.Propose("REQ-301", "maker-a", "2024-06-03", "Broker confirmed", "ticket/RES-1");
++
++        var rejection = service.Decide("REQ-301", "checker-c", "reject");
++
++        Assert.True(rejection.Accepted);
++        Assert.Equal("rejected", rejection.Status);
++
++        var final = Assert.Single(
++            AuditTestHarness.EntriesFor(AuditTestHarness.Export(_state), "REQ-301"),
++            e => AuditTestHarness.Field(e, "action") is "APPROVED" or "REJECTED");
++        Assert.Equal("REJECTED", AuditTestHarness.Field(final, "action"));
++        Assert.Equal("checker-c", AuditTestHarness.Field(final, "checker"));
++    }
++
++    [Fact]
++    public void Repeating_an_accepted_decision_is_idempotent()
++    {
++        var service = AuditTestHarness.Service(_state);
++        service.Initialize();
++        service.Propose("REQ-400", "maker-a", "2024-06-03", "Broker confirmed", "ticket/RES-1");
++        var first = service.Decide("REQ-400", "checker-b", "approve");
++
++        var repeat = service.Decide("REQ-400", "checker-b", "approve");
++
++        Assert.True(repeat.Accepted);
++        Assert.Equal("duplicate", repeat.Status);
++        Assert.True((bool)repeat.Payload["idempotent"]!);
++        Assert.Equal((string?)first.Payload["hash"], (string?)repeat.Payload["hash"]);
++
++        var finals = AuditTestHarness.EntriesFor(AuditTestHarness.Export(_state), "REQ-400")
++            .Where(e => AuditTestHarness.Field(e, "action") is "APPROVED" or "REJECTED");
++        Assert.Single(finals);
++    }
++
++    [Fact]
++    public void A_second_conflicting_decision_is_refused()
++    {
++        var service = AuditTestHarness.Service(_state);
++        service.Initialize();
++        service.Propose("REQ-401", "maker-a", "2024-06-03", "Broker confirmed", "ticket/RES-1");
++        service.Decide("REQ-401", "checker-b", "approve");
++
++        var conflicting = service.Decide("REQ-401", "checker-c", "reject");
++
++        Assert.False(conflicting.Accepted);
++        Assert.Equal("conflict", conflicting.Status);
++        Assert.Equal("APPROVED", (string?)conflicting.Payload["finalDecision"]);
++
++        var finals = AuditTestHarness.EntriesFor(AuditTestHarness.Export(_state), "REQ-401")
++            .Where(e => AuditTestHarness.Field(e, "action") is "APPROVED" or "REJECTED");
++        Assert.Single(finals);
++    }
++
++    [Fact]
++    public void Deciding_an_unknown_request_writes_no_history()
++    {
++        var service = AuditTestHarness.Service(_state);
++        service.Initialize();
++
++        var result = service.Decide("REQ-MISSING", "checker-b", "approve");
++
++        Assert.False(result.Accepted);
++        Assert.Equal("unknown_request", result.Status);
++        Assert.Empty(AuditTestHarness.Entries(AuditTestHarness.Export(_state)));
++    }
++
++    [Fact]
++    public void An_unrecognised_decision_value_writes_no_history()
++    {
++        var service = AuditTestHarness.Service(_state);
++        service.Initialize();
++        service.Propose("REQ-402", "maker-a", "2024-06-03", "Broker confirmed", "ticket/RES-1");
++
++        var result = service.Decide("REQ-402", "checker-b", "maybe");
++
++        Assert.False(result.Accepted);
++        Assert.Equal("invalid_decision", result.Status);
++        Assert.Single(AuditTestHarness.EntriesFor(AuditTestHarness.Export(_state), "REQ-402"));
++    }
++
++    [Fact]
++    public void Export_returns_the_complete_history_for_the_inclusive_range()
++    {
++        var service = AuditTestHarness.Service(_state);
++        service.Initialize();
++        service.Propose("REQ-500", "maker-a", "2024-06-03", "Broker confirmed", "ticket/RES-1");
++        service.Decide("REQ-500", "checker-b", "approve");
++        service.Propose("REQ-501", "maker-c", "2024-06-04", "Custodian confirmed", "ticket/RES-2");
++        service.Decide("REQ-501", "checker-d", "reject");
++
++        var export = AuditTestHarness.Export(_state, "2024-06-03", "2024-06-04");
++
++        Assert.Equal(4, AuditTestHarness.Entries(export).Count);
++        Assert.Equal(2, AuditTestHarness.EntriesFor(export, "REQ-500").Count());
++        Assert.Equal(2, AuditTestHarness.EntriesFor(export, "REQ-501").Count());
++        Assert.Equal("2024-06-03", (string?)export["fromDate"]);
++        Assert.Equal("2024-06-04", (string?)export["toDate"]);
++        Assert.Equal(4, (int)export["entryCount"]!);
++    }
++
++    [Fact]
++    public void Export_excludes_entries_outside_the_range()
++    {
++        var service = AuditTestHarness.Service(_state);
++        service.Initialize();
++        service.Propose("REQ-600", "maker-a", "2024-06-03", "In range", "ticket/RES-1");
++        service.Propose("REQ-601", "maker-a", "2024-07-01", "Out of range", "ticket/RES-2");
++
++        var export = AuditTestHarness.Export(_state, "2024-06-01", "2024-06-30");
++
++        var entry = Assert.Single(AuditTestHarness.Entries(export).Cast<JsonObject>());
++        Assert.Equal("REQ-600", AuditTestHarness.Field(entry, "requestId"));
++    }
++
++    [Fact]
++    public void Export_of_an_empty_history_is_still_parseable_json()
++    {
++        AuditTestHarness.Service(_state).Initialize();
++
++        var export = AuditTestHarness.Export(_state);
++
++        Assert.Empty(AuditTestHarness.Entries(export));
++        Assert.Equal(0, (int)export["entryCount"]!);
++    }
++
++    [Fact]
++    public void Export_works_without_an_explicit_initialize()
++    {
++        var service = AuditTestHarness.Service(_state);
++
++        var export = AuditTestHarness.Export(service.Store.StateDirectory);
++
++        Assert.Empty(AuditTestHarness.Entries(export));
++    }
++}
+diff --git a/tests/TradeRecon.Tests/TradeRecon.Tests.csproj b/tests/TradeRecon.Tests/TradeRecon.Tests.csproj
+index 9b5af11..ba16a91 100644
+--- a/tests/TradeRecon.Tests/TradeRecon.Tests.csproj
++++ b/tests/TradeRecon.Tests/TradeRecon.Tests.csproj
+@@ -12,6 +12,8 @@
+     <ProjectReference Include="..\..\src\TradeRecon.Application\TradeRecon.Application.csproj" />
+     <ProjectReference Include="..\..\src\TradeRecon.Infrastructure\TradeRecon.Infrastructure.csproj" />
+     <ProjectReference Include="..\..\src\TradeRecon.Console\TradeRecon.Console.csproj" />
++    <ProjectReference Include="..\..\src\TradeRecon.Audit\TradeRecon.Audit.csproj" />
++    <ProjectReference Include="..\..\src\TradeRecon.AuditConsole\TradeRecon.AuditConsole.csproj" />
+   </ItemGroup>
+   <ItemGroup>
+     <Content Include="..\..\fixtures\*.csv" Link="fixtures\%(Filename)%(Extension)">

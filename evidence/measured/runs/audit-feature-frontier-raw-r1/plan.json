@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.1.0",
+  "runId": "audit-feature-frontier-raw-r1",
+  "episodeId": "audit-feature",
+  "laneId": "frontier-raw",
+  "model": {
+    "id": "claude-opus-5",
+    "displayName": "Claude Opus 5",
+    "tier": "frontier",
+    "buildId": "not-exposed-by-copilot",
+    "agentVersion": "1.0.79-9",
+    "agentBuildId": "not-separately-exposed-by-copilot",
+    "effortParams": {
+      "reasoningEffort": "high"
+    }
+  },
+  "inputMode": "raw",
+  "repetition": 1,
+  "baseline": {
+    "ref": "refs/tags/benchmark-modernized-v1",
+    "sha256": "82ff4d70d1423d45cb25e2d714355500d22b31eb6c8f47c5f5f246d4f4662120"
+  },
+  "brief": {
+    "path": "benchmark/prompts/audit-feature-raw.md",
+    "sha256": "f47aa4cd40324a29be02f62a6f7fb8c900a72017ad565ca3b3e7756e343d648d"
+  },
+  "promptSha256": "f47aa4cd40324a29be02f62a6f7fb8c900a72017ad565ca3b3e7756e343d648d",
+  "spec": null,
+  "executionOrder": 10,
+  "executionPolicySnapshot": {
+    "freshWorkspacePerRun": true,
+    "crossRunMemory": false,
+    "humanRemediation": false,
+    "preserveFailedRuns": true,
+    "failedRunTreatment": "score-zero-and-fail-applicable-gates",
+    "timeoutSeconds": 5400,
+    "toolCallCap": 200,
+    "toolPermissionProfile": "standard-coding",
+    "runOrder": "randomized-interleaved",
+    "runOrderNotes": "Execute the seeded order across lanes rather than grouping by model or treatment.",
+    "captureQueueAndThrottleTime": true,
+    "queueAndThrottleNotes": "Record queue and throttle time separately from productive execution time."
+  },
+  "workspaceDir": "C:\\Users\\willtriccas\\.copilot\\repos\\copilot-worktrees\\Work-Demos\\willtriccas-ideal-chainsaw\\evidence\\measured\\runs\\audit-feature-frontier-raw-r1\\workspace",
+  "workspaceBaselineCommit": "5b101bc64e8b4b6cde1e6f4790b00ebb2aa42964",
+  "promptPath": "C:\\Users\\willtriccas\\.copilot\\repos\\copilot-worktrees\\Work-Demos\\willtriccas-ideal-chainsaw\\evidence\\measured\\runs\\audit-feature-frontier-raw-r1\\PROMPT.md"
+}

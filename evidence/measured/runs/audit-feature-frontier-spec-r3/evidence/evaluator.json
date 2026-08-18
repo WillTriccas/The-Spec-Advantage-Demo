@@ -1,0 +1,804 @@
+{
+  "adapterValidation": {
+    "errors": [],
+    "passed": true
+  },
+  "commands": [
+    {
+      "allowedExitCodes": [
+        0
+      ],
+      "arguments": [
+        "build",
+        "TradeRecon.sln",
+        "--configuration",
+        "Release"
+      ],
+      "cwd": ".",
+      "executable": "C:\\Users\\willtriccas\\AppData\\Local\\dotnet\\dotnet.exe",
+      "exitCode": 0,
+      "id": "application-build",
+      "passed": true,
+      "sensitiveOutputDetected": false,
+      "signal": null,
+      "stderr": "",
+      "stdout": "  Determining projects to restore...\n  All projects are up-to-date for restore.\n  TradeRecon.Domain -> <redacted-path>\\src\\TradeRecon.Domain\\bin\\Release\\net8.0\\TradeRecon.Domain.dll\n  TradeRecon.Audit -> <redacted-path>\\src\\TradeRecon.Audit\\bin\\Release\\net8.0\\TradeRecon.Audit.dll\n  TradeRecon.Application -> <redacted-path>\\src\\TradeRecon.Application\\bin\\Release\\net8.0\\TradeRecon.Application.dll\n  TradeRecon.AuditConsole -> <redacted-path>\\src\\TradeRecon.AuditConsole\\bin\\Release\\net8.0\\TradeRecon.AuditConsole.dll\n  TradeRecon.Infrastructure -> <redacted-path>\\src\\TradeRecon.Infrastructure\\bin\\Release\\net8.0\\TradeRecon.Infrastructure.dll\n  TradeRecon.Console -> <redacted-path>\\src\\TradeRecon.Console\\bin\\Release\\net8.0\\TradeRecon.Console.dll\n  TradeRecon.Tests -> <redacted-path>\\tests\\TradeRecon.Tests\\bin\\Release\\net8.0\\TradeRecon.Tests.dll\n\nBuild succeeded.\n    0 Warning(s)\n    0 Error(s)\n\nTime Elapsed 00:00:06.20\n",
+      "timedOut": false
+    },
+    {
+      "allowedExitCodes": [
+        0
+      ],
+      "arguments": [
+        "test",
+        "TradeRecon.sln",
+        "--configuration",
+        "Release",
+        "--no-build"
+      ],
+      "cwd": ".",
+      "executable": "C:\\Users\\willtriccas\\AppData\\Local\\dotnet\\dotnet.exe",
+      "exitCode": 0,
+      "id": "application-test",
+      "passed": true,
+      "sensitiveOutputDetected": false,
+      "signal": null,
+      "stderr": "",
+      "stdout": "Test run for <redacted-path>\\tests\\TradeRecon.Tests\\bin\\Release\\net8.0\\TradeRecon.Tests.dll (.NETCoreApp,Version=v8.0)\nVSTest version 17.11.1 (arm64)\n\nStarting test execution, please wait...\nA total of 1 test files matched the specified pattern.\n\nPassed!  - Failed:     0, Passed:   102, Skipped:     0, Total:   102, Duration: 3 s - TradeRecon.Tests.dll (net8.0)\n",
+      "timedOut": false
+    },
+    {
+      "allowedExitCodes": [
+        0,
+        2
+      ],
+      "arguments": [
+        "run",
+        "--project",
+        "src/TradeRecon.Console/TradeRecon.Console.csproj",
+        "--configuration",
+        "Release",
+        "--no-build",
+        "--",
+        "--date",
+        "2026-02-17",
+        "--fixtures",
+        "<redacted-path>",
+        "--out",
+        "<redacted-path>",
+        "--json"
+      ],
+      "cwd": ".",
+      "executable": "C:\\Users\\willtriccas\\AppData\\Local\\dotnet\\dotnet.exe",
+      "exitCode": 1,
+      "id": "application-run-canonical-fixture",
+      "passed": false,
+      "sensitiveOutputDetected": false,
+      "signal": null,
+      "stderr": "16:03:31 info: TradeRecon.Application.Reconciliation.ReconciliationRunner[0] Starting reconciliation run for 02/17/2026.\n16:03:31 fail: object[0] Reconciliation failed: CSV header is missing required column(s): BusinessDate, TradeId, Direction, SettlementDate, Amount. System.FormatException: CSV header is missing required column(s): BusinessDate, TradeId, Direction, SettlementDate, Amount.    at TradeRecon.Infrastructure.Sources.CsvReader.Read(String content, IReadOnlyCollection`1 requiredColumns) in <redacted-path>\\src\\TradeRecon.Infrastructure\\Sources\\CsvReader.cs:line 39    at TradeRecon.Infrastructure.Sources.CsvReconciliationBatchSource.ReadFileAsync(String fileName, IReadOnlyCollection`1 requiredColumns, CancellationToken ct) in <redacted-path>\\src\\TradeRecon.Infrastructure\\Sources\\CsvReconciliationBatchSource.cs:line 130    at TradeRecon.Infrastructure.Sources.CsvReconciliationBatchSource.LoadTradesAsync(DateOnly date, CancellationToken ct) in <redacted-path>\\src\\TradeRecon.Infrastructure\\Sources\\CsvReconciliationBatchSource.cs:line 58    at TradeRecon.Infrastructure.Sources.CsvReconciliationBatchSource.LoadAsync(DateOnly businessDate, CancellationToken cancellationToken) in <redacted-path>\\src\\TradeRecon.Infrastructure\\Sources\\CsvReconciliationBatchSource.cs:line 36    at TradeRecon.Application.Reconciliation.ReconciliationRunner.RunAsync(DateOnly businessDate, ReconciliationRunOptions options, CancellationToken cancellationToken) in <redacted-path>\\src\\TradeRecon.Application\\Reconciliation\\ReconciliationRunner.cs:line 51    at TradeRecon.Console.Program.Main(String[] args) in <redacted-path>\\src\\TradeRecon.Console\\Program.cs:line 98\n",
+      "stdout": "",
+      "timedOut": false
+    },
+    {
+      "allowedExitCodes": [
+        0
+      ],
+      "arguments": [
+        "run",
+        "--project",
+        "src/TradeRecon.AuditConsole/TradeRecon.AuditConsole.csproj",
+        "--configuration",
+        "Release",
+        "--verbosity",
+        "quiet",
+        "--",
+        "initialize",
+        "--state",
+        "<redacted-path>"
+      ],
+      "cwd": ".",
+      "executable": "C:\\Users\\willtriccas\\AppData\\Local\\dotnet\\dotnet.exe",
+      "exitCode": 0,
+      "id": "initialize",
+      "passed": true,
+      "sensitiveOutputDetected": false,
+      "signal": null,
+      "stderr": "",
+      "stdout": "{\"schemaVersion\":\"1.0\",\"command\":\"initialize\",\"status\":\"initialized\",\"accepted\":true,\"stateDirectory\":\"C:\\\\Users\\\\willtriccas\\\\AppData\\\\Local\\\\Temp\\\\sealed-audit-uAr1m6\\\\state\",\"historyPath\":\"C:\\\\Users\\\\willtriccas\\\\AppData\\\\Local\\\\Temp\\\\sealed-audit-uAr1m6\\\\state\\\\audit\\\\history.jsonl\",\"entryCount\":0}\n",
+      "timedOut": false
+    },
+    {
+      "allowedExitCodes": [
+        0,
+        3
+      ],
+      "arguments": [
+        "run",
+        "--project",
+        "src/TradeRecon.AuditConsole/TradeRecon.AuditConsole.csproj",
+        "--configuration",
+        "Release",
+        "--no-build",
+        "--",
+        "propose",
+        "--state",
+        "<redacted-path>",
+        "--request-id",
+        "REQ-A",
+        "--proposer",
+        "maker.alpha@example.test",
+        "--business-date",
+        "2026-02-17",
+        "--reason",
+        "synthetic policy exception reason",
+        "--evidence",
+        "synthetic-evidence-ticket-42"
+      ],
+      "cwd": ".",
+      "executable": "C:\\Users\\willtriccas\\AppData\\Local\\dotnet\\dotnet.exe",
+      "exitCode": 0,
+      "id": "propose-main",
+      "passed": true,
+      "sensitiveOutputDetected": false,
+      "signal": null,
+      "stderr": "",
+      "stdout": "{\"schemaVersion\":\"1.0\",\"command\":\"propose\",\"status\":\"proposed\",\"accepted\":true,\"requestId\":\"REQ-A\",\"action\":\"PROPOSED\",\"proposer\":\"maker.alpha@example.test\",\"checker\":null,\"businessDate\":\"2026-02-17\",\"sequence\":1,\"requestSequence\":1,\"previousHash\":null,\"hash\":\"5cfa703196f08aca07a9005cef1a5307855adf10b941faed5f24cc5548323f80\",\"timestamp\":\"2026-08-18T15:03:35.9706787Z\",\"idempotent\":false}\n",
+      "timedOut": false
+    },
+    {
+      "allowedExitCodes": [
+        0,
+        3
+      ],
+      "arguments": [
+        "run",
+        "--project",
+        "src/TradeRecon.AuditConsole/TradeRecon.AuditConsole.csproj",
+        "--configuration",
+        "Release",
+        "--no-build",
+        "--",
+        "decide",
+        "--state",
+        "<redacted-path>",
+        "--request-id",
+        "REQ-A",
+        "--approver",
+        "maker.alpha@example.test",
+        "--decision",
+        "approve"
+      ],
+      "cwd": ".",
+      "executable": "C:\\Users\\willtriccas\\AppData\\Local\\dotnet\\dotnet.exe",
+      "exitCode": 3,
+      "id": "self-approve",
+      "passed": true,
+      "sensitiveOutputDetected": false,
+      "signal": null,
+      "stderr": "",
+      "stdout": "{\"schemaVersion\":\"1.0\",\"command\":\"decide\",\"status\":\"self_approval_denied\",\"accepted\":false,\"requestId\":\"REQ-A\",\"proposer\":\"maker.alpha@example.test\",\"attemptedDecision\":\"APPROVED\",\"message\":\"A proposer may not decide their own request; no decision was recorded.\"}\n",
+      "timedOut": false
+    },
+    {
+      "allowedExitCodes": [
+        0,
+        3
+      ],
+      "arguments": [
+        "run",
+        "--project",
+        "src/TradeRecon.AuditConsole/TradeRecon.AuditConsole.csproj",
+        "--configuration",
+        "Release",
+        "--no-build",
+        "--",
+        "decide",
+        "--state",
+        "<redacted-path>",
+        "--request-id",
+        "REQ-A",
+        "--approver",
+        "checker.beta@example.test",
+        "--decision",
+        "approve"
+      ],
+      "cwd": ".",
+      "executable": "C:\\Users\\willtriccas\\AppData\\Local\\dotnet\\dotnet.exe",
+      "exitCode": 0,
+      "id": "checker-approve",
+      "passed": true,
+      "sensitiveOutputDetected": false,
+      "signal": null,
+      "stderr": "",
+      "stdout": "{\"schemaVersion\":\"1.0\",\"command\":\"decide\",\"status\":\"approved\",\"accepted\":true,\"requestId\":\"REQ-A\",\"action\":\"APPROVED\",\"proposer\":\"maker.alpha@example.test\",\"checker\":\"checker.beta@example.test\",\"businessDate\":\"2026-02-17\",\"sequence\":2,\"requestSequence\":2,\"previousHash\":\"5cfa703196f08aca07a9005cef1a5307855adf10b941faed5f24cc5548323f80\",\"hash\":\"e780a0e7224818c5e51889c83902875047b3e13d67bd67613adc5ffd1359a2e7\",\"timestamp\":\"2026-08-18T15:03:37.5974857Z\",\"idempotent\":false,\"finalDecision\":\"APPROVED\",\"finalChecker\":\"checker.beta@example.test\"}\n",
+      "timedOut": false
+    },
+    {
+      "allowedExitCodes": [
+        0,
+        3
+      ],
+      "arguments": [
+        "run",
+        "--project",
+        "src/TradeRecon.AuditConsole/TradeRecon.AuditConsole.csproj",
+        "--configuration",
+        "Release",
+        "--no-build",
+        "--",
+        "decide",
+        "--state",
+        "<redacted-path>",
+        "--request-id",
+        "REQ-A",
+        "--approver",
+        "checker.beta@example.test",
+        "--decision",
+        "approve"
+      ],
+      "cwd": ".",
+      "executable": "C:\\Users\\willtriccas\\AppData\\Local\\dotnet\\dotnet.exe",
+      "exitCode": 0,
+      "id": "checker-approve-idempotent",
+      "passed": true,
+      "sensitiveOutputDetected": false,
+      "signal": null,
+      "stderr": "",
+      "stdout": "{\"schemaVersion\":\"1.0\",\"command\":\"decide\",\"status\":\"duplicate\",\"accepted\":true,\"requestId\":\"REQ-A\",\"action\":\"APPROVED\",\"proposer\":\"maker.alpha@example.test\",\"checker\":\"checker.beta@example.test\",\"businessDate\":\"2026-02-17\",\"sequence\":2,\"requestSequence\":2,\"previousHash\":\"5cfa703196f08aca07a9005cef1a5307855adf10b941faed5f24cc5548323f80\",\"hash\":\"e780a0e7224818c5e51889c83902875047b3e13d67bd67613adc5ffd1359a2e7\",\"timestamp\":\"2026-08-18T15:03:37.5974857Z\",\"idempotent\":true,\"attemptedDecision\":\"APPROVED\",\"finalDecision\":\"APPROVED\",\"finalChecker\":\"checker.beta@example.test\"}\n",
+      "timedOut": false
+    },
+    {
+      "allowedExitCodes": [
+        0,
+        3
+      ],
+      "arguments": [
+        "run",
+        "--project",
+        "src/TradeRecon.AuditConsole/TradeRecon.AuditConsole.csproj",
+        "--configuration",
+        "Release",
+        "--no-build",
+        "--",
+        "propose",
+        "--state",
+        "<redacted-path>",
+        "--request-id",
+        "REQ-B",
+        "--proposer",
+        "maker.alpha@example.test",
+        "--business-date",
+        "2026-02-17",
+        "--reason",
+        "synthetic policy exception reason",
+        "--evidence",
+        "synthetic-evidence-ticket-42"
+      ],
+      "cwd": ".",
+      "executable": "C:\\Users\\willtriccas\\AppData\\Local\\dotnet\\dotnet.exe",
+      "exitCode": 0,
+      "id": "propose-reject",
+      "passed": true,
+      "sensitiveOutputDetected": false,
+      "signal": null,
+      "stderr": "",
+      "stdout": "{\"schemaVersion\":\"1.0\",\"command\":\"propose\",\"status\":\"proposed\",\"accepted\":true,\"requestId\":\"REQ-B\",\"action\":\"PROPOSED\",\"proposer\":\"maker.alpha@example.test\",\"checker\":null,\"businessDate\":\"2026-02-17\",\"sequence\":3,\"requestSequence\":1,\"previousHash\":\"e780a0e7224818c5e51889c83902875047b3e13d67bd67613adc5ffd1359a2e7\",\"hash\":\"6aa224b5c596073be28092b36ce28fdc120afff6c2dcbfe426c6f30d3afb0bb6\",\"timestamp\":\"2026-08-18T15:03:39.0744626Z\",\"idempotent\":false}\n",
+      "timedOut": false
+    },
+    {
+      "allowedExitCodes": [
+        0,
+        3
+      ],
+      "arguments": [
+        "run",
+        "--project",
+        "src/TradeRecon.AuditConsole/TradeRecon.AuditConsole.csproj",
+        "--configuration",
+        "Release",
+        "--no-build",
+        "--",
+        "decide",
+        "--state",
+        "<redacted-path>",
+        "--request-id",
+        "REQ-B",
+        "--approver",
+        "checker.gamma@example.test",
+        "--decision",
+        "reject"
+      ],
+      "cwd": ".",
+      "executable": "C:\\Users\\willtriccas\\AppData\\Local\\dotnet\\dotnet.exe",
+      "exitCode": 0,
+      "id": "checker-reject",
+      "passed": true,
+      "sensitiveOutputDetected": false,
+      "signal": null,
+      "stderr": "",
+      "stdout": "{\"schemaVersion\":\"1.0\",\"command\":\"decide\",\"status\":\"rejected\",\"accepted\":true,\"requestId\":\"REQ-B\",\"action\":\"REJECTED\",\"proposer\":\"maker.alpha@example.test\",\"checker\":\"checker.gamma@example.test\",\"businessDate\":\"2026-02-17\",\"sequence\":4,\"requestSequence\":2,\"previousHash\":\"6aa224b5c596073be28092b36ce28fdc120afff6c2dcbfe426c6f30d3afb0bb6\",\"hash\":\"a6c4a3830371fa25037bc3cf6fe0289e59147778eb505854a577967f704b23f4\",\"timestamp\":\"2026-08-18T15:03:39.8023990Z\",\"idempotent\":false,\"finalDecision\":\"REJECTED\",\"finalChecker\":\"checker.gamma@example.test\"}\n",
+      "timedOut": false
+    },
+    {
+      "allowedExitCodes": [
+        0,
+        3
+      ],
+      "arguments": [
+        "run",
+        "--project",
+        "src/TradeRecon.AuditConsole/TradeRecon.AuditConsole.csproj",
+        "--configuration",
+        "Release",
+        "--no-build",
+        "--",
+        "propose",
+        "--state",
+        "<redacted-path>",
+        "--request-id",
+        "REQ-MISSING",
+        "--proposer",
+        "maker.alpha@example.test",
+        "--business-date",
+        "2026-02-17",
+        "--reason",
+        "",
+        "--evidence",
+        ""
+      ],
+      "cwd": ".",
+      "executable": "C:\\Users\\willtriccas\\AppData\\Local\\dotnet\\dotnet.exe",
+      "exitCode": 3,
+      "id": "propose-missing-reason",
+      "passed": true,
+      "sensitiveOutputDetected": false,
+      "signal": null,
+      "stderr": "",
+      "stdout": "{\"schemaVersion\":\"1.0\",\"command\":\"propose\",\"status\":\"missing_reason\",\"accepted\":false,\"requestId\":\"REQ-MISSING\",\"message\":\"A non-empty reason is required.\"}\n",
+      "timedOut": false
+    },
+    {
+      "allowedExitCodes": [
+        0,
+        3
+      ],
+      "arguments": [
+        "run",
+        "--project",
+        "src/TradeRecon.AuditConsole/TradeRecon.AuditConsole.csproj",
+        "--configuration",
+        "Release",
+        "--no-build",
+        "--",
+        "propose",
+        "--state",
+        "<redacted-path>",
+        "--request-id",
+        "REQ-C",
+        "--proposer",
+        "maker.alpha@example.test",
+        "--business-date",
+        "2026-02-17",
+        "--reason",
+        "synthetic policy exception reason",
+        "--evidence",
+        "synthetic-evidence-ticket-42"
+      ],
+      "cwd": ".",
+      "executable": "C:\\Users\\willtriccas\\AppData\\Local\\dotnet\\dotnet.exe",
+      "exitCode": 0,
+      "id": "propose-conflict",
+      "passed": true,
+      "sensitiveOutputDetected": false,
+      "signal": null,
+      "stderr": "",
+      "stdout": "{\"schemaVersion\":\"1.0\",\"command\":\"propose\",\"status\":\"proposed\",\"accepted\":true,\"requestId\":\"REQ-C\",\"action\":\"PROPOSED\",\"proposer\":\"maker.alpha@example.test\",\"checker\":null,\"businessDate\":\"2026-02-17\",\"sequence\":5,\"requestSequence\":1,\"previousHash\":\"a6c4a3830371fa25037bc3cf6fe0289e59147778eb505854a577967f704b23f4\",\"hash\":\"abb7577396cb602744b3149242e6f1a9902afee57c9807af5dafea19125f7a50\",\"timestamp\":\"2026-08-18T15:03:41.0219108Z\",\"idempotent\":false}\n",
+      "timedOut": false
+    },
+    {
+      "allowedExitCodes": [
+        0,
+        3
+      ],
+      "arguments": [
+        "run",
+        "--project",
+        "src/TradeRecon.AuditConsole/TradeRecon.AuditConsole.csproj",
+        "--configuration",
+        "Release",
+        "--no-build",
+        "--",
+        "decide",
+        "--state",
+        "<redacted-path>",
+        "--request-id",
+        "REQ-C",
+        "--approver",
+        "checker.beta@example.test",
+        "--decision",
+        "approve"
+      ],
+      "cwd": ".",
+      "executable": "C:\\Users\\willtriccas\\AppData\\Local\\dotnet\\dotnet.exe",
+      "exitCode": 0,
+      "id": "conflict-approve",
+      "passed": true,
+      "sensitiveOutputDetected": false,
+      "signal": null,
+      "stderr": "",
+      "stdout": "{\"schemaVersion\":\"1.0\",\"command\":\"decide\",\"status\":\"approved\",\"accepted\":true,\"requestId\":\"REQ-C\",\"action\":\"APPROVED\",\"proposer\":\"maker.alpha@example.test\",\"checker\":\"checker.beta@example.test\",\"businessDate\":\"2026-02-17\",\"sequence\":6,\"requestSequence\":2,\"previousHash\":\"abb7577396cb602744b3149242e6f1a9902afee57c9807af5dafea19125f7a50\",\"hash\":\"1ada8fc4debf3b8dd94ca4cd166743dde353fb01857d53d581b6db135c16726c\",\"timestamp\":\"2026-08-18T15:03:41.6163575Z\",\"idempotent\":false,\"finalDecision\":\"APPROVED\",\"finalChecker\":\"checker.beta@example.test\"}\n",
+      "timedOut": false
+    },
+    {
+      "allowedExitCodes": [
+        0,
+        3
+      ],
+      "arguments": [
+        "run",
+        "--project",
+        "src/TradeRecon.AuditConsole/TradeRecon.AuditConsole.csproj",
+        "--configuration",
+        "Release",
+        "--no-build",
+        "--",
+        "decide",
+        "--state",
+        "<redacted-path>",
+        "--request-id",
+        "REQ-C",
+        "--approver",
+        "checker.gamma@example.test",
+        "--decision",
+        "reject"
+      ],
+      "cwd": ".",
+      "executable": "C:\\Users\\willtriccas\\AppData\\Local\\dotnet\\dotnet.exe",
+      "exitCode": 3,
+      "id": "conflict-reject",
+      "passed": true,
+      "sensitiveOutputDetected": false,
+      "signal": null,
+      "stderr": "",
+      "stdout": "{\"schemaVersion\":\"1.0\",\"command\":\"decide\",\"status\":\"conflict\",\"accepted\":false,\"requestId\":\"REQ-C\",\"action\":\"APPROVED\",\"proposer\":\"maker.alpha@example.test\",\"checker\":\"checker.beta@example.test\",\"businessDate\":\"2026-02-17\",\"sequence\":6,\"requestSequence\":2,\"previousHash\":\"abb7577396cb602744b3149242e6f1a9902afee57c9807af5dafea19125f7a50\",\"hash\":\"1ada8fc4debf3b8dd94ca4cd166743dde353fb01857d53d581b6db135c16726c\",\"timestamp\":\"2026-08-18T15:03:41.6163575Z\",\"idempotent\":false,\"attemptedDecision\":\"REJECTED\",\"finalDecision\":\"APPROVED\",\"finalChecker\":\"checker.beta@example.test\",\"message\":\"The request already has a durable final decision.\"}\n",
+      "timedOut": false
+    },
+    {
+      "allowedExitCodes": [
+        0
+      ],
+      "arguments": [
+        "run",
+        "--project",
+        "src/TradeRecon.AuditConsole/TradeRecon.AuditConsole.csproj",
+        "--configuration",
+        "Release",
+        "--no-build",
+        "--",
+        "export",
+        "--state",
+        "<redacted-path>",
+        "--from",
+        "2026-02-01",
+        "--to",
+        "2026-02-28",
+        "--export-path",
+        "<redacted-path>"
+      ],
+      "cwd": ".",
+      "executable": "C:\\Users\\willtriccas\\AppData\\Local\\dotnet\\dotnet.exe",
+      "exitCode": 0,
+      "id": "export-date-range",
+      "passed": true,
+      "sensitiveOutputDetected": false,
+      "signal": null,
+      "stderr": "",
+      "stdout": "{\"schemaVersion\":\"1.0\",\"command\":\"export\",\"status\":\"exported\",\"accepted\":true,\"fromDate\":\"2026-02-01\",\"toDate\":\"2026-02-28\",\"entryCount\":6,\"count\":6,\"hashAlgorithm\":\"sha256\",\"canonicalization\":\"sorted-keys-compact-json-without-hash\",\"exportPath\":\"C:\\\\Users\\\\willtriccas\\\\AppData\\\\Local\\\\Temp\\\\sealed-audit-uAr1m6\\\\export.json\",\"entries\":[{\"schemaVersion\":\"1.0\",\"sequence\":1,\"requestSequence\":1,\"version\":1,\"requestId\":\"REQ-A\",\"action\":\"PROPOSED\",\"eventType\":\"PROPOSED\",\"status\":\"PROPOSED\",\"decision\":null,\"actor\":\"maker.alpha@example.test\",\"proposer\":\"maker.alpha@example.test\",\"checker\":null,\"businessDate\":\"2026-02-17\",\"reason\":\"synthetic policy exception reason\",\"evidence\":\"synthetic-evidence-ticket-42\",\"timestamp\":\"2026-08-18T15:03:35.9706787Z\",\"previousHash\":null,\"hash\":\"5cfa703196f08aca07a9005cef1a5307855adf10b941faed5f24cc5548323f80\"},{\"schemaVersion\":\"1.0\",\"sequence\":2,\"requestSequence\":2,\"version\":2,\"requestId\":\"REQ-A\",\"action\":\"APPROVED\",\"eventType\":\"APPROVED\",\"status\":\"APPROVED\",\"decision\":\"APPROVED\",\"actor\":\"checker.beta@example.test\",\"proposer\":\"maker.alpha@example.test\",\"checker\":\"checker.beta@example.test\",\"businessDate\":\"2026-02-17\",\"reason\":\"synthetic policy exception reason\",\"evidence\":\"synthetic-evidence-ticket-42\",\"timestamp\":\"2026-08-18T15:03:37.5974857Z\",\"previousHash\":\"5cfa703196f08aca07a9005cef1a5307855adf10b941faed5f24cc5548323f80\",\"hash\":\"e780a0e7224818c5e51889c83902875047b3e13d67bd67613adc5ffd1359a2e7\"},{\"schemaVersion\":\"1.0\",\"sequence\":3,\"requestSequence\":1,\"version\":1,\"requestId\":\"REQ-B\",\"action\":\"PROPOSED\",\"eventType\":\"PROPOSED\",\"status\":\"PROPOSED\",\"decision\":null,\"actor\":\"maker.alpha@example.test\",\"proposer\":\"maker.alpha@example.test\",\"checker\":null,\"businessDate\":\"2026-02-17\",\"reason\":\"synthetic policy exception reason\",\"evidence\":\"synthetic-evidence-ticket-42\",\"timestamp\":\"2026-08-18T15:03:39.0744626Z\",\"previousHash\":\"e780a0e7224818c5e51889c83902875047b3e13d67bd67613adc5ffd1359a2e7\",\"hash\":\"6aa224b5c596073be28092b36ce28fdc120afff6c2dcbfe426c6f30d3afb0bb6\"},{\"schemaVersion\":\"1.0\",\"sequence\":4,\"requestSequence\":2,\"version\":2,\"requestId\":\"REQ-B\",\"action\":\"REJECTED\",\"eventType\":\"REJECTED\",\"status\":\"REJECTED\",\"decision\":\"REJECTED\",\"actor\":\"checker.gamma@example.test\",\"proposer\":\"maker.alpha@example.test\",\"checker\":\"checker.gamma@example.test\",\"businessDate\":\"2026-02-17\",\"reason\":\"synthetic policy exception reason\",\"evidence\":\"synthetic-evidence-ticket-42\",\"timestamp\":\"2026-08-18T15:03:39.8023990Z\",\"previousHash\":\"6aa224b5c596073be28092b36ce28fdc120afff6c2dcbfe426c6f30d3afb0bb6\",\"hash\":\"a6c4a3830371fa25037bc3cf6fe0289e59147778eb505854a577967f704b23f4\"},{\"schemaVersion\":\"1.0\",\"sequence\":5,\"requestSequence\":1,\"version\":1,\"requestId\":\"REQ-C\",\"action\":\"PROPOSED\",\"eventType\":\"PROPOSED\",\"status\":\"PROPOSED\",\"decision\":null,\"actor\":\"maker.alpha@example.test\",\"proposer\":\"maker.alpha@example.test\",\"checker\":null,\"businessDate\":\"2026-02-17\",\"reason\":\"synthetic policy exception reason\",\"evidence\":\"synthetic-evidence-ticket-42\",\"timestamp\":\"2026-08-18T15:03:41.0219108Z\",\"previousHash\":\"a6c4a3830371fa25037bc3cf6fe0289e59147778eb505854a577967f704b23f4\",\"hash\":\"abb7577396cb602744b3149242e6f1a9902afee57c9807af5dafea19125f7a50\"},{\"schemaVersion\":\"1.0\",\"sequence\":6,\"requestSequence\":2,\"version\":2,\"requestId\":\"REQ-C\",\"action\":\"APPROVED\",\"eventType\":\"APPROVED\",\"status\":\"APPROVED\",\"decision\":\"APPROVED\",\"actor\":\"checker.beta@example.test\",\"proposer\":\"maker.alpha@example.test\",\"checker\":\"checker.beta@example.test\",\"businessDate\":\"2026-02-17\",\"reason\":\"synthetic policy exception reason\",\"evidence\":\"synthetic-evidence-ticket-42\",\"timestamp\":\"2026-08-18T15:03:41.6163575Z\",\"previousHash\":\"abb7577396cb602744b3149242e6f1a9902afee57c9807af5dafea19125f7a50\",\"hash\":\"1ada8fc4debf3b8dd94ca4cd166743dde353fb01857d53d581b6db135c16726c\"}]}\n",
+      "timedOut": false
+    }
+  ],
+  "dimensions": {
+    "behaviorPreservation": {
+      "findings": [
+        "required audit behavior was not fully preserved"
+      ],
+      "passed": false,
+      "score": 0,
+      "weight": 20
+    },
+    "functionalCorrectness": {
+      "findings": [
+        "missing declared output(s): 2026-02-17/eod-summary.txt, 2026-02-17/eod-break-register.csv, 2026-02-17/eod-result.json; run command did not complete with stable allowed exit handling; normalized identifiers were not visible in matched output; duplicate trade was not surfaced as a break; inclusive tolerance boundary did not match; out-of-tolerance amount was not broken; missing settlement was not broken; missing position was not broken; non-positive values were not rejected; eligible manual override was not visible in matched output; duplicate override audit visibility was missing"
+      ],
+      "passed": false,
+      "score": 0,
+      "weight": 35
+    },
+    "maintainability": {
+      "findings": [
+        "audit adapter did not provide a complete lifecycle contract"
+      ],
+      "passed": false,
+      "score": 0,
+      "weight": 15
+    },
+    "operability": {
+      "findings": [
+        "audit commands did not complete deterministically"
+      ],
+      "passed": false,
+      "score": 0,
+      "weight": 10
+    },
+    "scopeTraceability": {
+      "findings": [
+        "audit prompt gates were not fully evidenced"
+      ],
+      "passed": false,
+      "score": 0,
+      "weight": 5
+    },
+    "securityControls": {
+      "findings": [
+        "sentinel exposure or critical static findings were detected"
+      ],
+      "passed": false,
+      "score": 0,
+      "weight": 15
+    }
+  },
+  "episodeId": "audit-feature",
+  "evaluator": {
+    "blindnessAttestation": "Evaluator used only allowed public contracts, prompts, scoring config, and source baselines; it remained blind to spec-factory/, evidence/, approved spec content, and expected measured benchmark output.",
+    "commandTimeoutsMs": {
+      "auditCommand": 15000,
+      "build": 120000,
+      "run": 60000,
+      "scanner": 30000,
+      "test": 120000
+    },
+    "fixtureHashes": {
+      "auditFeature": {
+        "fixtureSetHash": "89d6c189cb3ce8e0ef025a67bdbfe0299de45e94dab8edd507c5c0ff834b8e93",
+        "format": "adapter-placeholder-command-contract",
+        "id": "audit-hidden-synthetic-2026-08-12"
+      },
+      "modernization": {
+        "businessDate": "2026-02-17",
+        "files": {
+          "overrides.csv": "ddece0d4b5268f64aec7d3b29abe59a0cf9a65d2512243fc505e23f3229b6c1a",
+          "positions.csv": "f0a2740e433862ddaae573ea7d94d3de563fab0a7ab1de93fe40e20c24427205",
+          "settlements.csv": "bf8d8cbd64faa67de0daddb3be7506db5fb5e56db9b0ae31283e47a2f7f1c348",
+          "trades.csv": "e68a5a8e0f754d0d5ef996c1e8f0afc91488e56a258a6d8b67a53225adbc175f"
+        },
+        "fixtureSetHash": "0c0f59af9fef130de5fd3cf715cf7aaec3856b774e8ff3feb92c30bddfe46ebf",
+        "format": "legacy-observable-csv-contract",
+        "id": "modernization-hidden-synthetic-2026-08-12"
+      }
+    },
+    "name": "sealed-ai-sdlc-benchmark-evaluator",
+    "scannerRulesets": [
+      {
+        "id": "static-secret-patterns",
+        "version": "2026.08.12"
+      },
+      {
+        "id": "static-unsafe-execution-deserialization",
+        "version": "2026.08.12"
+      },
+      {
+        "id": "dependency-vulnerability-command-output",
+        "version": "2026.08.12"
+      }
+    ],
+    "version": "1.0.0"
+  },
+  "gates": {
+    "audit-integrity": {
+      "applicable": true,
+      "findings": [
+        "history was append-only, exportable, and sentinel-safe"
+      ],
+      "passed": true
+    },
+    "build": {
+      "applicable": true,
+      "findings": [
+        "audit adapter is command-based and schema-valid",
+        "benchmark-adapter build command completed with an allowed exit code"
+      ],
+      "passed": true
+    },
+    "essential-business-invariants": {
+      "applicable": true,
+      "findings": [
+        "missing declared output(s): 2026-02-17/eod-summary.txt, 2026-02-17/eod-break-register.csv, 2026-02-17/eod-result.json; run command did not complete with stable allowed exit handling; normalized identifiers were not visible in matched output; duplicate trade was not surfaced as a break; inclusive tolerance boundary did not match; out-of-tolerance amount was not broken; missing settlement was not broken; missing position was not broken; non-positive values were not rejected; eligible manual override was not visible in matched output; duplicate override audit visibility was missing"
+      ],
+      "passed": false
+    },
+    "maker-checker-separation": {
+      "applicable": true,
+      "findings": [
+        "self-approval was prevented and different checker decisions were accepted"
+      ],
+      "passed": true
+    },
+    "no-critical-security-findings": {
+      "applicable": true,
+      "findings": [
+        "0 blocking static/dependency finding(s)"
+      ],
+      "passed": true
+    }
+  },
+  "outcome": "failed",
+  "schemaVersion": "sealed-evaluator-evidence/1.0.0",
+  "score": 0,
+  "staticChecks": {
+    "blockingFindings": 0,
+    "criticalFindings": 0,
+    "dependencyAuditCommands": [
+      {
+        "exitCode": 0,
+        "id": "dotnet-restore-for-audit",
+        "kind": "dotnet-restore",
+        "stderr": "",
+        "stdout": "",
+        "target": "TradeRecon.sln",
+        "timedOut": false
+      },
+      {
+        "exitCode": 0,
+        "id": "dotnet-list-package-vulnerable",
+        "kind": "dotnet",
+        "stderr": "",
+        "stdout": "\nThe following sources were used:\n   https://packagefeedproxy.microsoft.io/nuget/v3/index.json\n\nThe given project `TradeRecon.Domain` has no vulnerable packages given the current sources.\nThe given project `TradeRecon.Application` has no vulnerable packages given the current sources.\nThe given project `TradeRecon.Infrastructure` has no vulnerable packages given the current sources.\nThe given project `TradeRecon.Console` has no vulnerable packages given the current sources.\nThe given project `TradeRecon.Audit` has no vulnerable packages given the current sources.\nThe given project `TradeRecon.AuditConsole` has no vulnerable packages given the current sources.\nThe given project `TradeRecon.Tests` has no vulnerable packages given the current sources.\n",
+        "target": "TradeRecon.sln",
+        "timedOut": false
+      },
+      {
+        "exitCode": 0,
+        "id": "dotnet-restore-for-audit",
+        "kind": "dotnet-restore",
+        "stderr": "",
+        "stdout": "",
+        "target": "src/TradeRecon.Application/TradeRecon.Application.csproj",
+        "timedOut": false
+      },
+      {
+        "exitCode": 0,
+        "id": "dotnet-list-package-vulnerable",
+        "kind": "dotnet",
+        "stderr": "",
+        "stdout": "\nThe following sources were used:\n   https://packagefeedproxy.microsoft.io/nuget/v3/index.json\n\nThe given project `TradeRecon.Application` has no vulnerable packages given the current sources.\n",
+        "target": "src/TradeRecon.Application/TradeRecon.Application.csproj",
+        "timedOut": false
+      },
+      {
+        "exitCode": 0,
+        "id": "dotnet-restore-for-audit",
+        "kind": "dotnet-restore",
+        "stderr": "",
+        "stdout": "",
+        "target": "src/TradeRecon.AuditConsole/TradeRecon.AuditConsole.csproj",
+        "timedOut": false
+      },
+      {
+        "exitCode": 0,
+        "id": "dotnet-list-package-vulnerable",
+        "kind": "dotnet",
+        "stderr": "",
+        "stdout": "\nThe following sources were used:\n   https://packagefeedproxy.microsoft.io/nuget/v3/index.json\n\nThe given project `TradeRecon.AuditConsole` has no vulnerable packages given the current sources.\n",
+        "target": "src/TradeRecon.AuditConsole/TradeRecon.AuditConsole.csproj",
+        "timedOut": false
+      },
+      {
+        "exitCode": 0,
+        "id": "dotnet-restore-for-audit",
+        "kind": "dotnet-restore",
+        "stderr": "",
+        "stdout": "",
+        "target": "src/TradeRecon.Audit/TradeRecon.Audit.csproj",
+        "timedOut": false
+      },
+      {
+        "exitCode": 0,
+        "id": "dotnet-list-package-vulnerable",
+        "kind": "dotnet",
+        "stderr": "",
+        "stdout": "\nThe following sources were used:\n   https://packagefeedproxy.microsoft.io/nuget/v3/index.json\n\nThe given project `TradeRecon.Audit` has no vulnerable packages given the current sources.\n",
+        "target": "src/TradeRecon.Audit/TradeRecon.Audit.csproj",
+        "timedOut": false
+      },
+      {
+        "exitCode": 0,
+        "id": "dotnet-restore-for-audit",
+        "kind": "dotnet-restore",
+        "stderr": "",
+        "stdout": "",
+        "target": "src/TradeRecon.Console/TradeRecon.Console.csproj",
+        "timedOut": false
+      },
+      {
+        "exitCode": 0,
+        "id": "dotnet-list-package-vulnerable",
+        "kind": "dotnet",
+        "stderr": "",
+        "stdout": "\nThe following sources were used:\n   https://packagefeedproxy.microsoft.io/nuget/v3/index.json\n\nThe given project `TradeRecon.Console` has no vulnerable packages given the current sources.\n",
+        "target": "src/TradeRecon.Console/TradeRecon.Console.csproj",
+        "timedOut": false
+      },
+      {
+        "exitCode": 0,
+        "id": "dotnet-restore-for-audit",
+        "kind": "dotnet-restore",
+        "stderr": "",
+        "stdout": "",
+        "target": "src/TradeRecon.Domain/TradeRecon.Domain.csproj",
+        "timedOut": false
+      },
+      {
+        "exitCode": 0,
+        "id": "dotnet-list-package-vulnerable",
+        "kind": "dotnet",
+        "stderr": "",
+        "stdout": "\nThe following sources were used:\n   https://packagefeedproxy.microsoft.io/nuget/v3/index.json\n\nThe given project `TradeRecon.Domain` has no vulnerable packages given the current sources.\n",
+        "target": "src/TradeRecon.Domain/TradeRecon.Domain.csproj",
+        "timedOut": false
+      },
+      {
+        "exitCode": 0,
+        "id": "dotnet-restore-for-audit",
+        "kind": "dotnet-restore",
+        "stderr": "",
+        "stdout": "",
+        "target": "src/TradeRecon.Infrastructure/TradeRecon.Infrastructure.csproj",
+        "timedOut": false
+      },
+      {
+        "exitCode": 0,
+        "id": "dotnet-list-package-vulnerable",
+        "kind": "dotnet",
+        "stderr": "",
+        "stdout": "\nThe following sources were used:\n   https://packagefeedproxy.microsoft.io/nuget/v3/index.json\n\nThe given project `TradeRecon.Infrastructure` has no vulnerable packages given the current sources.\n",
+        "target": "src/TradeRecon.Infrastructure/TradeRecon.Infrastructure.csproj",
+        "timedOut": false
+      },
+      {
+        "exitCode": 0,
+        "id": "dotnet-restore-for-audit",
+        "kind": "dotnet-restore",
+        "stderr": "",
+        "stdout": "",
+        "target": "tests/TradeRecon.Tests/TradeRecon.Tests.csproj",
+        "timedOut": false
+      },
+      {
+        "exitCode": 0,
+        "id": "dotnet-list-package-vulnerable",
+        "kind": "dotnet",
+        "stderr": "",
+        "stdout": "\nThe following sources were used:\n   https://packagefeedproxy.microsoft.io/nuget/v3/index.json\n\nThe given project `TradeRecon.Tests` has no vulnerable packages given the current sources.\n",
+        "target": "tests/TradeRecon.Tests/TradeRecon.Tests.csproj",
+        "timedOut": false
+      }
+    ],
+    "findings": [
+      {
+        "path": "README.md",
+        "ruleId": "command-shell-execution",
+        "severity": "high"
+      },
+      {
+        "path": "tests/TradeRecon.Tests/AuditAdapterContractTests.cs",
+        "ruleId": "command-shell-execution",
+        "severity": "high"
+      },
+      {
+        "path": "tests/TradeRecon.Tests/AuditTestHarness.cs",
+        "ruleId": "process-start-shell",
+        "severity": "high"
+      }
+    ]
+  }
+}

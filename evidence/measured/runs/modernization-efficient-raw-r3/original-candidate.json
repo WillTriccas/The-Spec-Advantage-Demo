@@ -1,0 +1,5 @@
+{
+  "originalCommit": "b0ec8cefe8f9164539fdc53362fc6c7b4c1fd3f8",
+  "originalBaselineCommit": "fe3c25dceb491eaa8b9f2e6fd77ab2b2696f0183",
+  "canonicalization": "Exact binary baseline-to-candidate diff applied to the importer-prepared root commit."
+}
