@@ -34,11 +34,16 @@ The showcase implementation is complete and locally validated. You can demonstra
 legacy application, specification workflow, controlled experiment design, sealed
 evaluation, and executive dashboard today.
 
-The measured experiment is intentionally **not complete or frozen**. The checked-in
-dashboard evidence is illustrative, is labelled `not-evaluated`, and cannot support a
-model-performance claim. Before measured execution, named reviewers must approve the
-benchmark, exact model and agent versions must be pinned, baseline tags must resolve,
-and the repository must be clean.
+The benchmark is frozen as `specforge-fsi-v1.0.0`, with baseline tags, observable
+Copilot runtime pins, high reasoning effort, and four explicit human approvals. The
+freeze record is ready with zero blockers.
+
+The 24 measured coding-agent runs have **not started**. The checked-in dashboard
+evidence remains illustrative, is labelled `not-evaluated`, and cannot support a
+model-performance claim. Because Copilot does not expose immutable provider model
+build IDs, future results are pre-qualified as `bounded-measured`: reproducible at the
+disclosed Copilot model-selection and agent-version boundary, not at a provider-build
+boundary.
 
 See:
 
@@ -46,6 +51,7 @@ See:
 - [Experiment protocol](docs/experiment-protocol.md)
 - [Facilitator guide](docs/facilitator-guide.md)
 - [Benchmark freeze checklist](docs/benchmark-freeze.md)
+- [Freeze approvals](docs/reviews/specforge-fsi-v1.0.0-freeze-approvals.md)
 - [Reviewer independence register](docs/reviewer-register.md)
 - [Client adaptation guide](docs/client-adaptation.md)
 - [Experiment contract decision](docs/decisions/0001-experiment-contract.md)
@@ -208,35 +214,31 @@ synthetic scenario with one of its own.
 
 ## What remains before measured results
 
-The product demonstration is ready. The experiment is not fully finished until these
-externally gated steps are completed:
+The product demonstration and benchmark freeze are ready. The experiment is not fully
+finished until these execution and publication steps are completed:
 
-1. Commit the benchmark and create the registered legacy and canonical baseline tags.
-2. Replace `unfrozen` with a unique benchmark version.
-3. Pin exact model build IDs, agent version/build IDs, and reasoning-effort settings.
-4. Record genuine independent scenario, specification, evaluator, and claim approvals
-   in `benchmark\config\approvals.json`.
+1. Execute all 24 isolated runs in the frozen randomized order without human
+   remediation.
+2. Retain completed, failed, timed-out, and cancelled runs.
+3. Import and evaluate every run against the sealed evaluator.
+4. Publish the complete measured report and rebuild the dashboard from that report.
 5. Optionally add dated, sourced pricing; without it, monetary efficiency remains
    unavailable rather than zero.
-6. Regenerate a clean, blocker-free freeze record.
-7. Execute all 24 runs without human remediation.
-8. Import every run and publish the measured report and dashboard.
 
 Until those steps are complete, use the showcase to explain the method, controls, and
 decision experience—not to claim that the registered hypothesis has been proven.
 
 ## Freeze readiness
 
-Measured sessions are deliberately blocked until immutable baseline refs, exact
-model/agent builds, reasoning settings, and independent approvals are recorded:
+The committed freeze record can be reproduced with:
 
 ```powershell
 node benchmark\bin\benchmark.js freeze --out evidence\freeze-readiness.json
 ```
 
-The command exits `2` while blockers remain and writes the complete machine-readable
-blocker list. It does not launch any model run or silently treat synthetic sign-off
-personas as real benchmark approvals.
+The current record is ready and has zero blockers. The command exits `2` if any future
+change invalidates a gate. It does not launch a model run or silently treat synthetic
+sign-off personas as real benchmark approvals.
 
 ## Evidence integrity
 
@@ -247,3 +249,4 @@ personas as real benchmark approvals.
 - Failed runs are retained.
 - Pricing remains unavailable until a dated, approved price source is configured.
 - The benchmark and claim rule are frozen before measured model runs begin.
+- Measured conclusions must display the `bounded-measured` provider-build limitation.

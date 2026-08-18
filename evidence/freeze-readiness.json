@@ -1,131 +1,34 @@
 {
   "schemaVersion": "freeze-readiness/1.0.0",
-  "generatedAt": "2026-08-13T13:59:02.905Z",
-  "ready": false,
-  "blockers": [
-    "Repository working tree is not clean.",
-    "benchmarkVersion is still \"unfrozen\".",
-    "efficient model buildId is not pinned.",
-    "efficient agentVersion is not pinned.",
-    "efficient agentBuildId is not pinned.",
-    "efficient reasoning effort is not pinned.",
-    "frontier model buildId is not pinned.",
-    "frontier agentVersion is not pinned.",
-    "frontier agentBuildId is not pinned.",
-    "frontier reasoning effort is not pinned.",
-    "Baseline ref refs/tags/benchmark-legacy-v1 does not resolve.",
-    "Baseline ref refs/tags/benchmark-modernized-v1 does not resolve.",
-    "Independent scenario approval is not recorded.",
-    "Independent specifications approval is not recorded.",
-    "Independent evaluator approval is not recorded.",
-    "Independent claimAdjudication approval is not recorded."
-  ],
-  "benchmarkVersion": "unfrozen",
+  "generatedAt": "2026-08-18T11:14:21.541Z",
+  "ready": true,
+  "blockers": [],
+  "benchmarkVersion": "specforge-fsi-v1.0.0",
+  "evidenceQualification": {
+    "level": "bounded-measured",
+    "limitation": "GitHub Copilot exposes the selected model IDs but not immutable provider model build IDs. Results are measured and reproducible at the disclosed Copilot model-selection and agent-version boundary, not at an underlying provider-build boundary."
+  },
   "repository": {
-    "headCommit": "3c86adf54e7a1b853d977b9a2cc4726973027667",
-    "clean": false,
-    "dirtyEntries": [
-      "M README.md",
-      " M benchmark/README.md",
-      " M benchmark/config/experiment.json",
-      " M benchmark/prompts/audit-feature-raw.md",
-      " M benchmark/prompts/modernization-raw.md",
-      " M benchmark/scripts/generate-illustrative-evidence.js",
-      " M benchmark/src/aggregate.js",
-      " M benchmark/src/claim.js",
-      " M benchmark/src/cli.js",
-      " M benchmark/src/cost.js",
-      " M benchmark/src/import.js",
-      " M benchmark/src/index.js",
-      " M benchmark/src/prepare.js",
-      " M benchmark/src/report.js",
-      " M benchmark/src/runs.js",
-      " M benchmark/src/schema-lite.js",
-      " M benchmark/test/aggregate.test.js",
-      " M benchmark/test/claim.test.js",
-      " M benchmark/test/cli.test.js",
-      " M benchmark/test/cost.test.js",
-      " M benchmark/test/import.test.js",
-      " M benchmark/test/prepare.test.js",
-      " M benchmark/test/report.test.js",
-      " M benchmark/test/runs.test.js",
-      " M benchmark/test/schema-lite.test.js",
-      " M contracts/report.schema.json",
-      " M contracts/run.schema.json",
-      " M dashboard/dist-single/index.html",
-      " M dashboard/src/App.test.tsx",
-      " M dashboard/src/App.tsx",
-      " D dashboard/src/fixture.json",
-      " M dashboard/src/types.ts",
-      " M docs/benchmark-freeze.md",
-      " M docs/experiment-protocol.md",
-      " M evaluator/src/audit.js",
-      " M evaluator/src/commands.js",
-      " M evaluator/src/constants.js",
-      " M evaluator/src/modernization.js",
-      " M evaluator/src/static-checks.js",
-      " M evaluator/test/evaluator.test.js",
-      " M evidence/README.md",
-      " M evidence/illustrative/README.md",
-      " M evidence/illustrative/claim-detail.json",
-      " M evidence/illustrative/report.json",
-      " M spec-factory/examples/audit-feature/approved/acceptance-criteria.json",
-      " M spec-factory/examples/audit-feature/approved/ambiguities.json",
-      " M spec-factory/examples/audit-feature/approved/discovery.json",
-      " M spec-factory/examples/audit-feature/approved/intent.json",
-      " M spec-factory/examples/audit-feature/approved/invariants.json",
-      " M spec-factory/examples/audit-feature/approved/manifest.json",
-      " M spec-factory/examples/audit-feature/approved/nfrs.json",
-      " M spec-factory/examples/audit-feature/approved/requirements.json",
-      " M spec-factory/examples/audit-feature/approved/risks.json",
-      " M spec-factory/examples/audit-feature/approved/signoff.json",
-      " M spec-factory/examples/audit-feature/approved/traceability.json",
-      " M spec-factory/examples/modernization/approved/acceptance-criteria.json",
-      " M spec-factory/examples/modernization/approved/ambiguities.json",
-      " M spec-factory/examples/modernization/approved/discovery.json",
-      " M spec-factory/examples/modernization/approved/intent.json",
-      " M spec-factory/examples/modernization/approved/invariants.json",
-      " M spec-factory/examples/modernization/approved/manifest.json",
-      " M spec-factory/examples/modernization/approved/nfrs.json",
-      " M spec-factory/examples/modernization/approved/requirements.json",
-      " M spec-factory/examples/modernization/approved/risks.json",
-      " M spec-factory/examples/modernization/approved/signoff.json",
-      " M spec-factory/examples/modernization/approved/traceability.json",
-      " M spec-factory/src/cli.js",
-      " M spec-factory/src/templates/signoff.json",
-      " M spec-factory/src/validate.js",
-      " M spec-factory/test/cli.test.js",
-      " M spec-factory/test/validate.test.js",
-      " M src/canonical-modernized/README.md",
-      " M src/canonical-modernized/src/TradeRecon.Domain/Settlement.cs",
-      " M src/canonical-modernized/src/TradeRecon.Domain/Trade.cs",
-      " M src/canonical-modernized/src/TradeRecon.Infrastructure/Sources/CsvReader.cs",
-      " M src/canonical-modernized/src/TradeRecon.Infrastructure/Sources/CsvReconciliationBatchSource.cs",
-      " M src/canonical-modernized/tests/TradeRecon.Tests/CliContractTests.cs",
-      "?? .github/",
-      "?? benchmark/config/approvals.json",
-      "?? benchmark/src/freeze.js",
-      "?? benchmark/test/freeze.test.js",
-      "?? evidence/freeze-readiness.json",
-      "?? scripts/"
-    ]
+    "headCommit": "52667ac722759f70ad12151bc5b2e3515a24b908",
+    "clean": true,
+    "dirtyEntries": []
   },
   "baselines": [
     {
       "episodeId": "modernization",
       "ref": "refs/tags/benchmark-legacy-v1",
-      "commit": null,
+      "commit": "b020630048cd90a039fb4f13e437c900b6cd4eac",
       "path": "src/legacy-trade-reconciliation",
-      "sha256": null,
-      "archiveSha256": null
+      "sha256": "209c028929088c1695b9f00b4d10f3dd8c0e3217f9d41122301358f5927158a2",
+      "archiveSha256": "40f17c48614bd630dcf44b10b0d32537443512e026c45a7da15c81683efc0beb"
     },
     {
       "episodeId": "audit-feature",
       "ref": "refs/tags/benchmark-modernized-v1",
-      "commit": null,
+      "commit": "806344ba17e194b54d0e645455829ab05c58fb6c",
       "path": "src/canonical-modernized",
-      "sha256": null,
-      "archiveSha256": null
+      "sha256": "82ff4d70d1423d45cb25e2d714355500d22b31eb6c8f47c5f5f246d4f4662120",
+      "archiveSha256": "79d2cf983d2788494590a43611b72504550c36b91b8d477bf12ba9b0a6a80f38"
     }
   ],
   "promptsAndSpecs": [
@@ -171,11 +74,11 @@
   "frozenInputs": {
     "evaluatorSha256": "1540f263481cae49fa84bc8d187c5e1b503cc5775f41f24da1e54339870c8946",
     "scoringConfigSha256": "c9e7c3bebd575b3b56f0409d69cdb5d952c175a73ec11ada7599d73a9648bac6",
-    "experimentConfigSha256": "339acfd96e7453ae80c20dd95f9cb7608615045d210f325ea4fc916dd1820354",
+    "experimentConfigSha256": "b7f2dd0b8a5990a4264412829ede8e05fcb0a20fd7814cba902a01ac54f3276f",
     "costsConfigSha256": "3b2c5ed227eef9cb46c8686dca1bd76af97e2f50e36729358ebc7c9d00dc5ea5",
-    "benchmarkEngineSha256": "692ac1fb0026e3bc24ed523d12fe4fd38080991082114d3c88b5c0dac3af9977",
+    "benchmarkEngineSha256": "848140d8340397b49926e4b1a05cca6a873850ee2822eb8ad8d654e3078dab9a",
     "runSchemaSha256": "b4cc4103ec2613d7f6ce46aef274a32b4e58a63cebeaccefc609f645606ccf11",
-    "reportSchemaSha256": "0d500177cdd0c05b9d0a316e71da44352700c2452f97bba0da640b61462f88c9",
+    "reportSchemaSha256": "b1b050eba32e96cb059d542ea21114e7d91d8e88cc22f74bc9b867be45187204",
     "scoringConfig": {
       "schemaVersion": "2.0.0",
       "weights": {
@@ -304,22 +207,22 @@
       "tier": "efficient",
       "id": "mai-code-1.1-flash",
       "displayName": "MAI Code 1.1 Flash",
-      "buildId": null,
-      "agentVersion": null,
-      "agentBuildId": null,
+      "buildId": "not-exposed-by-copilot",
+      "agentVersion": "1.0.79-9",
+      "agentBuildId": "not-separately-exposed-by-copilot",
       "effortParams": {
-        "reasoningEffort": null
+        "reasoningEffort": "high"
       }
     },
     {
       "tier": "frontier",
       "id": "claude-opus-5",
       "displayName": "Claude Opus 5",
-      "buildId": null,
-      "agentVersion": null,
-      "agentBuildId": null,
+      "buildId": "not-exposed-by-copilot",
+      "agentVersion": "1.0.79-9",
+      "agentBuildId": "not-separately-exposed-by-copilot",
       "effortParams": {
-        "reasoningEffort": null
+        "reasoningEffort": "high"
       }
     }
   ],
@@ -347,29 +250,29 @@
   "approvals": {
     "schemaVersion": "1.0.0",
     "scenario": {
-      "approved": false,
-      "reviewer": null,
-      "approvedAt": null,
-      "evidenceRef": null
+      "approved": true,
+      "reviewer": "Will Triccas",
+      "approvedAt": "2026-08-18T11:04:03.945Z",
+      "evidenceRef": "docs/reviews/specforge-fsi-v1.0.0-freeze-approvals.md#scenario"
     },
     "specifications": {
-      "approved": false,
-      "reviewer": null,
-      "approvedAt": null,
-      "evidenceRef": null
+      "approved": true,
+      "reviewer": "Will Triccas",
+      "approvedAt": "2026-08-18T11:04:03.945Z",
+      "evidenceRef": "docs/reviews/specforge-fsi-v1.0.0-freeze-approvals.md#specifications"
     },
     "evaluator": {
-      "approved": false,
-      "reviewer": null,
-      "approvedAt": null,
-      "evidenceRef": null
+      "approved": true,
+      "reviewer": "Will Triccas",
+      "approvedAt": "2026-08-18T11:04:03.945Z",
+      "evidenceRef": "docs/reviews/specforge-fsi-v1.0.0-freeze-approvals.md#evaluator-and-scoring"
     },
     "claimAdjudication": {
-      "approved": false,
-      "reviewer": null,
-      "approvedAt": null,
-      "evidenceRef": null
+      "approved": true,
+      "reviewer": "Will Triccas",
+      "approvedAt": "2026-08-18T11:04:03.945Z",
+      "evidenceRef": "docs/reviews/specforge-fsi-v1.0.0-freeze-approvals.md#claim-adjudication"
     }
   },
-  "recordSha256": "fe152a6939ba6abcf2859b26c87cae7ff9d5dd5bb497ec9ff56ab095aa1ca988"
+  "recordSha256": "edd523966c35daa42a6ad2306670157c90336232bac20b3c6f3e88c27a66ef30"
 }
