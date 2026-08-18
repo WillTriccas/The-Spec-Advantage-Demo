@@ -69,7 +69,7 @@
   "evidence": {
     "directory": "evidence/measured/runs/audit-feature-efficient-raw-r1/evidence",
     "transcriptPath": "evidence/measured/runs/audit-feature-efficient-raw-r1/evidence/transcript.jsonl",
-    "transcriptSha256": "d9a59f7c52c9597af4c437627c74b6821fc3a93f377fefe06ed65cb4cd1085ee",
+    "transcriptSha256": "974ea4350f5afac85b67e5a9961c3c7a8f8106b59e8ca8b6ad805eaf65d7aa12",
     "evaluatorPath": "evidence/measured/runs/audit-feature-efficient-raw-r1/evidence/evaluator.json",
     "evaluatorSha256": "b68a6ef52ab297600301a3ee6c754bf32576efb9a5fcdfd57eb76dd5cc5e0985"
   }

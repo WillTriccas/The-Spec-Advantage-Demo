@@ -62,14 +62,14 @@
   "source": {
     "commit": "d38bee3ddd8a1916f6525bac6a4320dbeed2deea",
     "diffPath": "evidence/measured/runs/audit-feature-frontier-raw-r2/candidate.patch",
-    "diffSha256": "ea0d5bf43d503080f52c2562531a9d97bb85f7de8f5d91e3c03bd6ef167cbf60",
+    "diffSha256": "254ac4e263e225908507c537275d38022ee02262501563260fa6e5c56daf0a3f",
     "bundlePath": "evidence/measured/runs/audit-feature-frontier-raw-r2/source.bundle",
     "bundleSha256": "5380fae12a1470d80e89c94d50c7a9619baf243d5e287ca6b4cfa37f95b4989b"
   },
   "evidence": {
     "directory": "evidence/measured/runs/audit-feature-frontier-raw-r2/evidence",
     "transcriptPath": "evidence/measured/runs/audit-feature-frontier-raw-r2/evidence/transcript.jsonl",
-    "transcriptSha256": "0f766e1247517af8cdb5544c9059e0fcdf9637740363b040c0e926f399cab3f5",
+    "transcriptSha256": "b1ccdc6938cee82f9806f8fc5c45fb193d97fad749437019cdeb91438b35c8d8",
     "evaluatorPath": "evidence/measured/runs/audit-feature-frontier-raw-r2/evidence/evaluator.json",
     "evaluatorSha256": "2fe3e872b2a2fee39b9a27c319de08036bb0761a8159de02f2a745accee1ac30"
   }

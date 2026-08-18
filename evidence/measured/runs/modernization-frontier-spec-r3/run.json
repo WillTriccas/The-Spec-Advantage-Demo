@@ -75,14 +75,14 @@
   "source": {
     "commit": "617e81991421d0b5cec16bc551b832c1550393e3",
     "diffPath": "evidence/measured/runs/modernization-frontier-spec-r3/candidate.patch",
-    "diffSha256": "3ce7ad5580e5be5c443a704b7eb56c6f3d8390345a7e7563d58441555d8fe825",
+    "diffSha256": "5343634681cd7f4bd1ae0aac02c752f1b2eee954d5ccb8eca8cf322a7f2d5061",
     "bundlePath": "evidence/measured/runs/modernization-frontier-spec-r3/source.bundle",
     "bundleSha256": "2be996cdd0fbfaf4c737ba09f10bd6bb336f27dfe386834fca63372b4b76d69c"
   },
   "evidence": {
     "directory": "evidence/measured/runs/modernization-frontier-spec-r3/evidence",
     "transcriptPath": "evidence/measured/runs/modernization-frontier-spec-r3/evidence/transcript.jsonl",
-    "transcriptSha256": "75bc5e90afbbac1627a03426cc701623e4c5e7d8ded0ae2c26c468d456600af5",
+    "transcriptSha256": "5d264388a0bd0c22a82887b7c93c5fb5f3d386096d33de1079b133da0c7d63ad",
     "evaluatorPath": "evidence/measured/runs/modernization-frontier-spec-r3/evidence/evaluator.json",
     "evaluatorSha256": "8e8b2eeaa1649ce5e11372c3e35eb22584956f7ae5424311fd594843d5db296c"
   }

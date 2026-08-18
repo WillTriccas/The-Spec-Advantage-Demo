@@ -69,7 +69,7 @@
   "evidence": {
     "directory": "evidence/measured/runs/modernization-efficient-raw-r1/evidence",
     "transcriptPath": "evidence/measured/runs/modernization-efficient-raw-r1/evidence/transcript.jsonl",
-    "transcriptSha256": "ecfc29930c9e3578407036f0522b6a72be452109875a865e3fb24d0365ffb793",
+    "transcriptSha256": "4cc22a1c4b810f4c4d0c48e639d552fb58265b5ace9a87f2b747d4258a9d4e71",
     "evaluatorPath": "evidence/measured/runs/modernization-efficient-raw-r1/evidence/evaluator.json",
     "evaluatorSha256": "82ac2213badd88900e4f4a3531d1e367eca388a75215fc686795223dc213f9fe"
   }

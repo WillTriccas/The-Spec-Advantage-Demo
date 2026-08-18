@@ -70,7 +70,7 @@
     "evidence": {
       "directory": "evidence/measured/runs/audit-feature-efficient-raw-r1/evidence",
       "transcriptPath": "evidence/measured/runs/audit-feature-efficient-raw-r1/evidence/transcript.jsonl",
-      "transcriptSha256": "d9a59f7c52c9597af4c437627c74b6821fc3a93f377fefe06ed65cb4cd1085ee",
+      "transcriptSha256": "974ea4350f5afac85b67e5a9961c3c7a8f8106b59e8ca8b6ad805eaf65d7aa12",
       "evaluatorPath": "evidence/measured/runs/audit-feature-efficient-raw-r1/evidence/evaluator.json",
       "evaluatorSha256": "b68a6ef52ab297600301a3ee6c754bf32576efb9a5fcdfd57eb76dd5cc5e0985"
     }
@@ -139,14 +139,14 @@
     "source": {
       "commit": "e666410de145455b9f9c3399c4f25a163da67112",
       "diffPath": "evidence/measured/runs/audit-feature-efficient-raw-r2/candidate.patch",
-      "diffSha256": "2298e98aad5b6c5b377d34bebe761cfde15e09b3c5d1f3fd509ee22769fbf5ab",
+      "diffSha256": "8ddd717fec16118bc6be1f316929cf91e469710b5d3d0f7ae7fd2fa8e6a634ac",
       "bundlePath": "evidence/measured/runs/audit-feature-efficient-raw-r2/source.bundle",
       "bundleSha256": "b7db2ea289fdd2e9f30f39f8f763897981ff007b5810764ada17d6f46a7f2a6f"
     },
     "evidence": {
       "directory": "evidence/measured/runs/audit-feature-efficient-raw-r2/evidence",
       "transcriptPath": "evidence/measured/runs/audit-feature-efficient-raw-r2/evidence/transcript.jsonl",
-      "transcriptSha256": "990d303a9d7fa86a90ccba2d7c70edf807a3b56e507a42d63bd7f1b5a8326ea6",
+      "transcriptSha256": "b8fd1c771de4165e9574b0b55109397794da1e3fff327c8f8017c45176cae620",
       "evaluatorPath": "evidence/measured/runs/audit-feature-efficient-raw-r2/evidence/evaluator.json",
       "evaluatorSha256": "c2cd783fd2f28e60b8c9438104092be7de894350e617b8b6c805671349994e59"
     }
@@ -222,7 +222,7 @@
     "evidence": {
       "directory": "evidence/measured/runs/audit-feature-efficient-raw-r3/evidence",
       "transcriptPath": "evidence/measured/runs/audit-feature-efficient-raw-r3/evidence/transcript.jsonl",
-      "transcriptSha256": "b8fcf045dee67cf0e884db2c9b4503abc53acbaa2d70b78d7e58cb6c31947d92",
+      "transcriptSha256": "652e8c13ae35164f819800f1de68f0d67d0fecf518873fcf82eb5c43d47888ff",
       "evaluatorPath": "evidence/measured/runs/audit-feature-efficient-raw-r3/evidence/evaluator.json",
       "evaluatorSha256": "e437d9319524364ce851ab315a2cb217eadbdd274f5e38dedb61e80971a2d3d4"
     }
@@ -304,14 +304,14 @@
     "source": {
       "commit": "873422ba3c1bf3285ad367f44eaf9c852a00d360",
       "diffPath": "evidence/measured/runs/audit-feature-efficient-spec-r1/candidate.patch",
-      "diffSha256": "e2352703bc2b54cf1b1310de4d37646277b160f028ac5da29828d4333a5e7e21",
+      "diffSha256": "a8be39d8e6d5daf9f8010b664c086222f37c4590289495436da1c3f0c128ca9a",
       "bundlePath": "evidence/measured/runs/audit-feature-efficient-spec-r1/source.bundle",
       "bundleSha256": "410176cc99b12fb4d91622e2cb9e4680f736e32c1fdf3d04545bdd3b1e73cf6d"
     },
     "evidence": {
       "directory": "evidence/measured/runs/audit-feature-efficient-spec-r1/evidence",
       "transcriptPath": "evidence/measured/runs/audit-feature-efficient-spec-r1/evidence/transcript.jsonl",
-      "transcriptSha256": "4e318319c443d9c3148977dd7473bbc9d2a4bc4fc1c8f035b2a0bc355665799f",
+      "transcriptSha256": "4c0c6858aa540e2fb13d0a887a9792a4df6222990e58876454930c69e8e56498",
       "evaluatorPath": "evidence/measured/runs/audit-feature-efficient-spec-r1/evidence/evaluator.json",
       "evaluatorSha256": "334f5a3388949b33b832feb6464d27ea5f7518a7810479284f1b4ddd22e80796"
     }
@@ -393,14 +393,14 @@
     "source": {
       "commit": "64ddeb3653d36d9f679bc3ce8d2a00dbc6712302",
       "diffPath": "evidence/measured/runs/audit-feature-efficient-spec-r2/candidate.patch",
-      "diffSha256": "f55eb824c38a7f49fe56bc0fa0af63876f5e258f8350c1b0b200e6498ca6469e",
+      "diffSha256": "ce6363a638c3972909a2ba69a19eec3a129d4083471afdb6aa7c168b1247b644",
       "bundlePath": "evidence/measured/runs/audit-feature-efficient-spec-r2/source.bundle",
       "bundleSha256": "262218df377647db0d444c8259de059415e0baeaafe1c03a7b944fbbb5689b92"
     },
     "evidence": {
       "directory": "evidence/measured/runs/audit-feature-efficient-spec-r2/evidence",
       "transcriptPath": "evidence/measured/runs/audit-feature-efficient-spec-r2/evidence/transcript.jsonl",
-      "transcriptSha256": "265f6bccfacd3a2df5aa3db2347823a926ff524dcafbc706ab9676f0ea13bf74",
+      "transcriptSha256": "bd54dfc97376469dce448a9227bc8cc893b8901984dc0991a34d9179275568a4",
       "evaluatorPath": "evidence/measured/runs/audit-feature-efficient-spec-r2/evidence/evaluator.json",
       "evaluatorSha256": "d033062a8586030f8ae96b1385fd563d8063fbf66197085e958ffa9391e85df3"
     }
@@ -482,14 +482,14 @@
     "source": {
       "commit": "4e387571464a04ed96d13d3c5dd14d64a0afff94",
       "diffPath": "evidence/measured/runs/audit-feature-efficient-spec-r3/candidate.patch",
-      "diffSha256": "1bfd68bed599b1368883f5878efbd44295790960726bd3e3405275c2eafa098c",
+      "diffSha256": "0a9a2fe11b49c78054f801153b87b7bca0a14f8e2f6f557e9047f822ab68f69a",
       "bundlePath": "evidence/measured/runs/audit-feature-efficient-spec-r3/source.bundle",
       "bundleSha256": "f4d88c48ae11cc4f06492f0d72021c708e8671f9d182966f1a15a028d6dbd455"
     },
     "evidence": {
       "directory": "evidence/measured/runs/audit-feature-efficient-spec-r3/evidence",
       "transcriptPath": "evidence/measured/runs/audit-feature-efficient-spec-r3/evidence/transcript.jsonl",
-      "transcriptSha256": "e0bbd1ffd1e9f310f112e54b7f7e5f9fa519212897543b2211a25b8382a79134",
+      "transcriptSha256": "73290c120a9deb350d8fe75e6d7b4f4a3a4ae06f4bd1a7bd768a8dc3fba80705",
       "evaluatorPath": "evidence/measured/runs/audit-feature-efficient-spec-r3/evidence/evaluator.json",
       "evaluatorSha256": "2731321bc426176a940439181aeec593c30ebca638b448716771cc6bb2a4a88a"
     }
@@ -558,14 +558,14 @@
     "source": {
       "commit": "c3359a429cc1b1453c8877a08eff1bdac2787fc0",
       "diffPath": "evidence/measured/runs/audit-feature-frontier-raw-r1/candidate.patch",
-      "diffSha256": "1961ae27251aece7c0e3ceb21d827cc5b862713012b99815dcdbca1071c490b5",
+      "diffSha256": "06d24012eb3fcc9f713799ec6521e6222d67a9885f54615e6e2c89d7991cfd28",
       "bundlePath": "evidence/measured/runs/audit-feature-frontier-raw-r1/source.bundle",
       "bundleSha256": "cf26055a01ce970ab8347b59dfef40634412b96d49295df0bbc454472963f9e7"
     },
     "evidence": {
       "directory": "evidence/measured/runs/audit-feature-frontier-raw-r1/evidence",
       "transcriptPath": "evidence/measured/runs/audit-feature-frontier-raw-r1/evidence/transcript.jsonl",
-      "transcriptSha256": "26e7dbb9147a867bb54eaf1db79cd644c1da4d599de1ce987db401619d58917d",
+      "transcriptSha256": "9091ad7cbc6d712ad94ae0a173589b0ffed5ee9ded76206af3cf52715c41dcd9",
       "evaluatorPath": "evidence/measured/runs/audit-feature-frontier-raw-r1/evidence/evaluator.json",
       "evaluatorSha256": "573709093a6c679ebd4a877ffb6ae3c8a1bf7b09d5f2c1cd0fc6a5c740b0cbf7"
     }
@@ -634,14 +634,14 @@
     "source": {
       "commit": "d38bee3ddd8a1916f6525bac6a4320dbeed2deea",
       "diffPath": "evidence/measured/runs/audit-feature-frontier-raw-r2/candidate.patch",
-      "diffSha256": "ea0d5bf43d503080f52c2562531a9d97bb85f7de8f5d91e3c03bd6ef167cbf60",
+      "diffSha256": "254ac4e263e225908507c537275d38022ee02262501563260fa6e5c56daf0a3f",
       "bundlePath": "evidence/measured/runs/audit-feature-frontier-raw-r2/source.bundle",
       "bundleSha256": "5380fae12a1470d80e89c94d50c7a9619baf243d5e287ca6b4cfa37f95b4989b"
     },
     "evidence": {
       "directory": "evidence/measured/runs/audit-feature-frontier-raw-r2/evidence",
       "transcriptPath": "evidence/measured/runs/audit-feature-frontier-raw-r2/evidence/transcript.jsonl",
-      "transcriptSha256": "0f766e1247517af8cdb5544c9059e0fcdf9637740363b040c0e926f399cab3f5",
+      "transcriptSha256": "b1ccdc6938cee82f9806f8fc5c45fb193d97fad749437019cdeb91438b35c8d8",
       "evaluatorPath": "evidence/measured/runs/audit-feature-frontier-raw-r2/evidence/evaluator.json",
       "evaluatorSha256": "2fe3e872b2a2fee39b9a27c319de08036bb0761a8159de02f2a745accee1ac30"
     }
@@ -710,14 +710,14 @@
     "source": {
       "commit": "ce0d8dceeec2b6c3339c0cccf0ee5e29ce7c215d",
       "diffPath": "evidence/measured/runs/audit-feature-frontier-raw-r3/candidate.patch",
-      "diffSha256": "4c087f05c3968c5283eab62af57238c92d74771b7bf6f5c3c3ca468e3d11112c",
+      "diffSha256": "de5f80567fb9acf0fe94ea82fc0c2eef35c09ca9c9a8e1893e80f6097f0f8ad2",
       "bundlePath": "evidence/measured/runs/audit-feature-frontier-raw-r3/source.bundle",
       "bundleSha256": "7cf6d20e6c869c53782a6f1a58234c596c1e183af41331884f9274d7a0efbf92"
     },
     "evidence": {
       "directory": "evidence/measured/runs/audit-feature-frontier-raw-r3/evidence",
       "transcriptPath": "evidence/measured/runs/audit-feature-frontier-raw-r3/evidence/transcript.jsonl",
-      "transcriptSha256": "9ab8ec36cc643c4df86be463e6db326463210e6f6954eacfea34626d89cf579a",
+      "transcriptSha256": "3f2dff72d77489ccb57c21a80064b7bd7fa4ae65621f4e0244bb4b6ec4c93d5b",
       "evaluatorPath": "evidence/measured/runs/audit-feature-frontier-raw-r3/evidence/evaluator.json",
       "evaluatorSha256": "f6cbd4e9c810c400b0eaacfab28bc68f1263f0509493edb095fdf2d20a304261"
     }
@@ -799,14 +799,14 @@
     "source": {
       "commit": "54c593c956d737cc0051a922222aa2cbe138f3a9",
       "diffPath": "evidence/measured/runs/audit-feature-frontier-spec-r1/candidate.patch",
-      "diffSha256": "6ce5de082689bd2e1cae033f4730edf76daf5fe5ad5988dede76d40b74f86805",
+      "diffSha256": "354268919b74be8c4b9ce4576bf6e8ad60b1a0db4553179c018701006672d12e",
       "bundlePath": "evidence/measured/runs/audit-feature-frontier-spec-r1/source.bundle",
       "bundleSha256": "103afe8781025c013c33b034b4110ddfff8d713914c0ef09238f40f6d7b0a36c"
     },
     "evidence": {
       "directory": "evidence/measured/runs/audit-feature-frontier-spec-r1/evidence",
       "transcriptPath": "evidence/measured/runs/audit-feature-frontier-spec-r1/evidence/transcript.jsonl",
-      "transcriptSha256": "29b5c106651ec148da4b52bf737cb52d9e83dd963f88aab40548cd3006607ef4",
+      "transcriptSha256": "5d62474c3c0b517af58d09a71baa35b472ec9a18d8ebbcbbef2285a794fa31fe",
       "evaluatorPath": "evidence/measured/runs/audit-feature-frontier-spec-r1/evidence/evaluator.json",
       "evaluatorSha256": "720e6b887e52bda5e04b41888e321e216599c475793d76c46294bff424e316b0"
     }
@@ -888,14 +888,14 @@
     "source": {
       "commit": "05a1686bd0ebd137a2001b2901a9ac6ba41d9a20",
       "diffPath": "evidence/measured/runs/audit-feature-frontier-spec-r2/candidate.patch",
-      "diffSha256": "86d3d5379528e66bd0e446ac8df5784275f3e4a25e40734064779ed45e892d55",
+      "diffSha256": "e585cd587102d4acfc30e4676c7c8ee196cd8c2f4b862cfbb50c774e710e80e7",
       "bundlePath": "evidence/measured/runs/audit-feature-frontier-spec-r2/source.bundle",
       "bundleSha256": "66c4ad223b15baca6ce6a535993b81a4dcd355afaad50a0086b1f7e085d79ea6"
     },
     "evidence": {
       "directory": "evidence/measured/runs/audit-feature-frontier-spec-r2/evidence",
       "transcriptPath": "evidence/measured/runs/audit-feature-frontier-spec-r2/evidence/transcript.jsonl",
-      "transcriptSha256": "bcc1b33c3180d0d1eb8e9236c663e4ddbd7f74f01947120d5400524ee98b85df",
+      "transcriptSha256": "860ce6c3e9b6be46f79767fdc4b25b96e49db4893dd5be14c80777e04baed99b",
       "evaluatorPath": "evidence/measured/runs/audit-feature-frontier-spec-r2/evidence/evaluator.json",
       "evaluatorSha256": "7860916fbd8860aa3ff6d232c22fbaa21bdab08ce26ee446e6aabcd1c10dfc00"
     }
@@ -977,14 +977,14 @@
     "source": {
       "commit": "b20146c0e526ba4f516bcfe3633435b797a3f6f1",
       "diffPath": "evidence/measured/runs/audit-feature-frontier-spec-r3/candidate.patch",
-      "diffSha256": "80563a55096b57e34196e4d5c6361dd7243def3aa53f6a3e79cc00b6b4521e5a",
+      "diffSha256": "a3fde154533cfb6686290e956986bd6907da44968633b0efde33ed3058b8a531",
       "bundlePath": "evidence/measured/runs/audit-feature-frontier-spec-r3/source.bundle",
       "bundleSha256": "3e2acf6c474f6d3ece9cec0d9791fce10e6009554bd68518210079f60d5098f9"
     },
     "evidence": {
       "directory": "evidence/measured/runs/audit-feature-frontier-spec-r3/evidence",
       "transcriptPath": "evidence/measured/runs/audit-feature-frontier-spec-r3/evidence/transcript.jsonl",
-      "transcriptSha256": "b1096bcf642331317ddd9d294c0d7e1dc1e68e29c57a6b2c71a728c23c6371e5",
+      "transcriptSha256": "03ebeff50b0fb228e71c1d03373ca86a7d3cfde6020eff93db9fee913a3eead0",
       "evaluatorPath": "evidence/measured/runs/audit-feature-frontier-spec-r3/evidence/evaluator.json",
       "evaluatorSha256": "fb6e111415ccd1b9ff90a3ca7d7bd60200675741a62534deed11c557f4f9e062"
     }
@@ -1060,7 +1060,7 @@
     "evidence": {
       "directory": "evidence/measured/runs/modernization-efficient-raw-r1/evidence",
       "transcriptPath": "evidence/measured/runs/modernization-efficient-raw-r1/evidence/transcript.jsonl",
-      "transcriptSha256": "ecfc29930c9e3578407036f0522b6a72be452109875a865e3fb24d0365ffb793",
+      "transcriptSha256": "4cc22a1c4b810f4c4d0c48e639d552fb58265b5ace9a87f2b747d4258a9d4e71",
       "evaluatorPath": "evidence/measured/runs/modernization-efficient-raw-r1/evidence/evaluator.json",
       "evaluatorSha256": "82ac2213badd88900e4f4a3531d1e367eca388a75215fc686795223dc213f9fe"
     }
@@ -1136,7 +1136,7 @@
     "evidence": {
       "directory": "evidence/measured/runs/modernization-efficient-raw-r2/evidence",
       "transcriptPath": "evidence/measured/runs/modernization-efficient-raw-r2/evidence/transcript.jsonl",
-      "transcriptSha256": "d6a60a10d9d2198b19a33293957316036557e45fa4706aec58a6241a68c11667",
+      "transcriptSha256": "6b8d3c3902b134fbc89570a19a390872cc2bfc744e9d9bbbbf922661a565bc11",
       "evaluatorPath": "evidence/measured/runs/modernization-efficient-raw-r2/evidence/evaluator.json",
       "evaluatorSha256": "d3ed291f234c172438e8d6ae4f0ea1f4fdd6e84f5f9e9df13cfa098923dc4f6a"
     }
@@ -1205,14 +1205,14 @@
     "source": {
       "commit": "03ea4964806d6a108d379f6e4d72d25f6d7a09c7",
       "diffPath": "evidence/measured/runs/modernization-efficient-raw-r3/candidate.patch",
-      "diffSha256": "808e900a2213ddfe0a5b788ca7e3c84028b0fe01e8bbdc80f4790b35a12836a0",
+      "diffSha256": "54045528a9ebade5ccd8168f2ff8f679d81f92d1d9b99e9dfa54986b753d1ea9",
       "bundlePath": "evidence/measured/runs/modernization-efficient-raw-r3/source.bundle",
       "bundleSha256": "1d3d3d3511a859ca8eed9eecdcc61824e32a30492ca81eb67a569c07bf8e67ff"
     },
     "evidence": {
       "directory": "evidence/measured/runs/modernization-efficient-raw-r3/evidence",
       "transcriptPath": "evidence/measured/runs/modernization-efficient-raw-r3/evidence/transcript.jsonl",
-      "transcriptSha256": "f38072a3791c741756b1fcbbf609da1adf4e3d7392405087d7a9b131d1a9522e",
+      "transcriptSha256": "055360f962fe926087bc6e16f03186e22a938ddf02aacf6d5b0498e949d8f3f0",
       "evaluatorPath": "evidence/measured/runs/modernization-efficient-raw-r3/evidence/evaluator.json",
       "evaluatorSha256": "de93a154f3433847b9893f25ef5d5ad0906ac6f981856abd027c4ab654c0801d"
     }
@@ -1301,7 +1301,7 @@
     "evidence": {
       "directory": "evidence/measured/runs/modernization-efficient-spec-r1/evidence",
       "transcriptPath": "evidence/measured/runs/modernization-efficient-spec-r1/evidence/transcript.jsonl",
-      "transcriptSha256": "bf397648c8d6116b404f5f1491f75ed92a52d33f029569f89b9bedbfb5acbec2",
+      "transcriptSha256": "727eb8b7993ea26639982b3422432ec674434cc6fdb64136ee79940f91bb5c58",
       "evaluatorPath": "evidence/measured/runs/modernization-efficient-spec-r1/evidence/evaluator.json",
       "evaluatorSha256": "26c79f4c073654ad4cd7c77b834c09f52716543e0634a57d89ac267fddefec06"
     }
@@ -1390,7 +1390,7 @@
     "evidence": {
       "directory": "evidence/measured/runs/modernization-efficient-spec-r2/evidence",
       "transcriptPath": "evidence/measured/runs/modernization-efficient-spec-r2/evidence/transcript.jsonl",
-      "transcriptSha256": "d1700b39a2a1e6e1822765feaea1199dd5a14486b8beba21a52e8bcc2e3080af",
+      "transcriptSha256": "b4468c4ddb0045e03cc116f0a8f38b17bc1281ccdb0cd00c5d94d48a6cd42c2e",
       "evaluatorPath": "evidence/measured/runs/modernization-efficient-spec-r2/evidence/evaluator.json",
       "evaluatorSha256": "ed7568f7499ef05a248b71761f99ef617ccd27503b31c16e90d66a07407483b6"
     }
@@ -1479,7 +1479,7 @@
     "evidence": {
       "directory": "evidence/measured/runs/modernization-efficient-spec-r3/evidence",
       "transcriptPath": "evidence/measured/runs/modernization-efficient-spec-r3/evidence/transcript.jsonl",
-      "transcriptSha256": "ff7ee8051442bf98570db7016cb3b330f810f217d5c021c6775a2506d3f82e2d",
+      "transcriptSha256": "e65931f08151319f8f3349f009fe8b195d55bf008a06524215eab29f49da432f",
       "evaluatorPath": "evidence/measured/runs/modernization-efficient-spec-r3/evidence/evaluator.json",
       "evaluatorSha256": "def691074c22280c55939544d79afe554964968679e5ec4d6a98db7f5c36da40"
     }
@@ -1548,14 +1548,14 @@
     "source": {
       "commit": "da3c863a1002c961a89f7717f3bcc55bd4a317e3",
       "diffPath": "evidence/measured/runs/modernization-frontier-raw-r1/candidate.patch",
-      "diffSha256": "d3c472de71c530bd3ce7f8b26f34527249cadba2bec7467f654a2d3e0d48915b",
+      "diffSha256": "ed8f0361f1c6f3fd0d7e5c3fabdac182998a0b088d7b8b74a87ff5b9fff0bfb3",
       "bundlePath": "evidence/measured/runs/modernization-frontier-raw-r1/source.bundle",
       "bundleSha256": "94dcdd28673f951e422031bfa43a45040e43f5a7a200ebbce74e4a645c8b9db6"
     },
     "evidence": {
       "directory": "evidence/measured/runs/modernization-frontier-raw-r1/evidence",
       "transcriptPath": "evidence/measured/runs/modernization-frontier-raw-r1/evidence/transcript.jsonl",
-      "transcriptSha256": "d25a8be41e596d63926f4c9e63f33b75b9d8a360135a7149c14f1b9e138fe31e",
+      "transcriptSha256": "c0aa81d63cf3d0f6a58666f5135723377de324ee0772c41ac90a669cfb757033",
       "evaluatorPath": "evidence/measured/runs/modernization-frontier-raw-r1/evidence/evaluator.json",
       "evaluatorSha256": "e17f1d35681b1554059f18e57448dd359e67223a80f824bb050cb9f5651552b7"
     }
@@ -1624,14 +1624,14 @@
     "source": {
       "commit": "1ca52bd2a5394fd0852cd65b6e2a65892284e518",
       "diffPath": "evidence/measured/runs/modernization-frontier-raw-r2/candidate.patch",
-      "diffSha256": "f971b218380d5003fa0fc0eb4fb9338b18dba7356b448c69bae693d894bf675d",
+      "diffSha256": "04e2533c893c8ac29b25d7b268f75cfb5b34f7e6cd805e7e43afb90917605ad3",
       "bundlePath": "evidence/measured/runs/modernization-frontier-raw-r2/source.bundle",
       "bundleSha256": "3b94ccc938bf7c8f5b420175d7fc2c2dcbf697117c286576bb2c3f22078c7e6e"
     },
     "evidence": {
       "directory": "evidence/measured/runs/modernization-frontier-raw-r2/evidence",
       "transcriptPath": "evidence/measured/runs/modernization-frontier-raw-r2/evidence/transcript.jsonl",
-      "transcriptSha256": "01324955855c77cd626f593826048add7644213f95450427bc6b387fc4be335e",
+      "transcriptSha256": "38d8401c9a88f480bae40359c901b56e4592ecf24c166119db69c48eabb543a6",
       "evaluatorPath": "evidence/measured/runs/modernization-frontier-raw-r2/evidence/evaluator.json",
       "evaluatorSha256": "0f4b5e3e0a1fc54c14cf4453b1c499e11e1fc7ba630ec40ea2a81cbd1f4b9df8"
     }
@@ -1700,14 +1700,14 @@
     "source": {
       "commit": "5efd95afc076cf911f83bf2e118a51654db4b845",
       "diffPath": "evidence/measured/runs/modernization-frontier-raw-r3/candidate.patch",
-      "diffSha256": "118cba6f11c24f5cbe7727498f2dfb1bbd92de546c0536b066210b2b459483ea",
+      "diffSha256": "b1627a91671711743b52ff53303cd5b17340f986405cebdcd4b2f268ba32de1f",
       "bundlePath": "evidence/measured/runs/modernization-frontier-raw-r3/source.bundle",
       "bundleSha256": "4bd64c136f0d004dcc2fb8d7c9faf821b9d9bba4c291ce426ffa8b4284c6e7e2"
     },
     "evidence": {
       "directory": "evidence/measured/runs/modernization-frontier-raw-r3/evidence",
       "transcriptPath": "evidence/measured/runs/modernization-frontier-raw-r3/evidence/transcript.jsonl",
-      "transcriptSha256": "3c7811a60779f5db1872e9d7bc2506ed785a061d63ae01e5e08773f9c083ff8b",
+      "transcriptSha256": "15bf80fcdad380e07656ddc67026487c0e0b675dbb06c7951051b494c4333982",
       "evaluatorPath": "evidence/measured/runs/modernization-frontier-raw-r3/evidence/evaluator.json",
       "evaluatorSha256": "aa91b7bef23c2f59447c626918c3b09fc8569fb914b568e58a42b1164290440a"
     }
@@ -1789,14 +1789,14 @@
     "source": {
       "commit": "de85dabc7ad57da489b37700b14fa905970e903b",
       "diffPath": "evidence/measured/runs/modernization-frontier-spec-r1/candidate.patch",
-      "diffSha256": "0310a5b0d61bd71dcc77205ca26fb71248e034e5e3b014733878b65f73b0f372",
+      "diffSha256": "0f79ba0c43cf68ace966f0f2e0c7ef64c7f4ab286f4885daa7fdf86f888afaab",
       "bundlePath": "evidence/measured/runs/modernization-frontier-spec-r1/source.bundle",
       "bundleSha256": "d9f70807f76dfd022fadd8728fadaf5ffc9618b30f479927caf46ed4b9a6f466"
     },
     "evidence": {
       "directory": "evidence/measured/runs/modernization-frontier-spec-r1/evidence",
       "transcriptPath": "evidence/measured/runs/modernization-frontier-spec-r1/evidence/transcript.jsonl",
-      "transcriptSha256": "1d36b04145ada14231fd05f26a899fe1b96d6ca9d9755a966b40c4aed96460d5",
+      "transcriptSha256": "e9ecbc787baf1e3d4417d05e108559e3edbcce49ca62e0e2731a15d032c23398",
       "evaluatorPath": "evidence/measured/runs/modernization-frontier-spec-r1/evidence/evaluator.json",
       "evaluatorSha256": "26c2f719acdbece873c563030f2b616bf9e3243c0aafa8960b4ff9a8a511503e"
     }
@@ -1878,14 +1878,14 @@
     "source": {
       "commit": "21d3ffbdd506eee2cf1cf5ad0cdc11be12722f86",
       "diffPath": "evidence/measured/runs/modernization-frontier-spec-r2/candidate.patch",
-      "diffSha256": "114271a22645682112620818de354c36798f02ad20ec8ffdc9e30edbe297ac7c",
+      "diffSha256": "944c412a55d796d115cfe285590c83c818a300307fdcf12f71deb5836d52127b",
       "bundlePath": "evidence/measured/runs/modernization-frontier-spec-r2/source.bundle",
       "bundleSha256": "9d3dc04fb6a6076e016cd29e218c55b555ae40314f13ab1e7b8b3e4a03e71b42"
     },
     "evidence": {
       "directory": "evidence/measured/runs/modernization-frontier-spec-r2/evidence",
       "transcriptPath": "evidence/measured/runs/modernization-frontier-spec-r2/evidence/transcript.jsonl",
-      "transcriptSha256": "563f9a3d493daf63205edec6104aa1f68282dc8b9e676770fb2592ce2b816f4b",
+      "transcriptSha256": "20b2e4a67c2a7975904103b827d849167efc5849ab93f29f2b0da69327b16188",
       "evaluatorPath": "evidence/measured/runs/modernization-frontier-spec-r2/evidence/evaluator.json",
       "evaluatorSha256": "c8198f60a8216f02899d37be24966ff74039c50154997f1030ca922c72acf9e5"
     }
@@ -1967,14 +1967,14 @@
     "source": {
       "commit": "617e81991421d0b5cec16bc551b832c1550393e3",
       "diffPath": "evidence/measured/runs/modernization-frontier-spec-r3/candidate.patch",
-      "diffSha256": "3ce7ad5580e5be5c443a704b7eb56c6f3d8390345a7e7563d58441555d8fe825",
+      "diffSha256": "5343634681cd7f4bd1ae0aac02c752f1b2eee954d5ccb8eca8cf322a7f2d5061",
       "bundlePath": "evidence/measured/runs/modernization-frontier-spec-r3/source.bundle",
       "bundleSha256": "2be996cdd0fbfaf4c737ba09f10bd6bb336f27dfe386834fca63372b4b76d69c"
     },
     "evidence": {
       "directory": "evidence/measured/runs/modernization-frontier-spec-r3/evidence",
       "transcriptPath": "evidence/measured/runs/modernization-frontier-spec-r3/evidence/transcript.jsonl",
-      "transcriptSha256": "75bc5e90afbbac1627a03426cc701623e4c5e7d8ded0ae2c26c468d456600af5",
+      "transcriptSha256": "5d264388a0bd0c22a82887b7c93c5fb5f3d386096d33de1079b133da0c7d63ad",
       "evaluatorPath": "evidence/measured/runs/modernization-frontier-spec-r3/evidence/evaluator.json",
       "evaluatorSha256": "8e8b2eeaa1649ce5e11372c3e35eb22584956f7ae5424311fd594843d5db296c"
     }

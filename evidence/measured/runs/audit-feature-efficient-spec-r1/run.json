@@ -75,14 +75,14 @@
   "source": {
     "commit": "873422ba3c1bf3285ad367f44eaf9c852a00d360",
     "diffPath": "evidence/measured/runs/audit-feature-efficient-spec-r1/candidate.patch",
-    "diffSha256": "e2352703bc2b54cf1b1310de4d37646277b160f028ac5da29828d4333a5e7e21",
+    "diffSha256": "a8be39d8e6d5daf9f8010b664c086222f37c4590289495436da1c3f0c128ca9a",
     "bundlePath": "evidence/measured/runs/audit-feature-efficient-spec-r1/source.bundle",
     "bundleSha256": "410176cc99b12fb4d91622e2cb9e4680f736e32c1fdf3d04545bdd3b1e73cf6d"
   },
   "evidence": {
     "directory": "evidence/measured/runs/audit-feature-efficient-spec-r1/evidence",
     "transcriptPath": "evidence/measured/runs/audit-feature-efficient-spec-r1/evidence/transcript.jsonl",
-    "transcriptSha256": "4e318319c443d9c3148977dd7473bbc9d2a4bc4fc1c8f035b2a0bc355665799f",
+    "transcriptSha256": "4c0c6858aa540e2fb13d0a887a9792a4df6222990e58876454930c69e8e56498",
     "evaluatorPath": "evidence/measured/runs/audit-feature-efficient-spec-r1/evidence/evaluator.json",
     "evaluatorSha256": "334f5a3388949b33b832feb6464d27ea5f7518a7810479284f1b4ddd22e80796"
   }

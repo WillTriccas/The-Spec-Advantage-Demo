@@ -62,14 +62,14 @@
   "source": {
     "commit": "03ea4964806d6a108d379f6e4d72d25f6d7a09c7",
     "diffPath": "evidence/measured/runs/modernization-efficient-raw-r3/candidate.patch",
-    "diffSha256": "808e900a2213ddfe0a5b788ca7e3c84028b0fe01e8bbdc80f4790b35a12836a0",
+    "diffSha256": "54045528a9ebade5ccd8168f2ff8f679d81f92d1d9b99e9dfa54986b753d1ea9",
     "bundlePath": "evidence/measured/runs/modernization-efficient-raw-r3/source.bundle",
     "bundleSha256": "1d3d3d3511a859ca8eed9eecdcc61824e32a30492ca81eb67a569c07bf8e67ff"
   },
   "evidence": {
     "directory": "evidence/measured/runs/modernization-efficient-raw-r3/evidence",
     "transcriptPath": "evidence/measured/runs/modernization-efficient-raw-r3/evidence/transcript.jsonl",
-    "transcriptSha256": "f38072a3791c741756b1fcbbf609da1adf4e3d7392405087d7a9b131d1a9522e",
+    "transcriptSha256": "055360f962fe926087bc6e16f03186e22a938ddf02aacf6d5b0498e949d8f3f0",
     "evaluatorPath": "evidence/measured/runs/modernization-efficient-raw-r3/evidence/evaluator.json",
     "evaluatorSha256": "de93a154f3433847b9893f25ef5d5ad0906ac6f981856abd027c4ab654c0801d"
   }
