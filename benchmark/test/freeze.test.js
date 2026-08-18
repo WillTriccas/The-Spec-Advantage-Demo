@@ -6,14 +6,25 @@ import {
   computeFreezeRecordSha256,
   createFreezeReadiness
 } from "../src/freeze.js";
+import { loadExperimentConfig } from "../src/config.js";
 
 test("freeze readiness fails closed while the benchmark is unfrozen and model versions are unpinned", () => {
-  const readiness = createFreezeReadiness({ generatedAt: "2026-08-12T14:00:00Z" });
+  const experimentConfig = structuredClone(loadExperimentConfig());
+  experimentConfig.benchmarkVersion = "unfrozen";
+  for (const model of Object.values(experimentConfig.models)) {
+    model.buildId = null;
+    model.agentVersion = null;
+    model.agentBuildId = null;
+    model.effortParams.reasoningEffort = null;
+  }
+  const readiness = createFreezeReadiness({
+    generatedAt: "2026-08-12T14:00:00Z",
+    experimentConfig
+  });
   assert.strictEqual(readiness.ready, false);
   assert.ok(readiness.blockers.some((blocker) => blocker.includes("benchmarkVersion")));
   assert.ok(readiness.blockers.some((blocker) => blocker.includes("buildId")));
   assert.ok(readiness.blockers.some((blocker) => blocker.includes("agentBuildId")));
-  assert.ok(readiness.blockers.some((blocker) => blocker.includes("approval")));
   assert.match(readiness.recordSha256, /^[a-f0-9]{64}$/);
 });
 

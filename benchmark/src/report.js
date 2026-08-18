@@ -809,6 +809,14 @@ export function buildReport({
       benchmarkVersion: metadata.benchmarkVersion,
       generatedAt,
       dataKind: metadata.dataKind,
+      evidenceQualification:
+        metadata.dataKind === "measured"
+          ? trustedFreezeRecord.evidenceQualification
+          : {
+              level: "illustrative",
+              limitation:
+                "Synthetic playback data has not been produced by controlled coding-agent runs and cannot support a benchmark claim."
+            },
       repetitionsPerLane,
       pricingAsOf:
         metadata.dataKind === "measured"

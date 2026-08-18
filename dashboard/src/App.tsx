@@ -125,6 +125,7 @@ export default function App() {
 
   const { metadata, overallClaim, episodes } = data;
   const isIllustrative = metadata.dataKind === 'illustrative';
+  const isBoundedMeasured = metadata.evidenceQualification.level === 'bounded-measured';
 
   const filteredEpisodes = episodes.filter(e => selectedEpisode === 'all' || e.id === selectedEpisode);
   
@@ -138,6 +139,11 @@ export default function App() {
           ILLUSTRATIVE DATA ONLY - NOT FOR MEASUREMENT
         </div>
       )}
+      {isBoundedMeasured && (
+        <div className="illustrative-banner">
+          BOUNDED MEASURED EVIDENCE - PROVIDER BUILD IDS NOT EXPOSED
+        </div>
+      )}
       <div className="dashboard-container">
         <header className="header">
           <div className="title-section">
@@ -145,6 +151,9 @@ export default function App() {
             <div style={{ marginTop: '8px', display: 'flex', gap: '8px', alignItems: 'center' }}>
               <span className={`badge ${isIllustrative ? 'illustrative' : 'measured'}`}>
                 {metadata.dataKind.toUpperCase()}
+              </span>
+              <span className={`badge ${isBoundedMeasured ? 'illustrative' : 'measured'}`}>
+                {metadata.evidenceQualification.level.toUpperCase()}
               </span>
               <span className="badge measured">v{metadata.benchmarkVersion}</span>
               <span style={{ fontSize: '12px', color: 'var(--cp-text-muted)' }}>
@@ -173,6 +182,10 @@ export default function App() {
             </button>
           </div>
         </header>
+
+        <p style={{ color: 'var(--cp-text-muted)', marginTop: 0 }}>
+          <strong>Evidence limitation:</strong> {metadata.evidenceQualification.limitation}
+        </p>
 
         {selectedEpisode === 'all' && (
           <ClaimCard claim={overallClaim} title="Overall Roll-up" isOverall={true} />

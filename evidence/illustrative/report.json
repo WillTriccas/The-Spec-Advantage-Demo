@@ -4,6 +4,10 @@
     "benchmarkVersion": "unfrozen",
     "generatedAt": "2026-08-12T13:00:00.000Z",
     "dataKind": "illustrative",
+    "evidenceQualification": {
+      "level": "illustrative",
+      "limitation": "Synthetic playback data has not been produced by controlled coding-agent runs and cannot support a benchmark claim."
+    },
     "repetitionsPerLane": 3,
     "pricingAsOf": null,
     "rateType": "unavailable",
@@ -12,16 +16,16 @@
       "evaluatorSha256": "1540f263481cae49fa84bc8d187c5e1b503cc5775f41f24da1e54339870c8946",
       "scoringConfigSha256": "c9e7c3bebd575b3b56f0409d69cdb5d952c175a73ec11ada7599d73a9648bac6",
       "costsConfigSha256": "3b2c5ed227eef9cb46c8686dca1bd76af97e2f50e36729358ebc7c9d00dc5ea5",
-      "benchmarkEngineSha256": "692ac1fb0026e3bc24ed523d12fe4fd38080991082114d3c88b5c0dac3af9977",
+      "benchmarkEngineSha256": "edff62eeea07709d7a2a4785d791c8701d986f3f8f127046048052fd6a1cc8c5",
       "promptSha256s": [
         "f22d3d71127ff9f1e7c3e35706442e5d4a79443ef273fa28e43468c0dc789957",
         "518d8bb000fd36bb982c37042636adf1f54c0d1a484ba5319578ec858452db23",
         "f47aa4cd40324a29be02f62a6f7fb8c900a72017ad565ca3b3e7756e343d648d",
         "b4a29ff8f3be258bdb86f51d78760adf86cd8319cd1a1051c7dd7216b10724f4"
       ],
-      "experimentConfigSha256": "339acfd96e7453ae80c20dd95f9cb7608615045d210f325ea4fc916dd1820354",
+      "experimentConfigSha256": "b7f2dd0b8a5990a4264412829ede8e05fcb0a20fd7814cba902a01ac54f3276f",
       "runSchemaSha256": "b4cc4103ec2613d7f6ce46aef274a32b4e58a63cebeaccefc609f645606ccf11",
-      "reportSchemaSha256": "0d500177cdd0c05b9d0a316e71da44352700c2452f97bba0da640b61462f88c9",
+      "reportSchemaSha256": "b1b050eba32e96cb059d542ea21114e7d91d8e88cc22f74bc9b867be45187204",
       "claimRule": {
         "comparisonLane": "efficient-spec",
         "controlLane": "frontier-raw",

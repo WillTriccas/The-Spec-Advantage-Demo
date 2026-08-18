@@ -85,6 +85,10 @@ export type Report = {
     benchmarkVersion: string;
     generatedAt: string;
     dataKind: "illustrative" | "measured";
+    evidenceQualification: {
+      level: "illustrative" | "bounded-measured" | "strict-measured";
+      limitation: string;
+    };
     repetitionsPerLane: number;
     pricingAsOf: string | null;
     rateType: "list" | "negotiated" | "internal-chargeback" | "unavailable";

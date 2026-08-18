@@ -101,6 +101,16 @@ export function createFreezeReadiness({
   if (experimentConfig.benchmarkVersion === "unfrozen") {
     blockers.push("benchmarkVersion is still \"unfrozen\".");
   }
+  const evidenceQualification = experimentConfig.evidenceQualification;
+  if (
+    !["strict-measured", "bounded-measured"].includes(
+      evidenceQualification?.level
+    ) ||
+    typeof evidenceQualification?.limitation !== "string" ||
+    !evidenceQualification.limitation
+  ) {
+    blockers.push("Measured evidence qualification is not fully declared.");
+  }
 
   const models = Object.entries(experimentConfig.models).map(([tier, model]) => {
     if (!model.buildId) blockers.push(`${tier} model buildId is not pinned.`);
@@ -108,6 +118,14 @@ export function createFreezeReadiness({
     if (!model.agentBuildId) blockers.push(`${tier} agentBuildId is not pinned.`);
     if (!model.effortParams?.reasoningEffort) {
       blockers.push(`${tier} reasoning effort is not pinned.`);
+    }
+    if (
+      model.buildId === "not-exposed-by-copilot" &&
+      evidenceQualification?.level !== "bounded-measured"
+    ) {
+      blockers.push(
+        `${tier} model build is not exposed, so evidence must be qualified as bounded-measured.`
+      );
     }
     return {
       tier,
@@ -178,6 +196,7 @@ export function createFreezeReadiness({
     ready: blockers.length === 0,
     blockers,
     benchmarkVersion: experimentConfig.benchmarkVersion,
+    evidenceQualification,
     repository: {
       headCommit,
       clean: dirtyEntries.length === 0,

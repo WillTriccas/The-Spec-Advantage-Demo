@@ -46,6 +46,10 @@ const scoringConfig = {
 
 const measuredExperimentConfig = {
   benchmarkVersion: "frozen-v1",
+  evidenceQualification: {
+    level: "strict-measured",
+    limitation: "Test fixture uses immutable model build identifiers."
+  },
   repetitionsPerLane: 3,
   episodes: [
     { id: "modernization", name: "Platform modernization", baselineRef: "refs/tags/benchmark-legacy-v1" },
@@ -88,6 +92,7 @@ function makeMeasuredFreezeRecord() {
     ready: true,
     blockers: [],
     benchmarkVersion: "frozen-v1",
+    evidenceQualification: measuredExperimentConfig.evidenceQualification,
     repository: { headCommit: "head", clean: true, dirtyEntries: [] },
     baselines: [
       {

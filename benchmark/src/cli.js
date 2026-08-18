@@ -161,7 +161,8 @@ export function cmdReport(options) {
   }
   const { report, claimDetail } = buildReport({
     runs,
-    benchmarkVersion: experimentConfig.benchmarkVersion,
+    benchmarkVersion:
+      dataKind === "measured" ? experimentConfig.benchmarkVersion : "unfrozen",
     repetitionsPerLane: experimentConfig.repetitionsPerLane,
     dataKind,
     pricingAsOf: pricingAsOf ?? null,
