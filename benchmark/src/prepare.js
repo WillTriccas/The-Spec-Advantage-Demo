@@ -65,7 +65,9 @@ export function hashDirectoryAtRef(ref, baselinePath, repoRoot = REPO_ROOT) {
   const hash = createHash("sha256");
   for (const file of files) {
     const relativePath = file.slice(normalizedPath.length + 1);
-    const content = execFileSync("git", ["show", `${ref}:${file}`], { cwd: repoRoot });
+    const content = execFileSync("git", ["cat-file", "blob", `${ref}:${file}`], {
+      cwd: repoRoot
+    });
     hash.update(relativePath, "utf8");
     hash.update("\0");
     hash.update(content);
@@ -85,7 +87,9 @@ export function materializeDirectoryAtRef(
     const relativePath = file.slice(normalizedPath.length + 1);
     const destinationPath = path.join(destination, relativePath);
     mkdirSync(path.dirname(destinationPath), { recursive: true });
-    const content = execFileSync("git", ["show", `${ref}:${file}`], { cwd: repoRoot });
+    const content = execFileSync("git", ["cat-file", "blob", `${ref}:${file}`], {
+      cwd: repoRoot
+    });
     writeFileSync(destinationPath, content);
   }
 
