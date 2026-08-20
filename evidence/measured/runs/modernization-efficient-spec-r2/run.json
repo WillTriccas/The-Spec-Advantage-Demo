@@ -1,0 +1,89 @@
+{
+  "schemaVersion": "1.1.0",
+  "dataKind": "measured",
+  "runId": "modernization-efficient-spec-r2",
+  "benchmarkVersion": "specforge-fsi-v1.0.0",
+  "episodeId": "modernization",
+  "laneId": "efficient-spec",
+  "model": {
+    "id": "mai-code-1.1-flash",
+    "displayName": "MAI Code 1.1 Flash",
+    "tier": "efficient",
+    "buildId": "not-exposed-by-copilot"
+  },
+  "inputMode": "spec",
+  "repetition": 2,
+  "baseline": {
+    "ref": "refs/tags/benchmark-legacy-v1",
+    "commit": "b020630048cd90a039fb4f13e437c900b6cd4eac",
+    "sha256": "209c028929088c1695b9f00b4d10f3dd8c0e3217f9d41122301358f5927158a2"
+  },
+  "brief": {
+    "path": "benchmark/prompts/modernization-raw.md",
+    "sha256": "f22d3d71127ff9f1e7c3e35706442e5d4a79443ef273fa28e43468c0dc789957"
+  },
+  "spec": {
+    "id": "modernization-approved",
+    "sha256": "e2de5ac4031db60b2d3ea4993cadbd53c0d4145a78febb97a78093276f34ac69",
+    "qualityScore": 100,
+    "authoringEffort": {
+      "elapsedSeconds": 17100,
+      "inputTokens": 41200,
+      "outputTokens": 18650,
+      "estimatedCostUsd": null,
+      "costEvidenceRef": null,
+      "costMethod": null,
+      "amortizedAcrossRuns": 3
+    }
+  },
+  "frozenInputs": {
+    "freezeRecordSha256": "edd523966c35daa42a6ad2306670157c90336232bac20b3c6f3e88c27a66ef30",
+    "evaluatorSha256": "1540f263481cae49fa84bc8d187c5e1b503cc5775f41f24da1e54339870c8946",
+    "scoringConfigSha256": "c9e7c3bebd575b3b56f0409d69cdb5d952c175a73ec11ada7599d73a9648bac6",
+    "costsConfigSha256": "3b2c5ed227eef9cb46c8686dca1bd76af97e2f50e36729358ebc7c9d00dc5ea5",
+    "benchmarkEngineSha256": "848140d8340397b49926e4b1a05cca6a873850ee2822eb8ad8d654e3078dab9a",
+    "promptSha256": "518d8bb000fd36bb982c37042636adf1f54c0d1a484ba5319578ec858452db23",
+    "experimentConfigSha256": "b7f2dd0b8a5990a4264412829ede8e05fcb0a20fd7814cba902a01ac54f3276f",
+    "runSchemaSha256": "b4cc4103ec2613d7f6ce46aef274a32b4e58a63cebeaccefc609f645606ccf11",
+    "reportSchemaSha256": "b1b050eba32e96cb059d542ea21114e7d91d8e88cc22f74bc9b867be45187204"
+  },
+  "execution": {
+    "status": "completed",
+    "order": 5,
+    "startedAt": "2026-08-18T12:22:29.452Z",
+    "endedAt": "2026-08-18T12:47:34.755Z",
+    "elapsedSeconds": 1505.303,
+    "productiveSeconds": 640.252,
+    "queueSeconds": 13.543,
+    "modelId": "mai-code-1.1-flash",
+    "modelBuildId": "not-exposed-by-copilot",
+    "agentVersion": "1.0.79-9",
+    "agentBuildId": "not-separately-exposed-by-copilot",
+    "reasoningEffort": "high",
+    "toolCalls": 93,
+    "inputTokens": 275599,
+    "cachedInputTokens": 5851008,
+    "outputTokens": 50304,
+    "reasoningTokens": 31872,
+    "estimatedCostUsd": null,
+    "specAuthoringCostUsd": null,
+    "firstGreenBuildSeconds": null,
+    "firstPassingSuiteSeconds": null,
+    "reworkCount": 0,
+    "scopeChurnFiles": 4
+  },
+  "source": {
+    "commit": "6df278d433dd6538a4ed0282969afca17928d3fc",
+    "diffPath": "evidence/measured/runs/modernization-efficient-spec-r2/candidate.patch",
+    "diffSha256": "11489694b7590be68f8b942c42ef4db75372add73d5d4f6487e8c5ced631bca2",
+    "bundlePath": "evidence/measured/runs/modernization-efficient-spec-r2/source.bundle",
+    "bundleSha256": "b95aadaeefa41bbe756be6228bd2f33ea59754e0476aff1789230262a045e082"
+  },
+  "evidence": {
+    "directory": "evidence/measured/runs/modernization-efficient-spec-r2/evidence",
+    "transcriptPath": "evidence/measured/runs/modernization-efficient-spec-r2/evidence/transcript.jsonl",
+    "transcriptSha256": "b4468c4ddb0045e03cc116f0a8f38b17bc1281ccdb0cd00c5d94d48a6cd42c2e",
+    "evaluatorPath": "evidence/measured/runs/modernization-efficient-spec-r2/evidence/evaluator.json",
+    "evaluatorSha256": "ed7568f7499ef05a248b71761f99ef617ccd27503b31c16e90d66a07407483b6"
+  }
+}

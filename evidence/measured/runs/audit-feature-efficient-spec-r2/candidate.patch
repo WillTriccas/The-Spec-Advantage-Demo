@@ -1,0 +1,935 @@
+diff --git a/audit-adapter.json b/audit-adapter.json
+new file mode 100644
+index 0000000..f6d7fcd
+--- /dev/null
++++ b/audit-adapter.json
+@@ -0,0 +1,81 @@
++{
++  "schemaVersion": "1.0.0",
++  "workingDirectory": ".",
++  "commands": {
++    "initialize": {
++      "executable": "dotnet",
++      "arguments": [
++        "run",
++        "--project",
++        "src/TradeRecon.Console/TradeRecon.Console.csproj",
++        "--configuration",
++        "Release",
++        "--no-build",
++        "--",
++        "audit",
++        "initialize",
++        "{stateDirectory}"
++      ],
++      "allowedExitCodes": [0, 1]
++    },
++    "propose": {
++      "executable": "dotnet",
++      "arguments": [
++        "run",
++        "--project",
++        "src/TradeRecon.Console/TradeRecon.Console.csproj",
++        "--configuration",
++        "Release",
++        "--no-build",
++        "--",
++        "audit",
++        "propose",
++        "{stateDirectory}",
++        "{requestId}",
++        "{proposer}",
++        "{businessDate}",
++        "{reason}",
++        "{evidence}"
++      ],
++      "allowedExitCodes": [0, 1]
++    },
++    "decide": {
++      "executable": "dotnet",
++      "arguments": [
++        "run",
++        "--project",
++        "src/TradeRecon.Console/TradeRecon.Console.csproj",
++        "--configuration",
++        "Release",
++        "--no-build",
++        "--",
++        "audit",
++        "decide",
++        "{stateDirectory}",
++        "{requestId}",
++        "{approver}",
++        "{decision}"
++      ],
++      "allowedExitCodes": [0, 1]
++    },
++    "export": {
++      "executable": "dotnet",
++      "arguments": [
++        "run",
++        "--project",
++        "src/TradeRecon.Console/TradeRecon.Console.csproj",
++        "--configuration",
++        "Release",
++        "--no-build",
++        "--",
++        "audit",
++        "export",
++        "{stateDirectory}",
++        "{fromDate}",
++        "{toDate}",
++        "{exportPath}"
++      ],
++      "allowedExitCodes": [0, 1]
++    }
++  }
++}
+diff --git a/contracts/audit-adapter.schema.json b/contracts/audit-adapter.schema.json
+new file mode 100644
+index 0000000..14e3111
+--- /dev/null
++++ b/contracts/audit-adapter.schema.json
+@@ -0,0 +1,62 @@
++{
++  "$schema": "https://json-schema.org/draft/2020-12/schema",
++  "$id": "https://example.com/schemas/audit-adapter.schema.json",
++  "title": "Audit Adapter Contract",
++  "type": "object",
++  "additionalProperties": false,
++  "required": ["schemaVersion", "workingDirectory", "commands"],
++  "properties": {
++    "schemaVersion": {
++      "type": "string",
++      "minLength": 1
++    },
++    "workingDirectory": {
++      "type": "string",
++      "minLength": 1
++    },
++    "commands": {
++      "type": "object",
++      "additionalProperties": false,
++      "required": ["initialize", "propose", "decide", "export"],
++      "properties": {
++        "initialize": {
++          "$ref": "#/$defs/command"
++        },
++        "propose": {
++          "$ref": "#/$defs/command"
++        },
++        "decide": {
++          "$ref": "#/$defs/command"
++        },
++        "export": {
++          "$ref": "#/$defs/command"
++        }
++      }
++    }
++  },
++  "$defs": {
++    "command": {
++      "type": "object",
++      "additionalProperties": false,
++      "required": ["executable", "arguments"],
++      "properties": {
++        "executable": {
++          "type": "string",
++          "minLength": 1
++        },
++        "arguments": {
++          "type": "array",
++          "items": {
++            "type": "string"
++          }
++        },
++        "allowedExitCodes": {
++          "type": "array",
++          "items": {
++            "type": "integer"
++          }
++        }
++      }
++    }
++  }
++}
+diff --git a/src/TradeRecon.Application/Audit/AuditWorkflow.cs b/src/TradeRecon.Application/Audit/AuditWorkflow.cs
+new file mode 100644
+index 0000000..8930f9c
+--- /dev/null
++++ b/src/TradeRecon.Application/Audit/AuditWorkflow.cs
+@@ -0,0 +1,471 @@
++using System.Globalization;
++using System.Security.Cryptography;
++using System.Text;
++using System.Text.Json;
++using System.Text.Json.Serialization;
++using System.Text.RegularExpressions;
++
++namespace TradeRecon.Application.Audit;
++
++public static partial class AuditWorkflow
++{
++    private const string StateFileName = "audit-history.json";
++    private static readonly JsonSerializerOptions StateJsonOptions = new()
++    {
++        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
++        WriteIndented = true,
++        PropertyNamingPolicy = null
++    };
++
++    private static readonly Regex AccountPattern = new(
++        @"(?<![A-Za-z0-9])(?:[A-Z]{2,}[A-Z0-9-]{2,}[0-9][A-Z0-9-]*|[A-Z]{3,}[0-9]{3,})(?![A-Za-z0-9])",
++        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
++
++    private static readonly Regex AmountPattern = new(
++        @"(?<![A-Za-z0-9])(?:[$€£¥]?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?)(?:\s*(?:USD|EUR|GBP|JPY|AUD|CAD|CHF|CNY|SEK|NOK|NZD|HKD|SGD))?(?![A-Za-z0-9])",
++        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
++
++    public static object Initialize(string stateDirectory)
++    {
++        var resolvedDirectory = EnsureStateDirectory(stateDirectory);
++        var state = LoadState(resolvedDirectory);
++        return new
++        {
++            ok = true,
++            action = "initialize",
++            stateDirectory = resolvedDirectory,
++            entries = state.Entries.Count,
++            version = state.Version
++        };
++    }
++
++    public static object Propose(
++        string stateDirectory,
++        string requestId,
++        string proposer,
++        string businessDate,
++        string reason,
++        string evidence)
++    {
++        if (string.IsNullOrWhiteSpace(requestId) ||
++            string.IsNullOrWhiteSpace(proposer) ||
++            string.IsNullOrWhiteSpace(businessDate))
++        {
++            return ErrorResult("propose", "requestId, proposer, and businessDate are required.");
++        }
++
++        if (!TryParseBusinessDate(businessDate, out var parsedDate))
++        {
++            return ErrorResult("propose", "businessDate must use yyyy-MM-dd format.");
++        }
++
++        var sanitizedReason = SanitizeForAudit(reason);
++        var sanitizedEvidence = SanitizeForAudit(evidence);
++        if (string.IsNullOrWhiteSpace(sanitizedReason))
++        {
++            return ErrorResult("propose", "Reason is required.");
++        }
++
++        if (string.IsNullOrWhiteSpace(sanitizedEvidence))
++        {
++            return ErrorResult("propose", "Evidence is required.");
++        }
++
++        using var lockHandle = AcquireLock(stateDirectory);
++        var state = LoadState(stateDirectory);
++
++        var currentDecision = state.Entries.LastOrDefault(item =>
++            string.Equals(item.RequestId, requestId, StringComparison.Ordinal) &&
++            (item.Action == "APPROVED" || item.Action == "REJECTED"));
++        if (currentDecision is not null)
++        {
++            return ErrorResult("propose", "A final decision already exists for this request.");
++        }
++
++        var existingProposal = state.Entries.LastOrDefault(item =>
++            string.Equals(item.RequestId, requestId, StringComparison.Ordinal) &&
++            item.Action == "PROPOSED");
++        if (existingProposal is not null)
++        {
++            return SuccessResult(existingProposal, true);
++        }
++
++        var entry = CreateEntry(
++            state,
++            requestId,
++            "PROPOSED",
++            proposer,
++            businessDate,
++            sanitizedReason,
++            sanitizedEvidence,
++            proposer,
++            null);
++
++        state.Entries.Add(entry);
++        PersistState(stateDirectory, state);
++        return SuccessResult(entry, false);
++    }
++
++    public static object Decide(
++        string stateDirectory,
++        string requestId,
++        string approver,
++        string decision)
++    {
++        if (string.IsNullOrWhiteSpace(requestId) || string.IsNullOrWhiteSpace(approver))
++        {
++            return ErrorResult("decide", "requestId and approver are required.");
++        }
++
++        if (!string.Equals(decision, "APPROVED", StringComparison.OrdinalIgnoreCase) &&
++            !string.Equals(decision, "REJECTED", StringComparison.OrdinalIgnoreCase))
++        {
++            return ErrorResult("decide", "Decision must be APPROVED or REJECTED.");
++        }
++
++        using var lockHandle = AcquireLock(stateDirectory);
++        var state = LoadState(stateDirectory);
++
++        var existingFinalDecision = state.Entries.LastOrDefault(item =>
++            string.Equals(item.RequestId, requestId, StringComparison.Ordinal) &&
++            (item.Action == "APPROVED" || item.Action == "REJECTED"));
++        if (existingFinalDecision is not null)
++        {
++            if (string.Equals(existingFinalDecision.Action, decision, StringComparison.OrdinalIgnoreCase))
++            {
++                return SuccessResult(existingFinalDecision, true);
++            }
++
++            return new
++            {
++                ok = true,
++                action = "decide",
++                requestId,
++                decision = existingFinalDecision.Action,
++                actor = existingFinalDecision.Actor,
++                finalDecision = existingFinalDecision.Action,
++                idempotent = true,
++                conflict = true
++            };
++        }
++
++        var proposal = state.Entries.LastOrDefault(item =>
++            string.Equals(item.RequestId, requestId, StringComparison.Ordinal) &&
++            item.Action == "PROPOSED");
++        if (proposal is null)
++        {
++            return ErrorResult("decide", "No proposal exists for this request.");
++        }
++
++        if (string.Equals(proposal.Proposer, approver, StringComparison.Ordinal))
++        {
++            return ErrorResult("decide", "Self-approval is not permitted.");
++        }
++
++        var entry = CreateEntry(
++            state,
++            requestId,
++            decision.ToUpperInvariant(),
++            approver,
++            proposal.BusinessDate ?? string.Empty,
++            proposal.Reason ?? string.Empty,
++            proposal.Evidence ?? string.Empty,
++            proposal.Proposer,
++            approver);
++
++        state.Entries.Add(entry);
++        PersistState(stateDirectory, state);
++        return SuccessResult(entry, false);
++    }
++
++    public static object Export(string stateDirectory, string fromDate, string toDate, string exportPath)
++    {
++        if (!TryParseBusinessDate(fromDate, out var from) || !TryParseBusinessDate(toDate, out var to))
++        {
++            return ErrorResult("export", "fromDate and toDate must both use yyyy-MM-dd format.");
++        }
++
++        using var lockHandle = AcquireLock(stateDirectory);
++        var state = LoadState(stateDirectory);
++
++        var entries = state.Entries
++            .Where(item => TryParseBusinessDate(item.BusinessDate ?? string.Empty, out var itemDate) && itemDate >= from && itemDate <= to)
++            .Select(ToExportRecord)
++            .ToList();
++
++        var payload = new
++        {
++            ok = true,
++            action = "export",
++            fromDate,
++            toDate,
++            count = entries.Count,
++            entries
++        };
++
++        var serialized = JsonSerializer.Serialize(payload, StateJsonOptions);
++
++        if (!string.IsNullOrWhiteSpace(exportPath))
++        {
++            var directory = Path.GetDirectoryName(exportPath);
++            if (!string.IsNullOrWhiteSpace(directory))
++            {
++                Directory.CreateDirectory(directory);
++            }
++
++            File.WriteAllText(exportPath, serialized + Environment.NewLine, Encoding.UTF8);
++        }
++
++        return payload;
++    }
++
++    private static string EnsureStateDirectory(string stateDirectory)
++    {
++        var directory = string.IsNullOrWhiteSpace(stateDirectory)
++            ? Path.Combine(Path.GetTempPath(), "trade-recon-audit")
++            : Path.GetFullPath(stateDirectory);
++
++        Directory.CreateDirectory(directory);
++        return directory;
++    }
++
++    private static FileStream AcquireLock(string stateDirectory)
++    {
++        var directory = EnsureStateDirectory(stateDirectory);
++        var lockPath = Path.Combine(directory, "audit-workflow.lock");
++        return new FileStream(lockPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
++    }
++
++    private static AuditState LoadState(string stateDirectory)
++    {
++        var directory = EnsureStateDirectory(stateDirectory);
++        var statePath = Path.Combine(directory, StateFileName);
++
++        if (!File.Exists(statePath))
++        {
++            var newState = new AuditState();
++            PersistState(directory, newState);
++            return newState;
++        }
++
++        using var stream = File.OpenRead(statePath);
++        var state = JsonSerializer.Deserialize<AuditState>(stream, StateJsonOptions) ?? new AuditState();
++        if (state.Entries is null)
++        {
++            state.Entries = new List<AuditEntry>();
++        }
++
++        state.Version ??= 1;
++        return state;
++    }
++
++    private static void PersistState(string stateDirectory, AuditState state)
++    {
++        var directory = EnsureStateDirectory(stateDirectory);
++        var statePath = Path.Combine(directory, StateFileName);
++        var tempPath = statePath + ".tmp";
++        var json = JsonSerializer.Serialize(state, StateJsonOptions);
++        File.WriteAllText(tempPath, json + Environment.NewLine, Encoding.UTF8);
++        File.Move(tempPath, statePath, overwrite: true);
++    }
++
++    private static AuditEntry CreateEntry(
++        AuditState state,
++        string requestId,
++        string action,
++        string actor,
++        string businessDate,
++        string reason,
++        string evidence,
++        string? proposer,
++        string? checker)
++    {
++        var sequence = state.Entries.Count + 1;
++        var timestamp = DateTimeOffset.UtcNow.ToString("O", CultureInfo.InvariantCulture);
++        var previousHash = state.Entries.Count == 0 ? null : state.Entries[^1].Hash;
++        var entry = new AuditEntry
++        {
++            Sequence = sequence,
++            Timestamp = timestamp,
++            RequestId = requestId,
++            Action = action,
++            Actor = actor,
++            Proposer = proposer,
++            Checker = checker,
++            BusinessDate = businessDate,
++            Reason = reason,
++            Evidence = evidence,
++            PreviousHash = previousHash,
++            Version = state.Version ?? 1
++        };
++
++        entry.Hash = ComputeHash(entry);
++        return entry;
++    }
++
++    private static object SuccessResult(AuditEntry entry, bool idempotent)
++    {
++        return new
++        {
++            ok = true,
++            action = entry.Action,
++            requestId = entry.RequestId,
++            actor = entry.Actor,
++            proposer = entry.Proposer,
++            checker = entry.Checker,
++            businessDate = entry.BusinessDate,
++            reason = entry.Reason,
++            evidence = entry.Evidence,
++            sequence = entry.Sequence,
++            timestamp = entry.Timestamp,
++            previousHash = entry.PreviousHash,
++            hash = entry.Hash,
++            version = entry.Version,
++            idempotent
++        };
++    }
++
++    private static object ErrorResult(string action, string message)
++    {
++        return new
++        {
++            ok = false,
++            action,
++            error = SanitizeForAudit(message)
++        };
++    }
++
++    private static object ToExportRecord(AuditEntry entry)
++    {
++        return new
++        {
++            sequence = entry.Sequence,
++            timestamp = entry.Timestamp,
++            requestId = entry.RequestId,
++            action = entry.Action,
++            actor = entry.Actor,
++            proposer = entry.Proposer,
++            checker = entry.Checker,
++            businessDate = entry.BusinessDate,
++            reason = entry.Reason,
++            evidence = entry.Evidence,
++            previousHash = entry.PreviousHash,
++            hash = entry.Hash,
++            version = entry.Version
++        };
++    }
++
++    private static string ComputeHash(AuditEntry entry)
++    {
++        var payload = new
++        {
++            sequence = entry.Sequence,
++            timestamp = entry.Timestamp,
++            requestId = entry.RequestId,
++            action = entry.Action,
++            actor = entry.Actor,
++            proposer = entry.Proposer,
++            checker = entry.Checker,
++            businessDate = entry.BusinessDate,
++            reason = entry.Reason,
++            evidence = entry.Evidence,
++            previousHash = entry.PreviousHash,
++            version = entry.Version
++        };
++
++        var canonical = CanonicalJson(payload);
++        using var sha256 = SHA256.Create();
++        var hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(canonical));
++        return Convert.ToHexString(hashBytes).ToLowerInvariant();
++    }
++
++    private static string CanonicalJson(object value)
++    {
++        var element = JsonSerializer.SerializeToElement(value);
++        return CanonicalizeJsonElement(element);
++    }
++
++    private static string CanonicalizeJsonElement(JsonElement element)
++    {
++        return element.ValueKind switch
++        {
++            JsonValueKind.Object => "{" + string.Join(",", element.EnumerateObject().OrderBy(pair => pair.Name, StringComparer.Ordinal).Select(pair => JsonSerializer.Serialize(pair.Name) + ":" + CanonicalizeJsonElement(pair.Value))) + "}",
++            JsonValueKind.Array => "[" + string.Join(",", element.EnumerateArray().Select(CanonicalizeJsonElement)) + "]",
++            JsonValueKind.String => JsonSerializer.Serialize(element.GetString() ?? string.Empty),
++            JsonValueKind.Number => element.GetRawText(),
++            JsonValueKind.True => "true",
++            JsonValueKind.False => "false",
++            JsonValueKind.Null => "null",
++            _ => "null"
++        };
++    }
++
++    private static string SanitizeForAudit(string? value)
++    {
++        if (string.IsNullOrEmpty(value))
++        {
++            return string.Empty;
++        }
++
++        var sanitized = value;
++        sanitized = AccountPattern.Replace(sanitized, "[ACCOUNT]");
++        sanitized = AmountPattern.Replace(sanitized, "[AMOUNT]");
++        return sanitized.Trim();
++    }
++
++    private static bool TryParseBusinessDate(string? value, out DateOnly businessDate)
++    {
++        return DateOnly.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out businessDate);
++    }
++}
++
++public sealed class AuditState
++{
++    [JsonPropertyName("version")]
++    public int? Version { get; set; } = 1;
++
++    [JsonPropertyName("entries")]
++    public List<AuditEntry> Entries { get; set; } = new();
++}
++
++public sealed class AuditEntry
++{
++    [JsonPropertyName("sequence")]
++    public int Sequence { get; set; }
++
++    [JsonPropertyName("timestamp")]
++    public string Timestamp { get; set; } = string.Empty;
++
++    [JsonPropertyName("requestId")]
++    public string RequestId { get; set; } = string.Empty;
++
++    [JsonPropertyName("action")]
++    public string Action { get; set; } = string.Empty;
++
++    [JsonPropertyName("actor")]
++    public string Actor { get; set; } = string.Empty;
++
++    [JsonPropertyName("proposer")]
++    public string? Proposer { get; set; }
++
++    [JsonPropertyName("checker")]
++    public string? Checker { get; set; }
++
++    [JsonPropertyName("businessDate")]
++    public string? BusinessDate { get; set; }
++
++    [JsonPropertyName("reason")]
++    public string? Reason { get; set; }
++
++    [JsonPropertyName("evidence")]
++    public string? Evidence { get; set; }
++
++    [JsonPropertyName("previousHash")]
++    public string? PreviousHash { get; set; }
++
++    [JsonPropertyName("hash")]
++    public string Hash { get; set; } = string.Empty;
++
++    [JsonPropertyName("version")]
++    public int Version { get; set; } = 1;
++}
+diff --git a/src/TradeRecon.Console/Program.cs b/src/TradeRecon.Console/Program.cs
+index cc9ccbc..dddd670 100644
+--- a/src/TradeRecon.Console/Program.cs
++++ b/src/TradeRecon.Console/Program.cs
+@@ -1,7 +1,9 @@
+ using System.Globalization;
++using System.Text.Json;
+ using Microsoft.Extensions.DependencyInjection;
+ using Microsoft.Extensions.Logging;
+ using Microsoft.Extensions.Logging.Console;
++using TradeRecon.Application.Audit;
+ using TradeRecon.Application.Reconciliation;
+ using TradeRecon.Application.Reporting;
+ using TradeRecon.Domain;
+@@ -37,10 +39,16 @@ public static class Program
+ 
+     public static async Task<int> Main(string[] args)
+     {
++        if (args.Length > 0 && (args[0].Equals("audit", StringComparison.OrdinalIgnoreCase) ||
++            args[0].Equals("--audit", StringComparison.OrdinalIgnoreCase)))
++        {
++            return await RunAuditCommandAsync(args[1..]);
++        }
++
+         if (args.Contains("--help") || args.Contains("-h"))
+         {
+             System.Console.WriteLine(
+-                "Usage: TradeRecon.Console [--date yyyy-MM-dd] [--fixtures <dir>] [--out <dir>] [--json]");
++                "Usage: TradeRecon.Console [--date yyyy-MM-dd] [--fixtures <dir>] [--out <dir>] [--json]\nAudit usage: TradeRecon.Console audit <initialize|propose|decide|export> ...");
+             return ExitClean;
+         }
+ 
+@@ -122,6 +130,73 @@ public static class Program
+         }
+     }
+ 
++    private static Task<int> RunAuditCommandAsync(string[] args)
++    {
++        if (args.Length == 0 || args[0].Equals("--help", StringComparison.OrdinalIgnoreCase) || args[0].Equals("-h", StringComparison.OrdinalIgnoreCase))
++        {
++            var usage = JsonSerializer.Serialize(new
++            {
++                ok = true,
++                action = "audit-help",
++                usage = "TradeRecon.Console audit <initialize|propose|decide|export> ..."
++            });
++            System.Console.Out.WriteLine(usage);
++            return Task.FromResult(ExitClean);
++        }
++
++        try
++        {
++            var command = args[0];
++            var result = command switch
++            {
++                "initialize" => AuditWorkflow.Initialize(RequireArgument(args, 1, "stateDirectory")),
++                "propose" => AuditWorkflow.Propose(
++                    RequireArgument(args, 1, "stateDirectory"),
++                    RequireArgument(args, 2, "requestId"),
++                    RequireArgument(args, 3, "proposer"),
++                    RequireArgument(args, 4, "businessDate"),
++                    RequireArgument(args, 5, "reason"),
++                    RequireArgument(args, 6, "evidence")),
++                "decide" => AuditWorkflow.Decide(
++                    RequireArgument(args, 1, "stateDirectory"),
++                    RequireArgument(args, 2, "requestId"),
++                    RequireArgument(args, 3, "approver"),
++                    RequireArgument(args, 4, "decision")),
++                "export" => AuditWorkflow.Export(
++                    RequireArgument(args, 1, "stateDirectory"),
++                    RequireArgument(args, 2, "fromDate"),
++                    RequireArgument(args, 3, "toDate"),
++                    RequireArgument(args, 4, "exportPath")),
++                _ => new { ok = false, action = command, error = $"Unknown audit command '{command}'." }
++            };
++
++            var payload = JsonSerializer.Serialize(result);
++            System.Console.Out.WriteLine(payload);
++            return Task.FromResult((bool?)result.GetType().GetProperty("ok")?.GetValue(result) == true ? ExitClean : ExitError);
++        }
++        catch (Exception ex)
++        {
++            var payload = JsonSerializer.Serialize(new
++            {
++                ok = false,
++                action = "audit",
++                error = ex.Message
++            });
++            System.Console.Error.WriteLine(payload);
++            return Task.FromResult(ExitError);
++        }
++    }
++
++    private static string RequireArgument(string[] args, int index, string name)
++    {
++        if (args.Length <= index)
++        {
++            throw new ArgumentException($"Missing required argument '{name}'.");
++        }
++
++        return args[index];
++    }
++
+     private sealed record CliOptions(
+         DateOnly BusinessDate,
+         string FixturesDirectory,
+diff --git a/tests/TradeRecon.Tests/AuditWorkflowTests.cs b/tests/TradeRecon.Tests/AuditWorkflowTests.cs
+new file mode 100644
+index 0000000..bd88fe8
+--- /dev/null
++++ b/tests/TradeRecon.Tests/AuditWorkflowTests.cs
+@@ -0,0 +1,191 @@
++using System.Security.Cryptography;
++using System.Text;
++using System.Text.Json;
++using TradeRecon.Application.Audit;
++using Xunit;
++
++namespace TradeRecon.Tests;
++
++public class AuditWorkflowTests
++{
++    [Fact]
++    public void ProposeAndDecide_ProduceOrderedHashChain()
++    {
++        var stateDirectory = CreateStateDirectory();
++        try
++        {
++            var initialize = AuditWorkflow.Initialize(stateDirectory);
++            Assert.True((bool?)initialize.GetType().GetProperty("ok")?.GetValue(initialize) == true);
++
++            var propose = AuditWorkflow.Propose(
++                stateDirectory,
++                "REQ-001",
++                "maker-a",
++                "2024-06-03",
++                "Break is due to ACC001 mismatch.",
++                "Evidence: ACC001 settlement amount 12345.67");
++            var proposalDoc = JsonDocument.Parse(JsonSerializer.Serialize(propose));
++            Assert.Equal("PROPOSED", proposalDoc.RootElement.GetProperty("action").GetString());
++            Assert.Equal(1, proposalDoc.RootElement.GetProperty("sequence").GetInt32());
++            Assert.DoesNotContain("ACC001", JsonSerializer.Serialize(propose));
++            Assert.DoesNotContain("12345.67", JsonSerializer.Serialize(propose));
++
++            var decision = AuditWorkflow.Decide(stateDirectory, "REQ-001", "checker-b", "APPROVED");
++            var decisionDoc = JsonDocument.Parse(JsonSerializer.Serialize(decision));
++            Assert.Equal("APPROVED", decisionDoc.RootElement.GetProperty("action").GetString());
++            Assert.Equal("checker-b", decisionDoc.RootElement.GetProperty("actor").GetString());
++            Assert.Equal(2, decisionDoc.RootElement.GetProperty("sequence").GetInt32());
++
++            var exportPath = Path.Combine(stateDirectory, "audit-export.json");
++            var export = AuditWorkflow.Export(stateDirectory, "2024-06-03", "2024-06-03", exportPath);
++            var exportDoc = JsonDocument.Parse(JsonSerializer.Serialize(export));
++            var entries = exportDoc.RootElement.GetProperty("entries");
++            Assert.Equal(2, entries.GetArrayLength());
++
++            string? previousHash = null;
++            foreach (var entry in entries.EnumerateArray())
++            {
++                var sequence = entry.GetProperty("sequence").GetInt32();
++                Assert.Equal(sequence, sequence);
++                var currentHash = entry.GetProperty("hash").GetString();
++                if (previousHash is not null)
++                {
++                    Assert.Equal(previousHash, entry.GetProperty("previousHash").GetString());
++                }
++                else
++                {
++                    Assert.Equal(JsonValueKind.Null, entry.GetProperty("previousHash").ValueKind);
++                }
++
++                var payload = new
++                {
++                    sequence = entry.GetProperty("sequence").GetInt32(),
++                    timestamp = entry.GetProperty("timestamp").GetString(),
++                    requestId = entry.GetProperty("requestId").GetString(),
++                    action = entry.GetProperty("action").GetString(),
++                    actor = entry.GetProperty("actor").GetString(),
++                    proposer = entry.GetProperty("proposer").GetString(),
++                    checker = entry.TryGetProperty("checker", out var checkerElement) ? checkerElement.GetString() : null,
++                    businessDate = entry.GetProperty("businessDate").GetString(),
++                    reason = entry.GetProperty("reason").GetString(),
++                    evidence = entry.GetProperty("evidence").GetString(),
++                    previousHash = entry.GetProperty("previousHash").ValueKind == JsonValueKind.Null ? null : entry.GetProperty("previousHash").GetString(),
++                    version = entry.GetProperty("version").GetInt32()
++                };
++
++                var canonical = CanonicalJson(payload);
++                using var sha = SHA256.Create();
++                var computedHash = Convert.ToHexString(sha.ComputeHash(Encoding.UTF8.GetBytes(canonical))).ToLowerInvariant();
++                Assert.Equal(computedHash, currentHash);
++                previousHash = currentHash;
++            }
++        }
++        finally
++        {
++            Directory.Delete(stateDirectory, recursive: true);
++        }
++    }
++
++    [Fact]
++    public void SelfApproval_DoesNotPersistFinalDecision()
++    {
++        var stateDirectory = CreateStateDirectory();
++        try
++        {
++            AuditWorkflow.Propose(stateDirectory, "REQ-002", "maker-a", "2024-06-03", "Need approval.", "Evidence: details");
++            var decision = AuditWorkflow.Decide(stateDirectory, "REQ-002", "maker-a", "APPROVED");
++            var decisionDoc = JsonDocument.Parse(JsonSerializer.Serialize(decision));
++            Assert.False(decisionDoc.RootElement.GetProperty("ok").GetBoolean());
++
++            var export = AuditWorkflow.Export(stateDirectory, "2024-06-03", "2024-06-03", Path.Combine(stateDirectory, "export.json"));
++            var exportDoc = JsonDocument.Parse(JsonSerializer.Serialize(export));
++            Assert.Equal(1, exportDoc.RootElement.GetProperty("count").GetInt32());
++            Assert.Equal("PROPOSED", exportDoc.RootElement.GetProperty("entries")[0].GetProperty("action").GetString());
++        }
++        finally
++        {
++            Directory.Delete(stateDirectory, recursive: true);
++        }
++    }
++
++    [Fact]
++    public void RepeatedApproval_IsIdempotent()
++    {
++        var stateDirectory = CreateStateDirectory();
++        try
++        {
++            AuditWorkflow.Propose(stateDirectory, "REQ-003", "maker-a", "2024-06-03", "Reason", "Evidence");
++            var first = AuditWorkflow.Decide(stateDirectory, "REQ-003", "checker-b", "APPROVED");
++            var second = AuditWorkflow.Decide(stateDirectory, "REQ-003", "checker-b", "APPROVED");
++
++            var firstDoc = JsonDocument.Parse(JsonSerializer.Serialize(first));
++            var secondDoc = JsonDocument.Parse(JsonSerializer.Serialize(second));
++            Assert.False(firstDoc.RootElement.GetProperty("idempotent").GetBoolean());
++            Assert.True(secondDoc.RootElement.GetProperty("idempotent").GetBoolean());
++
++            var export = AuditWorkflow.Export(stateDirectory, "2024-06-03", "2024-06-03", Path.Combine(stateDirectory, "export.json"));
++            var exportDoc = JsonDocument.Parse(JsonSerializer.Serialize(export));
++            Assert.Equal(2, exportDoc.RootElement.GetProperty("count").GetInt32());
++            var approvedEntries = exportDoc.RootElement.GetProperty("entries").EnumerateArray().Where(item => item.GetProperty("action").GetString() == "APPROVED").ToList();
++            Assert.Single(approvedEntries);
++        }
++        finally
++        {
++            Directory.Delete(stateDirectory, recursive: true);
++        }
++    }
++
++    [Fact]
++    public void ConflictingDecisions_KeepSingleFinalDecision()
++    {
++        var stateDirectory = CreateStateDirectory();
++        try
++        {
++            AuditWorkflow.Propose(stateDirectory, "REQ-004", "maker-a", "2024-06-03", "Reason", "Evidence");
++            var approve = AuditWorkflow.Decide(stateDirectory, "REQ-004", "checker-b", "APPROVED");
++            var reject = AuditWorkflow.Decide(stateDirectory, "REQ-004", "checker-c", "REJECTED");
++
++            var approveDoc = JsonDocument.Parse(JsonSerializer.Serialize(approve));
++            var rejectDoc = JsonDocument.Parse(JsonSerializer.Serialize(reject));
++            Assert.Equal("APPROVED", approveDoc.RootElement.GetProperty("action").GetString());
++            Assert.True(rejectDoc.RootElement.GetProperty("conflict").GetBoolean());
++
++            var export = AuditWorkflow.Export(stateDirectory, "2024-06-03", "2024-06-03", Path.Combine(stateDirectory, "export.json"));
++            var exportDoc = JsonDocument.Parse(JsonSerializer.Serialize(export));
++            var finalEntries = exportDoc.RootElement.GetProperty("entries").EnumerateArray().Where(item => item.GetProperty("action").GetString() == "APPROVED" || item.GetProperty("action").GetString() == "REJECTED").ToList();
++            Assert.Single(finalEntries);
++        }
++        finally
++        {
++            Directory.Delete(stateDirectory, recursive: true);
++        }
++    }
++
++    private static string CreateStateDirectory()
++    {
++        var directory = Path.Combine(Path.GetTempPath(), "audit-tests-" + Guid.NewGuid().ToString("N"));
++        Directory.CreateDirectory(directory);
++        return directory;
++    }
++
++    private static string CanonicalJson(object value)
++    {
++        var element = JsonSerializer.SerializeToElement(value);
++        return CanonicalizeJsonElement(element);
++    }
++
++    private static string CanonicalizeJsonElement(JsonElement element)
++    {
++        return element.ValueKind switch
++        {
++            JsonValueKind.Object => "{" + string.Join(",", element.EnumerateObject().OrderBy(pair => pair.Name, StringComparer.Ordinal).Select(pair => JsonSerializer.Serialize(pair.Name) + ":" + CanonicalizeJsonElement(pair.Value))) + "}",
++            JsonValueKind.Array => "[" + string.Join(",", element.EnumerateArray().Select(CanonicalizeJsonElement)) + "]",
++            JsonValueKind.String => JsonSerializer.Serialize(element.GetString() ?? string.Empty),
++            JsonValueKind.Number => element.GetRawText(),
++            JsonValueKind.True => "true",
++            JsonValueKind.False => "false",
++            JsonValueKind.Null => "null",
++            _ => "null"
++        };
++    }
++}

@@ -34,11 +34,19 @@ The showcase implementation is complete and locally validated. You can demonstra
 legacy application, specification workflow, controlled experiment design, sealed
 evaluation, and executive dashboard today.
 
-The measured experiment is intentionally **not complete or frozen**. The checked-in
-dashboard evidence is illustrative, is labelled `not-evaluated`, and cannot support a
-model-performance claim. Before measured execution, named reviewers must approve the
-benchmark, exact model and agent versions must be pinned, baseline tags must resolve,
-and the repository must be clean.
+The published measured evidence remains frozen as `specforge-fsi-v1.0.0`, with
+baseline tags, observable Copilot runtime pins, high reasoning effort, and four
+explicit human approvals. Its 90-minute policy and results remain immutable.
+
+`specforge-fsi-v1.1.0` is the next benchmark version. It applies a symmetric
+120-minute limit to the complete 24-run matrix and is intentionally blocked from
+execution until fresh freeze approvals are recorded.
+
+All 24 coding-agent runs have completed and were independently evaluated. The
+pre-registered headline claim is **not supported**: the efficient model with the
+approved spec did not match the frontier raw lane under the sealed evaluator. Evidence
+is qualified as `bounded-measured` because Copilot exposes model-selection IDs and the
+agent version, but not immutable provider model build IDs.
 
 See:
 
@@ -46,6 +54,7 @@ See:
 - [Experiment protocol](docs/experiment-protocol.md)
 - [Facilitator guide](docs/facilitator-guide.md)
 - [Benchmark freeze checklist](docs/benchmark-freeze.md)
+- [Freeze approvals](docs/reviews/specforge-fsi-v1.0.0-freeze-approvals.md)
 - [Reviewer independence register](docs/reviewer-register.md)
 - [Client adaptation guide](docs/client-adaptation.md)
 - [Experiment contract decision](docs/decisions/0001-experiment-contract.md)
@@ -185,13 +194,10 @@ Open `dashboard\dist-single\index.html`.
 
 1. Start with the **Executive** view: hypothesis, claim status, quality medians,
    variability, hard gates, and efficiency.
-2. Point out the persistent **Illustrative / Not evaluated** labelling.
-3. Switch to the **Engineering** view and drill into lanes, repetitions, score
-   dimensions, evidence provenance, and specification-authoring effort.
-4. Explain that the same report engine and dashboard will display measured data after
-   the frozen 24-run experiment.
-
-Do not present the illustrative values as observed model performance.
+2. Explain the **bounded-measured** evidence boundary and unavailable monetary pricing.
+3. Compare `efficient-spec` with `frontier-raw` for each episode.
+4. Switch to the **Engineering** view and drill into retained timeouts, the incomplete
+   run, gate outcomes, usage, and evidence provenance.
 
 ### 7. Close on the operating model (1 minute)
 
@@ -206,37 +212,32 @@ For a 30-minute session, add a live workspace preparation, compare raw/spec prom
 show retained failed-run handling, and discuss how the client would replace the
 synthetic scenario with one of its own.
 
-## What remains before measured results
+## Measured result
 
-The product demonstration is ready. The experiment is not fully finished until these
-externally gated steps are completed:
+The execution matrix contains 19 in-policy completions, four runs stopped at the frozen
+5,400-second boundary, and one incomplete run with no candidate change. Six candidates
+passed every applicable sealed-evaluator gate. Both episode claims and the overall
+roll-up are `not-supported`.
 
-1. Commit the benchmark and create the registered legacy and canonical baseline tags.
-2. Replace `unfrozen` with a unique benchmark version.
-3. Pin exact model build IDs, agent version/build IDs, and reasoning-effort settings.
-4. Record genuine independent scenario, specification, evaluator, and claim approvals
-   in `benchmark\config\approvals.json`.
-5. Optionally add dated, sourced pricing; without it, monetary efficiency remains
-   unavailable rather than zero.
-6. Regenerate a clean, blocker-free freeze record.
-7. Execute all 24 runs without human remediation.
-8. Import every run and publish the measured report and dashboard.
+Dated, sourced pricing can still be added in a future benchmark version. This frozen
+version reports monetary efficiency as unavailable rather than zero.
 
-Until those steps are complete, use the showcase to explain the method, controls, and
-decision experience—not to claim that the registered hypothesis has been proven.
+The next version changes the execution limit to 7,200 seconds. Results from v1.1.0
+must be reported separately from v1.0.0; the four previously timed-out MAI runs
+cannot be selectively rerun.
 
 ## Freeze readiness
 
-Measured sessions are deliberately blocked until immutable baseline refs, exact
-model/agent builds, reasoning settings, and independent approvals are recorded:
+Generate the pending v1.1.0 readiness record with:
 
 ```powershell
-node benchmark\bin\benchmark.js freeze --out evidence\freeze-readiness.json
+node benchmark\bin\benchmark.js freeze --out evidence\freeze-readiness-v1.1.0.json
 ```
 
-The command exits `2` while blockers remain and writes the complete machine-readable
-blocker list. It does not launch any model run or silently treat synthetic sign-off
-personas as real benchmark approvals.
+The published `evidence\freeze-readiness.json` remains the immutable, ready v1.0.0
+record. The v1.1.0 command exits `2` until fresh independent approvals are recorded.
+It does not launch a model run or silently treat synthetic sign-off personas as real
+benchmark approvals.
 
 ## Evidence integrity
 
@@ -247,3 +248,4 @@ personas as real benchmark approvals.
 - Failed runs are retained.
 - Pricing remains unavailable until a dated, approved price source is configured.
 - The benchmark and claim rule are frozen before measured model runs begin.
+- Measured conclusions must display the `bounded-measured` provider-build limitation.

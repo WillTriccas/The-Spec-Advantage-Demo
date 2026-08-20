@@ -6,6 +6,7 @@ import {
   CONFIG_DIR,
   CONTRACTS_DIR,
   REPO_ROOT,
+  getExperimentConfigPath,
   loadCostsConfig,
   loadExperimentConfig,
   loadScoringConfig
@@ -84,10 +85,17 @@ export function createFreezeReadiness({
   repoRoot = REPO_ROOT,
   generatedAt = new Date().toISOString(),
   experimentConfig = loadExperimentConfig(),
+  experimentConfigPath = getExperimentConfigPath(),
   scoringConfig = loadScoringConfig(),
   costsConfig = loadCostsConfig()
 } = {}) {
-  const approvalsPath = path.join(CONFIG_DIR, "approvals.json");
+  const approvalsPath = path.resolve(
+    repoRoot,
+    experimentConfig.approvalsPath ?? path.join("benchmark", "config", "approvals.json")
+  );
+  if (!approvalsPath.startsWith(`${path.resolve(repoRoot)}${path.sep}`)) {
+    throw new Error("Approvals path must remain inside the repository");
+  }
   const approvals = existsSync(approvalsPath)
     ? readJson(approvalsPath)
     : { schemaVersion: "1.0.0" };
@@ -101,6 +109,16 @@ export function createFreezeReadiness({
   if (experimentConfig.benchmarkVersion === "unfrozen") {
     blockers.push("benchmarkVersion is still \"unfrozen\".");
   }
+  const evidenceQualification = experimentConfig.evidenceQualification;
+  if (
+    !["strict-measured", "bounded-measured"].includes(
+      evidenceQualification?.level
+    ) ||
+    typeof evidenceQualification?.limitation !== "string" ||
+    !evidenceQualification.limitation
+  ) {
+    blockers.push("Measured evidence qualification is not fully declared.");
+  }
 
   const models = Object.entries(experimentConfig.models).map(([tier, model]) => {
     if (!model.buildId) blockers.push(`${tier} model buildId is not pinned.`);
@@ -108,6 +126,14 @@ export function createFreezeReadiness({
     if (!model.agentBuildId) blockers.push(`${tier} agentBuildId is not pinned.`);
     if (!model.effortParams?.reasoningEffort) {
       blockers.push(`${tier} reasoning effort is not pinned.`);
+    }
+    if (
+      model.buildId === "not-exposed-by-copilot" &&
+      evidenceQualification?.level !== "bounded-measured"
+    ) {
+      blockers.push(
+        `${tier} model build is not exposed, so evidence must be qualified as bounded-measured.`
+      );
     }
     return {
       tier,
@@ -178,6 +204,7 @@ export function createFreezeReadiness({
     ready: blockers.length === 0,
     blockers,
     benchmarkVersion: experimentConfig.benchmarkVersion,
+    evidenceQualification,
     repository: {
       headCommit,
       clean: dirtyEntries.length === 0,
@@ -188,7 +215,7 @@ export function createFreezeReadiness({
     frozenInputs: {
       evaluatorSha256: hashDirectory(path.join(repoRoot, "evaluator")),
       scoringConfigSha256: hashFile(path.join(CONFIG_DIR, "scoring.json")),
-      experimentConfigSha256: hashFile(path.join(CONFIG_DIR, "experiment.json")),
+      experimentConfigSha256: hashFile(experimentConfigPath),
       costsConfigSha256: hashFile(path.join(CONFIG_DIR, "costs.json")),
       benchmarkEngineSha256: hashDirectory(path.join(repoRoot, "benchmark", "src")),
       runSchemaSha256: hashFile(path.join(CONTRACTS_DIR, "run.schema.json")),

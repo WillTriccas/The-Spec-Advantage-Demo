@@ -179,7 +179,15 @@ function validReport(overrides = {}) {
       benchmarkVersion: "unfrozen",
       generatedAt: "2024-06-01T00:00:00Z",
       dataKind: "illustrative",
+      evidenceQualification: {
+        level: "illustrative",
+        limitation: "Synthetic fixture data."
+      },
       repetitionsPerLane: 3,
+      executionPolicy: {
+        timeoutSeconds: 7200,
+        toolCallCap: 200
+      },
       pricingAsOf: null,
       rateType: "unavailable",
       frozenInputs: {

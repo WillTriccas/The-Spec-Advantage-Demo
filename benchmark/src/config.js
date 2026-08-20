@@ -12,8 +12,20 @@ function readJson(filePath) {
   return JSON.parse(readFileSync(filePath, "utf8"));
 }
 
-export function loadExperimentConfig() {
-  return readJson(path.join(CONFIG_DIR, "experiment.json"));
+export function getExperimentConfigPath(benchmarkVersion = null) {
+  const activePath = path.join(CONFIG_DIR, "experiment.json");
+  if (benchmarkVersion === null) return activePath;
+  if (!/^[a-zA-Z0-9._-]+$/.test(benchmarkVersion)) {
+    throw new Error(`Invalid benchmark version: ${benchmarkVersion}`);
+  }
+  const activeConfig = readJson(activePath);
+  return activeConfig.benchmarkVersion === benchmarkVersion
+    ? activePath
+    : path.join(CONFIG_DIR, "versions", `${benchmarkVersion}.json`);
+}
+
+export function loadExperimentConfig(benchmarkVersion = null) {
+  return readJson(getExperimentConfigPath(benchmarkVersion));
 }
 
 export function loadScoringConfig() {

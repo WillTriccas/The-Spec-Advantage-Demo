@@ -1,0 +1,81 @@
+diff --git a/LegacyTradeReconciliation/CsvFileGateway.cs b/LegacyTradeReconciliation/CsvFileGateway.cs
+index a8bf075..bd17764 100644
+--- a/LegacyTradeReconciliation/CsvFileGateway.cs
++++ b/LegacyTradeReconciliation/CsvFileGateway.cs
+@@ -73,7 +73,7 @@ namespace LegacyTradeReconciliation
+                     record.SettlementId ?? string.Empty,
+                     record.OverrideNote ?? string.Empty)));
+ 
+-            File.WriteAllLines(path, lines);
++            File.WriteAllText(path, string.Join("\n", lines) + "\n");
+         }
+ 
+         public void WriteBreakQueue(string outputDirectory, IReadOnlyCollection<BreakRecord> breakQueue)
+@@ -98,12 +98,12 @@ namespace LegacyTradeReconciliation
+                     record.PositionId ?? string.Empty,
+                     record.SettlementId ?? string.Empty)));
+ 
+-            File.WriteAllLines(path, lines);
++            File.WriteAllText(path, string.Join("\n", lines) + "\n");
+         }
+ 
+         public void WriteEndOfDayReport(string outputDirectory, string reportText)
+         {
+-            File.WriteAllText(Path.Combine(outputDirectory, BatchConfiguration.EndOfDayReportFileName), reportText);
++            File.WriteAllText(Path.Combine(outputDirectory, BatchConfiguration.EndOfDayReportFileName), reportText.Replace("\r\n", "\n").Replace('\r', '\n'));
+         }
+ 
+         private static string[] ReadRequiredLines(string inputDirectory, string fileName)
+diff --git a/LegacyTradeReconciliation/EndOfDayReporter.cs b/LegacyTradeReconciliation/EndOfDayReporter.cs
+index 413ce33..8594a64 100644
+--- a/LegacyTradeReconciliation/EndOfDayReporter.cs
++++ b/LegacyTradeReconciliation/EndOfDayReporter.cs
+@@ -57,7 +57,7 @@ namespace LegacyTradeReconciliation
+                 }
+             }
+ 
+-            return report.ToString().TrimEnd() + Environment.NewLine;
++            return report.ToString().TrimEnd() + "\n";
+         }
+     }
+ }
+diff --git a/LegacyTradeReconciliation/ReconciliationBatch.cs b/LegacyTradeReconciliation/ReconciliationBatch.cs
+index 86e4ee1..bb3046f 100644
+--- a/LegacyTradeReconciliation/ReconciliationBatch.cs
++++ b/LegacyTradeReconciliation/ReconciliationBatch.cs
+@@ -1,4 +1,5 @@
+ using System;
++using System.Globalization;
+ using System.IO;
+ using System.Linq;
+ using System.Security.Cryptography;
+@@ -67,12 +68,13 @@ namespace LegacyTradeReconciliation
+             using (var sha256 = SHA256.Create())
+             {
+                 var payload = new StringBuilder();
+-                payload.AppendLine(request.BusinessDate.ToString("yyyy-MM-dd"));
++                payload.Append(request.BusinessDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)).Append('\n');
+ 
+                 foreach (string filePath in Directory.GetFiles(request.InputDirectory).OrderBy(path => path, StringComparer.OrdinalIgnoreCase))
+                 {
+-                    payload.AppendLine(Path.GetFileName(filePath));
+-                    payload.AppendLine(File.ReadAllText(filePath));
++                    payload.Append(Path.GetFileName(filePath)).Append('\n');
++                    string fileContents = File.ReadAllText(filePath).Replace("\r\n", "\n").Replace('\r', '\n');
++                    payload.Append(fileContents).Append('\n');
+                 }
+ 
+                 byte[] hash = sha256.ComputeHash(Encoding.UTF8.GetBytes(payload.ToString()));
+diff --git a/LegacyTradeReconciliation/RunLedgerStore.cs b/LegacyTradeReconciliation/RunLedgerStore.cs
+index 314a4e7..dd44f2e 100644
+--- a/LegacyTradeReconciliation/RunLedgerStore.cs
++++ b/LegacyTradeReconciliation/RunLedgerStore.cs
+@@ -31,7 +31,7 @@ namespace LegacyTradeReconciliation
+             }
+ 
+             bool fileExists = File.Exists(_ledgerPath);
+-            using (var writer = new StreamWriter(_ledgerPath, true))
++            using (var writer = new StreamWriter(_ledgerPath, true) { NewLine = "\n" })
+             {
+                 if (!fileExists)
+                 {

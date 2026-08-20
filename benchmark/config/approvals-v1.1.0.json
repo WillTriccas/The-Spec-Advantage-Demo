@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0.0",
+  "scenario": {
+    "approved": false,
+    "reviewer": "pending",
+    "approvedAt": "pending",
+    "evidenceRef": "docs/reviews/specforge-fsi-v1.1.0-freeze-approvals.md#scenario"
+  },
+  "specifications": {
+    "approved": false,
+    "reviewer": "pending",
+    "approvedAt": "pending",
+    "evidenceRef": "docs/reviews/specforge-fsi-v1.1.0-freeze-approvals.md#specifications"
+  },
+  "evaluator": {
+    "approved": false,
+    "reviewer": "pending",
+    "approvedAt": "pending",
+    "evidenceRef": "docs/reviews/specforge-fsi-v1.1.0-freeze-approvals.md#evaluator-and-scoring"
+  },
+  "claimAdjudication": {
+    "approved": false,
+    "reviewer": "pending",
+    "approvedAt": "pending",
+    "evidenceRef": "docs/reviews/specforge-fsi-v1.1.0-freeze-approvals.md#claim-adjudication"
+  }
+}

@@ -14,9 +14,14 @@ import {
   assertFrozenForMeasuredData
 } from "../src/prepare.js";
 import { buildPlannedRuns } from "../src/runs.js";
+import { loadExperimentConfig } from "../src/config.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "..", "..");
+const UNFROZEN_EXPERIMENT_CONFIG = {
+  ...loadExperimentConfig(),
+  benchmarkVersion: "unfrozen"
+};
 
 function withTempDir(fn) {
   const dir = mkdtempSync(path.join(tmpdir(), "bench-prepare-"));
@@ -65,7 +70,12 @@ test("prepareRunWorkspace for a raw lane copies only the baseline and the raw br
     writeFileSync(path.join(baselineDir, "Program.cs"), "// legacy code", "utf8");
     withTempDir((outputRoot) => {
       const run = buildPlannedRuns().find((r) => r.runId === "modernization-efficient-raw-r1");
-      const result = prepareRunWorkspace(run, { baselineDir, outputRoot, repoRoot: REPO_ROOT });
+      const result = prepareRunWorkspace(run, {
+        baselineDir,
+        outputRoot,
+        repoRoot: REPO_ROOT,
+        experimentConfig: UNFROZEN_EXPERIMENT_CONFIG
+      });
 
       assert.ok(existsSync(path.join(result.workspaceDir, "Program.cs")));
       const prompt = readFileSync(result.promptPath, "utf8");
@@ -85,7 +95,7 @@ test("prepareRunWorkspace for a raw lane copies only the baseline and the raw br
         humanRemediation: false,
         preserveFailedRuns: true,
         failedRunTreatment: "score-zero-and-fail-applicable-gates",
-        timeoutSeconds: 5400,
+        timeoutSeconds: 7200,
         toolCallCap: 200,
         toolPermissionProfile: "standard-coding",
         runOrder: "randomized-interleaved",
@@ -102,7 +112,12 @@ test("prepareRunWorkspace for a spec lane renders the approved spec as the promp
     writeFileSync(path.join(baselineDir, "Program.cs"), "// legacy code", "utf8");
     withTempDir((outputRoot) => {
       const run = buildPlannedRuns().find((r) => r.runId === "modernization-efficient-spec-r1");
-      const result = prepareRunWorkspace(run, { baselineDir, outputRoot, repoRoot: REPO_ROOT });
+      const result = prepareRunWorkspace(run, {
+        baselineDir,
+        outputRoot,
+        repoRoot: REPO_ROOT,
+        experimentConfig: UNFROZEN_EXPERIMENT_CONFIG
+      });
 
       const prompt = readFileSync(result.promptPath, "utf8");
       assert.match(prompt, /## Requirements/);
@@ -123,7 +138,12 @@ test("prepareRunWorkspace computes a baseline sha256 recorded in plan.json", () 
     writeFileSync(path.join(baselineDir, "Program.cs"), "// legacy code", "utf8");
     withTempDir((outputRoot) => {
       const run = buildPlannedRuns().find((r) => r.runId === "audit-feature-frontier-raw-r2");
-      const result = prepareRunWorkspace(run, { baselineDir, outputRoot, repoRoot: REPO_ROOT });
+      const result = prepareRunWorkspace(run, {
+        baselineDir,
+        outputRoot,
+        repoRoot: REPO_ROOT,
+        experimentConfig: UNFROZEN_EXPERIMENT_CONFIG
+      });
       const plan = JSON.parse(readFileSync(result.planPath, "utf8"));
       assert.match(plan.baseline.sha256, /^[a-f0-9]{64}$/);
       assert.strictEqual(plan.baseline.sha256, hashDirectory(baselineDir));
@@ -135,7 +155,12 @@ test("prepareRunWorkspace throws when the baseline directory does not exist", ()
   withTempDir((outputRoot) => {
     const run = buildPlannedRuns().find((r) => r.runId === "modernization-efficient-raw-r1");
     assert.throws(() => {
-      prepareRunWorkspace(run, { baselineDir: path.join(outputRoot, "nope"), outputRoot, repoRoot: REPO_ROOT });
+      prepareRunWorkspace(run, {
+        baselineDir: path.join(outputRoot, "nope"),
+        outputRoot,
+        repoRoot: REPO_ROOT,
+        experimentConfig: UNFROZEN_EXPERIMENT_CONFIG
+      });
     }, /does not exist/);
   });
 });
@@ -145,7 +170,12 @@ test("assertNoSpecLeakage does not throw for a clean raw-lane workspace", () => 
     writeFileSync(path.join(baselineDir, "Program.cs"), "// legacy code", "utf8");
     withTempDir((outputRoot) => {
       const run = buildPlannedRuns().find((r) => r.runId === "audit-feature-efficient-raw-r1");
-      const result = prepareRunWorkspace(run, { baselineDir, outputRoot, repoRoot: REPO_ROOT });
+      const result = prepareRunWorkspace(run, {
+        baselineDir,
+        outputRoot,
+        repoRoot: REPO_ROOT,
+        experimentConfig: UNFROZEN_EXPERIMENT_CONFIG
+      });
       assert.doesNotThrow(() => assertNoSpecLeakage(run, result.workspaceDir, REPO_ROOT));
     });
   });
@@ -169,7 +199,12 @@ test("prepareRunWorkspace writes a provenance.json with task-brief and config ha
     writeFileSync(path.join(baselineDir, "Program.cs"), "// legacy code", "utf8");
     withTempDir((outputRoot) => {
       const run = buildPlannedRuns().find((r) => r.runId === "modernization-efficient-raw-r1");
-      const result = prepareRunWorkspace(run, { baselineDir, outputRoot, repoRoot: REPO_ROOT });
+      const result = prepareRunWorkspace(run, {
+        baselineDir,
+        outputRoot,
+        repoRoot: REPO_ROOT,
+        experimentConfig: UNFROZEN_EXPERIMENT_CONFIG
+      });
       assert.ok(existsSync(result.provenancePath));
       const provenance = JSON.parse(readFileSync(result.provenancePath, "utf8"));
       assert.match(provenance.hashes.taskBriefSha256, /^[a-f0-9]{64}$/);
@@ -186,7 +221,12 @@ test("prepareRunWorkspace writes both the shared task-brief hash and the spec-ma
     writeFileSync(path.join(baselineDir, "Program.cs"), "// legacy code", "utf8");
     withTempDir((outputRoot) => {
       const run = buildPlannedRuns().find((r) => r.runId === "modernization-efficient-spec-r1");
-      const result = prepareRunWorkspace(run, { baselineDir, outputRoot, repoRoot: REPO_ROOT });
+      const result = prepareRunWorkspace(run, {
+        baselineDir,
+        outputRoot,
+        repoRoot: REPO_ROOT,
+        experimentConfig: UNFROZEN_EXPERIMENT_CONFIG
+      });
       const provenance = JSON.parse(readFileSync(result.provenancePath, "utf8"));
       assert.match(provenance.hashes.taskBriefSha256, /^[a-f0-9]{64}$/);
       assert.match(provenance.hashes.specManifestSha256, /^[a-f0-9]{64}$/);
@@ -199,7 +239,12 @@ test("plan.json's model object carries frozen model and agent pins through from 
     writeFileSync(path.join(baselineDir, "Program.cs"), "// legacy code", "utf8");
     withTempDir((outputRoot) => {
       const run = { ...buildPlannedRuns().find((r) => r.runId === "modernization-efficient-raw-r1"), modelBuildId: "build-123", modelAgentVersion: "agent-9", modelAgentBuildId: "agent-build-9", modelEffortParams: { reasoningEffort: "high" } };
-      const result = prepareRunWorkspace(run, { baselineDir, outputRoot, repoRoot: REPO_ROOT });
+      const result = prepareRunWorkspace(run, {
+        baselineDir,
+        outputRoot,
+        repoRoot: REPO_ROOT,
+        experimentConfig: UNFROZEN_EXPERIMENT_CONFIG
+      });
       assert.strictEqual(result.plan.model.buildId, "build-123");
       assert.strictEqual(result.plan.model.agentVersion, "agent-9");
       assert.strictEqual(result.plan.model.agentBuildId, "agent-build-9");
@@ -213,7 +258,16 @@ test("validateRunConsistency throws when a run's inputMode doesn't match its lan
     writeFileSync(path.join(baselineDir, "Program.cs"), "// legacy code", "utf8");
     withTempDir((outputRoot) => {
       const run = { ...buildPlannedRuns().find((r) => r.runId === "modernization-efficient-raw-r1"), inputMode: "spec" };
-      assert.throws(() => prepareRunWorkspace(run, { baselineDir, outputRoot, repoRoot: REPO_ROOT }), /inputMode/);
+      assert.throws(
+        () =>
+          prepareRunWorkspace(run, {
+            baselineDir,
+            outputRoot,
+            repoRoot: REPO_ROOT,
+            experimentConfig: UNFROZEN_EXPERIMENT_CONFIG
+          }),
+        /inputMode/
+      );
     });
   });
 });
@@ -223,7 +277,16 @@ test("validateRunConsistency throws when a run's modelId doesn't match its model
     writeFileSync(path.join(baselineDir, "Program.cs"), "// legacy code", "utf8");
     withTempDir((outputRoot) => {
       const run = { ...buildPlannedRuns().find((r) => r.runId === "modernization-efficient-raw-r1"), modelId: "not-the-configured-model" };
-      assert.throws(() => prepareRunWorkspace(run, { baselineDir, outputRoot, repoRoot: REPO_ROOT }), /modelId/);
+      assert.throws(
+        () =>
+          prepareRunWorkspace(run, {
+            baselineDir,
+            outputRoot,
+            repoRoot: REPO_ROOT,
+            experimentConfig: UNFROZEN_EXPERIMENT_CONFIG
+          }),
+        /modelId/
+      );
     });
   });
 });

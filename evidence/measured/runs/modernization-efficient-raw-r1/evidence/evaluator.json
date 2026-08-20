@@ -1,0 +1,336 @@
+{
+  "attestation": {
+    "independentFromSpecAuthors": true,
+    "evaluatorNames": [
+      "sealed-ai-sdlc-benchmark-evaluator"
+    ],
+    "statement": "Evaluator used only allowed public contracts, prompts, scoring config, and source baselines; it remained blind to spec-factory/, evidence/, approved spec content, and expected measured benchmark output."
+  },
+  "scores": {
+    "behaviorPreservation": 0,
+    "functionalCorrectness": 0,
+    "maintainability": 100,
+    "operability": 0,
+    "scopeTraceability": 0,
+    "securityControls": 0
+  },
+  "hardGates": {
+    "build": true,
+    "essential-business-invariants": false,
+    "no-critical-security-findings": false
+  },
+  "sealedEvidence": {
+    "adapterValidation": {
+      "errors": [],
+      "passed": true
+    },
+    "commands": [
+      {
+        "allowedExitCodes": [
+          0
+        ],
+        "arguments": [
+          "build",
+          "LegacyTradeReconciliation.sln",
+          "--configuration",
+          "Release"
+        ],
+        "cwd": ".",
+        "executable": "C:\\Users\\willtriccas\\AppData\\Local\\dotnet\\dotnet.exe",
+        "exitCode": 0,
+        "id": "build",
+        "passed": true,
+        "sensitiveOutputDetected": false,
+        "signal": null,
+        "stderr": "",
+        "stdout": "  Determining projects to restore...\n  All projects are up-to-date for restore.\n  LegacyTradeReconciliation -> <redacted-path>\\LegacyTradeReconciliation\\bin\\Release\\net8.0\\LegacyTradeReconciliation.dll\n\nBuild succeeded.\n    0 Warning(s)\n    0 Error(s)\n\nTime Elapsed 00:00:02.07\n",
+        "timedOut": false
+      },
+      {
+        "allowedExitCodes": [
+          0
+        ],
+        "arguments": [
+          "run",
+          "--project",
+          "tests/LegacyTradeReconciliation.CharacterizationTests/LegacyTradeReconciliation.CharacterizationTests.csproj",
+          "--configuration",
+          "Release",
+          "--no-build"
+        ],
+        "cwd": ".",
+        "executable": "C:\\Users\\willtriccas\\AppData\\Local\\dotnet\\dotnet.exe",
+        "exitCode": 2147516545,
+        "id": "test",
+        "passed": false,
+        "sensitiveOutputDetected": false,
+        "signal": null,
+        "stderr": "The application to execute does not exist: '<redacted-path>\\tests\\LegacyTradeReconciliation.CharacterizationTests\\obj\\Release\\net8.0\\LegacyTradeReconciliation.CharacterizationTests.dll'\n",
+        "stdout": "",
+        "timedOut": false
+      },
+      {
+        "allowedExitCodes": [
+          0
+        ],
+        "arguments": [
+          "run",
+          "--project",
+          "LegacyTradeReconciliation/LegacyTradeReconciliation.csproj",
+          "--configuration",
+          "Release",
+          "--",
+          "2026-02-17",
+          "<redacted-path>",
+          "<redacted-path>"
+        ],
+        "cwd": ".",
+        "executable": "C:\\Users\\willtriccas\\AppData\\Local\\dotnet\\dotnet.exe",
+        "exitCode": 0,
+        "id": "run-hidden-fixture-1",
+        "passed": true,
+        "sensitiveOutputDetected": false,
+        "signal": null,
+        "stderr": "",
+        "stdout": "Processed 10 trades into 5 matched rows and 5 open breaks.\n",
+        "timedOut": false
+      },
+      {
+        "allowedExitCodes": [
+          0
+        ],
+        "arguments": [
+          "run",
+          "--project",
+          "LegacyTradeReconciliation/LegacyTradeReconciliation.csproj",
+          "--configuration",
+          "Release",
+          "--",
+          "2026-02-17",
+          "<redacted-path>",
+          "<redacted-path>"
+        ],
+        "cwd": ".",
+        "executable": "C:\\Users\\willtriccas\\AppData\\Local\\dotnet\\dotnet.exe",
+        "exitCode": 0,
+        "id": "run-hidden-fixture-2",
+        "passed": true,
+        "sensitiveOutputDetected": false,
+        "signal": null,
+        "stderr": "",
+        "stdout": "Exact rerun detected for 2026-02-17. Existing outputs were retained.\n",
+        "timedOut": false
+      }
+    ],
+    "dimensions": {
+      "behaviorPreservation": {
+        "findings": [
+          "legacy observable behavior was not fully preserved"
+        ],
+        "passed": false,
+        "score": 0,
+        "weight": 20
+      },
+      "functionalCorrectness": {
+        "findings": [
+          "test command failed or timed out"
+        ],
+        "passed": false,
+        "score": 0,
+        "weight": 35
+      },
+      "maintainability": {
+        "findings": [
+          "Candidate exposed a schema-valid data-only benchmark adapter."
+        ],
+        "passed": true,
+        "score": 15,
+        "weight": 15
+      },
+      "operability": {
+        "findings": [
+          "build/test/run command sequence did not complete cleanly"
+        ],
+        "passed": false,
+        "score": 0,
+        "weight": 10
+      },
+      "scopeTraceability": {
+        "findings": [
+          "declared output contract was incomplete or invalid"
+        ],
+        "passed": false,
+        "score": 0,
+        "weight": 5
+      },
+      "securityControls": {
+        "findings": [
+          "Blocking pinned static/dependency findings were detected."
+        ],
+        "passed": false,
+        "score": 0,
+        "weight": 15
+      }
+    },
+    "episodeId": "modernization",
+    "evaluator": {
+      "blindnessAttestation": "Evaluator used only allowed public contracts, prompts, scoring config, and source baselines; it remained blind to spec-factory/, evidence/, approved spec content, and expected measured benchmark output.",
+      "commandTimeoutsMs": {
+        "auditCommand": 15000,
+        "build": 120000,
+        "run": 60000,
+        "scanner": 30000,
+        "test": 120000
+      },
+      "fixtureHashes": {
+        "auditFeature": {
+          "fixtureSetHash": "89d6c189cb3ce8e0ef025a67bdbfe0299de45e94dab8edd507c5c0ff834b8e93",
+          "format": "adapter-placeholder-command-contract",
+          "id": "audit-hidden-synthetic-2026-08-12"
+        },
+        "modernization": {
+          "businessDate": "2026-02-17",
+          "files": {
+            "overrides.csv": "ddece0d4b5268f64aec7d3b29abe59a0cf9a65d2512243fc505e23f3229b6c1a",
+            "positions.csv": "f0a2740e433862ddaae573ea7d94d3de563fab0a7ab1de93fe40e20c24427205",
+            "settlements.csv": "bf8d8cbd64faa67de0daddb3be7506db5fb5e56db9b0ae31283e47a2f7f1c348",
+            "trades.csv": "e68a5a8e0f754d0d5ef996c1e8f0afc91488e56a258a6d8b67a53225adbc175f"
+          },
+          "fixtureSetHash": "0c0f59af9fef130de5fd3cf715cf7aaec3856b774e8ff3feb92c30bddfe46ebf",
+          "format": "legacy-observable-csv-contract",
+          "id": "modernization-hidden-synthetic-2026-08-12"
+        }
+      },
+      "name": "sealed-ai-sdlc-benchmark-evaluator",
+      "scannerRulesets": [
+        {
+          "id": "static-secret-patterns",
+          "version": "2026.08.12"
+        },
+        {
+          "id": "static-unsafe-execution-deserialization",
+          "version": "2026.08.12"
+        },
+        {
+          "id": "dependency-vulnerability-command-output",
+          "version": "2026.08.12"
+        }
+      ],
+      "version": "1.0.0"
+    },
+    "gates": {
+      "build": {
+        "applicable": true,
+        "findings": [
+          "build command completed with an allowed exit code"
+        ],
+        "passed": true
+      },
+      "essential-business-invariants": {
+        "applicable": true,
+        "findings": [
+          "test command failed or timed out"
+        ],
+        "passed": false
+      },
+      "no-critical-security-findings": {
+        "applicable": true,
+        "findings": [
+          "2 blocking static/dependency finding(s)"
+        ],
+        "passed": false
+      }
+    },
+    "outcome": "failed",
+    "schemaVersion": "sealed-evaluator-evidence/1.0.0",
+    "score": 0,
+    "staticChecks": {
+      "blockingFindings": 2,
+      "criticalFindings": 2,
+      "dependencyAuditCommands": [
+        {
+          "exitCode": 0,
+          "id": "dotnet-restore-for-audit",
+          "kind": "dotnet-restore",
+          "stderr": "",
+          "stdout": "",
+          "target": "LegacyTradeReconciliation.sln",
+          "timedOut": false
+        },
+        {
+          "exitCode": 0,
+          "id": "dotnet-list-package-vulnerable",
+          "kind": "dotnet",
+          "stderr": "",
+          "stdout": "\nThe following sources were used:\n   https://packagefeedproxy.microsoft.io/nuget/v3/index.json\n\nThe given project `LegacyTradeReconciliation` has no vulnerable packages given the current sources.\n",
+          "target": "LegacyTradeReconciliation.sln",
+          "timedOut": false
+        },
+        {
+          "exitCode": 0,
+          "id": "dotnet-restore-for-audit",
+          "kind": "dotnet-restore",
+          "stderr": "",
+          "stdout": "",
+          "target": "LegacyTradeReconciliation/LegacyTradeReconciliation.csproj",
+          "timedOut": false
+        },
+        {
+          "exitCode": 0,
+          "id": "dotnet-list-package-vulnerable",
+          "kind": "dotnet",
+          "stderr": "",
+          "stdout": "\nThe following sources were used:\n   https://packagefeedproxy.microsoft.io/nuget/v3/index.json\n\nThe given project `LegacyTradeReconciliation` has no vulnerable packages given the current sources.\n",
+          "target": "LegacyTradeReconciliation/LegacyTradeReconciliation.csproj",
+          "timedOut": false
+        },
+        {
+          "exitCode": 1,
+          "id": "dotnet-restore-for-audit",
+          "kind": "dotnet-restore",
+          "stderr": "",
+          "stdout": "MSBUILD : error MSB1009: Project file does not exist.\nSwitch: <redacted-path>\\tests\\LegacyTradeReconciliation.CharacterizationTests\\LegacyTradeReconciliation.CharacterizationTests.csproj\n",
+          "target": "tests/LegacyTradeReconciliation.CharacterizationTests/LegacyTradeReconciliation.CharacterizationTests.csproj",
+          "timedOut": false
+        },
+        {
+          "exitCode": 1,
+          "id": "dotnet-list-package-vulnerable",
+          "kind": "dotnet",
+          "stderr": "No assets file was found for `<redacted-path>\\tests\\LegacyTradeReconciliation.CharacterizationTests\\LegacyTradeReconciliation.CharacterizationTests.csproj`. Please run restore before running this command.\n",
+          "stdout": "\nThe following sources were used:\n   https://packagefeedproxy.microsoft.io/nuget/v3/index.json\n\n\n",
+          "target": "tests/LegacyTradeReconciliation.CharacterizationTests/LegacyTradeReconciliation.CharacterizationTests.csproj",
+          "timedOut": false
+        }
+      ],
+      "findings": [
+        {
+          "path": ".",
+          "reason": "dependency audit restore exited with code 1",
+          "ruleId": "dependency-audit-failed",
+          "scannerId": "dotnet-restore-for-audit",
+          "severity": "critical",
+          "source": "dependency-audit"
+        },
+        {
+          "path": ".",
+          "reason": "dotnet package audit exited with code 1",
+          "ruleId": "dependency-audit-failed",
+          "scannerId": "dotnet-list-package-vulnerable",
+          "severity": "critical",
+          "source": "dependency-audit"
+        },
+        {
+          "path": "README.md",
+          "ruleId": "command-shell-execution",
+          "severity": "high"
+        }
+      ]
+    }
+  },
+  "compatibilityMapping": {
+    "dimensionRule": "passed => 100; failed => 0",
+    "gateRule": "gates.<id>.passed copied without reinterpretation",
+    "sourcePath": "evidence/measured/runs/modernization-efficient-raw-r1/evidence/sealed-evaluator.json"
+  }
+}

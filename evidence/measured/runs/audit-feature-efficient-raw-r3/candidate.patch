@@ -1,0 +1,609 @@
+diff --git a/src/TradeRecon.Console/Program.cs b/src/TradeRecon.Console/Program.cs
+index cc9ccbc..6c62772 100644
+--- a/src/TradeRecon.Console/Program.cs
++++ b/src/TradeRecon.Console/Program.cs
+@@ -1,4 +1,9 @@
+ using System.Globalization;
++using System.Security.Cryptography;
++using System.Text;
++using System.Text.Json;
++using System.Text.Json.Serialization;
++using System.Text.RegularExpressions;
+ using Microsoft.Extensions.DependencyInjection;
+ using Microsoft.Extensions.Logging;
+ using Microsoft.Extensions.Logging.Console;
+@@ -26,6 +31,19 @@ namespace TradeRecon.Console;
+ /// </summary>
+ public static class Program
+ {
++    private const string AuditCommandInitialize = "initialize";
++    private const string AuditCommandPropose = "propose";
++    private const string AuditCommandDecide = "decide";
++    private const string AuditCommandExport = "export";
++    private const string AuditCommandHelp = "help";
++
++    private static readonly JsonSerializerOptions AuditJsonOptions = new()
++    {
++        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
++        DefaultIgnoreCondition = JsonIgnoreCondition.Never,
++        WriteIndented = false
++    };
++
+     /// <summary>Reconciliation completed with no open breaks.</summary>
+     public const int ExitClean = 0;
+ 
+@@ -37,6 +55,11 @@ public static class Program
+ 
+     public static async Task<int> Main(string[] args)
+     {
++        if (args.Length > 0 && IsAuditCommand(args[0]))
++        {
++            return await HandleAuditCommandAsync(args).ConfigureAwait(false);
++        }
++
+         if (args.Contains("--help") || args.Contains("-h"))
+         {
+             System.Console.WriteLine(
+@@ -122,6 +145,562 @@ public static class Program
+         }
+     }
+ 
++    private static bool IsAuditCommand(string command)
++        => string.Equals(command, AuditCommandInitialize, StringComparison.OrdinalIgnoreCase)
++            || string.Equals(command, AuditCommandPropose, StringComparison.OrdinalIgnoreCase)
++            || string.Equals(command, AuditCommandDecide, StringComparison.OrdinalIgnoreCase)
++            || string.Equals(command, AuditCommandExport, StringComparison.OrdinalIgnoreCase)
++            || string.Equals(command, AuditCommandHelp, StringComparison.OrdinalIgnoreCase);
++
++    private static async Task<int> HandleAuditCommandAsync(string[] args)
++    {
++        var request = args[0];
++        try
++        {
++            if (string.Equals(request, AuditCommandHelp, StringComparison.OrdinalIgnoreCase)
++                || args.Contains("--help", StringComparer.OrdinalIgnoreCase)
++                || args.Contains("-h", StringComparer.OrdinalIgnoreCase))
++            {
++                WriteAuditJson(new
++                {
++                    ok = true,
++                    action = "help",
++                    commands = new[]
++                    {
++                        AuditCommandInitialize,
++                        AuditCommandPropose,
++                        AuditCommandDecide,
++                        AuditCommandExport
++                    },
++                    usage = "initialize|propose|decide|export"
++                });
++                return ExitClean;
++            }
++
++            return request.ToLowerInvariant() switch
++            {
++                "initialize" => await RunInitializeAsync(args).ConfigureAwait(false),
++                "propose" => await RunProposeAsync(args).ConfigureAwait(false),
++                "decide" => await RunDecideAsync(args).ConfigureAwait(false),
++                "export" => await RunExportAsync(args).ConfigureAwait(false),
++                _ => ExitError
++            };
++        }
++        catch (Exception ex)
++        {
++            WriteAuditJson(new { ok = false, error = SanitizeOutput(ex.Message) });
++            return ExitError;
++        }
++    }
++
++    private static async Task<int> RunInitializeAsync(string[] args)
++    {
++        var stateDirectory = GetRequiredValue(args, "--stateDirectory", "--state-directory");
++        Directory.CreateDirectory(stateDirectory);
++        var lockFile = new AuditStateLock(stateDirectory);
++        try
++        {
++            await lockFile.AcquireAsync().ConfigureAwait(false);
++            var state = await ReadStateAsync(stateDirectory).ConfigureAwait(false);
++            var wasInitialized = state.Version > 0 && state.Entries.Count >= 0;
++            if (!wasInitialized || state.Entries is null || state.Requests is null)
++            {
++                state.Version = 1;
++                state.Sequence = 0;
++                state.Entries ??= new List<AuditEntry>();
++                state.Requests ??= new Dictionary<string, AuditRequestRecord>(StringComparer.OrdinalIgnoreCase);
++                await WriteStateAsync(stateDirectory, state).ConfigureAwait(false);
++            }
++
++            WriteAuditJson(new
++            {
++                ok = true,
++                action = "initialize",
++                stateDirectory,
++                initialized = true,
++                version = 1,
++                sequence = state.Sequence,
++                entries = state.Entries.Select(MapEntryForExport).ToList()
++            });
++            return ExitClean;
++        }
++        finally
++        {
++            lockFile.Dispose();
++        }
++    }
++
++    private static async Task<int> RunProposeAsync(string[] args)
++    {
++        var stateDirectory = GetRequiredValue(args, "--stateDirectory", "--state-directory");
++        var requestId = SanitizeOutput(GetRequiredValue(args, "--requestId", "--request-id"));
++        var proposer = SanitizeOutput(GetRequiredValue(args, "--proposer"));
++        var businessDate = GetRequiredValue(args, "--businessDate", "--business-date");
++        var reason = SanitizeOutput(GetRequiredValue(args, "--reason"));
++        var evidence = SanitizeOutput(GetRequiredValue(args, "--evidence"));
++
++        Directory.CreateDirectory(stateDirectory);
++        var lockFile = new AuditStateLock(stateDirectory);
++        try
++        {
++            await lockFile.AcquireAsync().ConfigureAwait(false);
++            var state = await ReadStateAsync(stateDirectory).ConfigureAwait(false);
++            state.Requests ??= new Dictionary<string, AuditRequestRecord>(StringComparer.OrdinalIgnoreCase);
++
++            if (state.Requests.TryGetValue(requestId, out var existing))
++            {
++                var requestMatches = string.Equals(existing.Proposer, proposer, StringComparison.OrdinalIgnoreCase)
++                    && string.Equals(existing.BusinessDate, businessDate, StringComparison.OrdinalIgnoreCase)
++                    && string.Equals(existing.Reason, reason, StringComparison.Ordinal)
++                    && string.Equals(existing.Evidence, evidence, StringComparison.Ordinal);
++
++                if (requestMatches)
++                {
++                    WriteAuditJson(new
++                    {
++                        ok = true,
++                        action = "proposed",
++                        status = "proposed",
++                        requestId,
++                        proposer,
++                        businessDate,
++                        duplicate = true,
++                        sequence = existing.ProposalSequence,
++                        hash = existing.ProposalHash
++                    });
++                    return ExitClean;
++                }
++
++                throw new InvalidOperationException("request already exists with conflicting details.");
++            }
++
++            var proposalDate = DateOnly.ParseExact(businessDate, "yyyy-MM-dd", CultureInfo.InvariantCulture);
++            var entry = CreateAuditEntry(state, requestId, "proposed", proposer, "proposer", proposalDate.ToString("yyyy-MM-dd"));
++            entry.Decision = null;
++            entry.IsFinalDecision = false;
++            entry.Reason = reason;
++            entry.Evidence = evidence;
++
++            var record = new AuditRequestRecord
++            {
++                RequestId = requestId,
++                Proposer = proposer,
++                BusinessDate = proposalDate.ToString("yyyy-MM-dd"),
++                Reason = reason,
++                Evidence = evidence,
++                ProposalHash = entry.Hash,
++                ProposalSequence = entry.Sequence,
++                FinalDecision = null,
++                FinalChecker = null
++            };
++
++            state.Entries ??= new List<AuditEntry>();
++            state.Entries.Add(entry);
++            state.Requests[requestId] = record;
++            await WriteStateAsync(stateDirectory, state).ConfigureAwait(false);
++
++            WriteAuditJson(new
++            {
++                ok = true,
++                action = "proposed",
++                status = "proposed",
++                requestId,
++                proposer,
++                businessDate,
++                reason,
++                evidence,
++                sequence = entry.Sequence,
++                hash = entry.Hash,
++                duplicate = false
++            });
++            return ExitClean;
++        }
++        finally
++        {
++            lockFile.Dispose();
++        }
++    }
++
++    private static async Task<int> RunDecideAsync(string[] args)
++    {
++        var stateDirectory = GetRequiredValue(args, "--stateDirectory", "--state-directory");
++        var requestId = SanitizeOutput(GetRequiredValue(args, "--requestId", "--request-id"));
++        var approver = SanitizeOutput(GetRequiredValue(args, "--approver"));
++        var decision = NormalizeDecision(GetRequiredValue(args, "--decision"));
++
++        Directory.CreateDirectory(stateDirectory);
++        var lockFile = new AuditStateLock(stateDirectory);
++        try
++        {
++            await lockFile.AcquireAsync().ConfigureAwait(false);
++            var state = await ReadStateAsync(stateDirectory).ConfigureAwait(false);
++            state.Requests ??= new Dictionary<string, AuditRequestRecord>(StringComparer.OrdinalIgnoreCase);
++
++            if (!state.Requests.TryGetValue(requestId, out var request))
++            {
++                throw new InvalidOperationException("request is not found.");
++            }
++
++            if (string.Equals(request.Proposer, approver, StringComparison.OrdinalIgnoreCase))
++            {
++                throw new InvalidOperationException("self-approval is not allowed.");
++            }
++
++            if (!string.IsNullOrWhiteSpace(request.FinalDecision))
++            {
++                if (string.Equals(request.FinalDecision, decision, StringComparison.OrdinalIgnoreCase)
++                    && string.Equals(request.FinalChecker, approver, StringComparison.OrdinalIgnoreCase))
++                {
++                    WriteAuditJson(new
++                    {
++                        ok = true,
++                        action = decision,
++                        requestId,
++                        approver,
++                        decision,
++                        status = decision,
++                        duplicate = true,
++                        finalDecision = request.FinalDecision,
++                        checker = request.FinalChecker,
++                        businessDate = request.BusinessDate
++                    });
++                    return ExitClean;
++                }
++
++                throw new InvalidOperationException("request already has a final decision.");
++            }
++
++            request.FinalDecision = decision;
++            request.FinalChecker = approver;
++            request.DecidedAt = DateTimeOffset.UtcNow;
++
++            var entry = CreateAuditEntry(state, requestId, decision, approver, "checker", request.BusinessDate);
++            entry.Decision = decision;
++            entry.IsFinalDecision = true;
++            entry.Reason = request.Reason;
++            entry.Evidence = request.Evidence;
++            state.Entries ??= new List<AuditEntry>();
++            state.Entries.Add(entry);
++            await WriteStateAsync(stateDirectory, state).ConfigureAwait(false);
++
++            WriteAuditJson(new
++            {
++                ok = true,
++                action = decision,
++                requestId,
++                approver,
++                decision,
++                status = decision,
++                checker = approver,
++                businessDate = request.BusinessDate,
++                sequence = entry.Sequence,
++                hash = entry.Hash,
++                finalDecision = decision,
++                duplicate = false
++            });
++            return ExitClean;
++        }
++        finally
++        {
++            lockFile.Dispose();
++        }
++    }
++
++    private static async Task<int> RunExportAsync(string[] args)
++    {
++        var stateDirectory = GetRequiredValue(args, "--stateDirectory", "--state-directory");
++        var fromDate = GetRequiredValue(args, "--fromDate", "--from-date");
++        var toDate = GetRequiredValue(args, "--toDate", "--to-date");
++        var exportPath = GetRequiredValue(args, "--exportPath", "--export-path");
++
++        var lockFile = new AuditStateLock(stateDirectory);
++        try
++        {
++            await lockFile.AcquireAsync().ConfigureAwait(false);
++            var state = await ReadStateAsync(stateDirectory).ConfigureAwait(false);
++            state.Entries ??= new List<AuditEntry>();
++
++            var from = DateOnly.ParseExact(fromDate, "yyyy-MM-dd", CultureInfo.InvariantCulture);
++            var to = DateOnly.ParseExact(toDate, "yyyy-MM-dd", CultureInfo.InvariantCulture);
++            var filtered = state.Entries
++                .Where(entry =>
++                {
++                    if (!DateOnly.TryParseExact(entry.BusinessDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var businessDate))
++                    {
++                        return false;
++                    }
++
++                    return businessDate >= from && businessDate <= to;
++                })
++                .Select(MapEntryForExport)
++                .ToList();
++
++            var payload = new
++            {
++                ok = true,
++                action = "export",
++                fromDate,
++                toDate,
++                exportPath,
++                entries = filtered
++            };
++
++            var exportDirectory = Path.GetDirectoryName(exportPath);
++            if (!string.IsNullOrWhiteSpace(exportDirectory))
++            {
++                Directory.CreateDirectory(exportDirectory);
++            }
++
++            await File.WriteAllTextAsync(exportPath, JsonSerializer.Serialize(payload, AuditJsonOptions) + Environment.NewLine).ConfigureAwait(false);
++            WriteAuditJson(payload);
++            return ExitClean;
++        }
++        finally
++        {
++            lockFile.Dispose();
++        }
++    }
++
++    private static async Task<AuditState> ReadStateAsync(string stateDirectory)
++    {
++        Directory.CreateDirectory(stateDirectory);
++        var statePath = Path.Combine(stateDirectory, "audit-state.json");
++        if (!File.Exists(statePath))
++        {
++            return new AuditState
++            {
++                Version = 1,
++                Sequence = 0,
++                Entries = new List<AuditEntry>(),
++                Requests = new Dictionary<string, AuditRequestRecord>(StringComparer.OrdinalIgnoreCase)
++            };
++        }
++
++        var json = await File.ReadAllTextAsync(statePath).ConfigureAwait(false);
++        if (string.IsNullOrWhiteSpace(json))
++        {
++            return new AuditState
++            {
++                Version = 1,
++                Sequence = 0,
++                Entries = new List<AuditEntry>(),
++                Requests = new Dictionary<string, AuditRequestRecord>(StringComparer.OrdinalIgnoreCase)
++            };
++        }
++
++        var state = JsonSerializer.Deserialize<AuditState>(json, AuditJsonOptions)
++            ?? new AuditState
++            {
++                Version = 1,
++                Sequence = 0,
++                Entries = new List<AuditEntry>(),
++                Requests = new Dictionary<string, AuditRequestRecord>(StringComparer.OrdinalIgnoreCase)
++            };
++
++        state.Entries ??= new List<AuditEntry>();
++        state.Requests ??= new Dictionary<string, AuditRequestRecord>(StringComparer.OrdinalIgnoreCase);
++        return state;
++    }
++
++    private static async Task WriteStateAsync(string stateDirectory, AuditState state)
++    {
++        var statePath = Path.Combine(stateDirectory, "audit-state.json");
++        var tempPath = Path.Combine(stateDirectory, $"audit-state-{Guid.NewGuid():N}.tmp");
++        var payload = JsonSerializer.Serialize(state, AuditJsonOptions);
++        await File.WriteAllTextAsync(tempPath, payload).ConfigureAwait(false);
++        File.Move(tempPath, statePath, overwrite: true);
++    }
++
++    private static string NormalizeDecision(string value)
++    {
++        ArgumentException.ThrowIfNullOrWhiteSpace(value);
++        return value.Trim() switch
++        {
++            "approve" or "approved" => "approved",
++            "reject" or "rejected" => "rejected",
++            _ => throw new ArgumentException("Decision must be 'approve' or 'reject'.")
++        };
++    }
++
++    private static AuditEntry CreateAuditEntry(AuditState state, string requestId, string action, string actor, string role, string businessDate)
++    {
++        var previousHash = state.Entries.Count > 0 ? state.Entries[^1].Hash : "genesis";
++        var timestamp = DateTimeOffset.UtcNow.ToString("O");
++        var sequence = state.Sequence + 1;
++        var entry = new AuditEntry
++        {
++            RequestId = requestId,
++            Action = action,
++            Actor = actor,
++            Role = role,
++            BusinessDate = businessDate,
++            Timestamp = timestamp,
++            Sequence = sequence,
++            Version = state.Version,
++            PreviousHash = previousHash,
++            Decision = null,
++            IsFinalDecision = false
++        };
++
++        var payload = JsonSerializer.Serialize(new
++        {
++            requestId = entry.RequestId,
++            action = entry.Action,
++            actor = entry.Actor,
++            role = entry.Role,
++            businessDate = entry.BusinessDate,
++            timestamp = entry.Timestamp,
++            sequence = entry.Sequence,
++            version = entry.Version,
++            previousHash = entry.PreviousHash,
++            decision = entry.Decision,
++            isFinalDecision = entry.IsFinalDecision,
++            reason = entry.Reason,
++            evidence = entry.Evidence
++        }, AuditJsonOptions);
++
++        entry.Hash = ComputeHash(previousHash + "|" + payload);
++        state.Sequence = sequence;
++        return entry;
++    }
++
++    private static string ComputeHash(string value)
++    {
++        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(value));
++        return Convert.ToHexString(bytes).ToLowerInvariant();
++    }
++
++    private static object MapEntryForExport(AuditEntry entry)
++    {
++        return new
++        {
++            requestId = SanitizeOutput(entry.RequestId),
++            action = SanitizeOutput(entry.Action),
++            actor = SanitizeOutput(entry.Actor),
++            role = SanitizeOutput(entry.Role),
++            businessDate = SanitizeOutput(entry.BusinessDate),
++            timestamp = SanitizeOutput(entry.Timestamp),
++            sequence = entry.Sequence,
++            version = entry.Version,
++            hash = SanitizeOutput(entry.Hash),
++            previousHash = SanitizeOutput(entry.PreviousHash),
++            decision = SanitizeOutput(entry.Decision),
++            isFinalDecision = entry.IsFinalDecision,
++            reason = SanitizeOutput(entry.Reason),
++            evidence = SanitizeOutput(entry.Evidence)
++        };
++    }
++
++    private static string GetRequiredValue(string[] args, params string[] optionNames)
++    {
++        foreach (var optionName in optionNames)
++        {
++            var index = Array.FindIndex(args, arg => string.Equals(arg, optionName, StringComparison.OrdinalIgnoreCase));
++            if (index >= 0)
++            {
++                if (index + 1 >= args.Length || args[index + 1].StartsWith("--", StringComparison.Ordinal))
++                {
++                    throw new ArgumentException($"Option {optionName} requires a value.");
++                }
++
++                return args[index + 1];
++            }
++        }
++
++        throw new ArgumentException($"Missing required option ({string.Join(", ", optionNames)}).");
++    }
++
++    private static void WriteAuditJson(object payload)
++        => System.Console.WriteLine(JsonSerializer.Serialize(payload, AuditJsonOptions));
++
++    private static string SanitizeOutput(string? value)
++    {
++        if (string.IsNullOrWhiteSpace(value))
++        {
++            return string.Empty;
++        }
++
++        var sanitized = value;
++        sanitized = Regex.Replace(sanitized, @"(?i)\b(?:account|acct|customer|trade|settlement)[\s:=/-]*[A-Z0-9-]{2,}\b", "[ACCOUNT_REDACTED]");
++        sanitized = Regex.Replace(sanitized, @"(?i)\bACC[A-Z0-9-]+\b", "[ACCOUNT_REDACTED]");
++        sanitized = Regex.Replace(sanitized, @"(?i)\b[A-Z]{2,}[0-9]{3,}\b", "[ACCOUNT_REDACTED]");
++        sanitized = Regex.Replace(sanitized, @"(?i)(?:USD|EUR|GBP|JPY|CAD|AUD|CHF|CNY|RUB|INR|NOK|SEK|MXN|NZD)\s*[-$]?\d[\d,]*(?:\.\d+)?", "[AMOUNT_REDACTED]");
++        sanitized = Regex.Replace(sanitized, @"(?i)\$\d[\d,]*(?:\.\d+)?", "[AMOUNT_REDACTED]");
++        sanitized = Regex.Replace(sanitized, @"(?i)\b\d[\d,]*(?:\.\d+)?\b(?=\s*(?:amount|value|notional|principal|total|settlement|trade))", "[AMOUNT_REDACTED]");
++        return sanitized;
++    }
++
++    private sealed class AuditStateLock : IDisposable
++    {
++        private readonly FileStream _stream;
++
++        public AuditStateLock(string stateDirectory)
++        {
++            Directory.CreateDirectory(stateDirectory);
++            _stream = new FileStream(Path.Combine(stateDirectory, "audit.lock"), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
++        }
++
++        public Task AcquireAsync()
++        {
++            if (OperatingSystem.IsWindows())
++            {
++                _stream.Lock(0, 0);
++            }
++
++            return Task.CompletedTask;
++        }
++
++        public void Dispose()
++        {
++            if (OperatingSystem.IsWindows())
++            {
++                _stream.Unlock(0, 0);
++            }
++
++            _stream.Dispose();
++        }
++    }
++
++    private sealed class AuditState
++    {
++        public int Version { get; set; } = 1;
++        public long Sequence { get; set; }
++        public List<AuditEntry> Entries { get; set; } = new();
++        public Dictionary<string, AuditRequestRecord> Requests { get; set; } = new(StringComparer.OrdinalIgnoreCase);
++    }
++
++    private sealed class AuditEntry
++    {
++        public string RequestId { get; set; } = string.Empty;
++        public string Action { get; set; } = string.Empty;
++        public string Actor { get; set; } = string.Empty;
++        public string Role { get; set; } = string.Empty;
++        public string BusinessDate { get; set; } = string.Empty;
++        public string Timestamp { get; set; } = string.Empty;
++        public long Sequence { get; set; }
++        public int Version { get; set; } = 1;
++        public string Hash { get; set; } = string.Empty;
++        public string PreviousHash { get; set; } = string.Empty;
++        public string? Decision { get; set; }
++        public bool IsFinalDecision { get; set; }
++        public string Reason { get; set; } = string.Empty;
++        public string Evidence { get; set; } = string.Empty;
++    }
++
++    private sealed class AuditRequestRecord
++    {
++        public string RequestId { get; set; } = string.Empty;
++        public string Proposer { get; set; } = string.Empty;
++        public string BusinessDate { get; set; } = string.Empty;
++        public string Reason { get; set; } = string.Empty;
++        public string Evidence { get; set; } = string.Empty;
++        public string ProposalHash { get; set; } = string.Empty;
++        public long ProposalSequence { get; set; }
++        public string? FinalDecision { get; set; }
++        public string? FinalChecker { get; set; }
++        public DateTimeOffset? DecidedAt { get; set; }
++    }
++
+     private sealed record CliOptions(
+         DateOnly BusinessDate,
+         string FixturesDirectory,

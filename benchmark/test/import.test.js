@@ -76,7 +76,7 @@ function writePlan(runDir, overrides = {}) {
       }
     },
     executionOrder: 15,
-    executionPolicySnapshot: { timeoutSeconds: 5400, toolCallCap: 200 },
+    executionPolicySnapshot: { timeoutSeconds: 7200, toolCallCap: 200 },
     workspaceDir,
     workspaceBaselineCommit,
     promptPath,
@@ -529,6 +529,42 @@ test("importRun rejects execution settings that drift from the freeze record", (
   });
 });
 
+test("importRun accepts and preserves a run stopped at the 120-minute boundary", () => {
+  withTempDir((runDir) => {
+    writePlan(runDir, {
+      model: {
+        id: "mai-code-1.1-flash",
+        displayName: "MAI Code 1.1 Flash",
+        tier: "efficient",
+        buildId: "model-build-1",
+        agentVersion: "agent-1",
+        agentBuildId: "agent-build-1",
+        effortParams: { reasoningEffort: "low" }
+      }
+    });
+    const hashes = writeFrozenProvenance(runDir);
+    const freeze = writeFrozenRecord(runDir, hashes);
+    const { run } = importRun(
+      baseArgs(runDir, {
+        benchmarkVersion: "benchmark-v1",
+        dataKind: "measured",
+        freezeRecordSha256: freeze.recordSha256,
+        freezeRecordPath: freeze.recordPath,
+        execution: {
+          ...baseArgs(runDir).execution,
+          status: "timed-out",
+          elapsedSeconds: 7200,
+          agentVersion: "agent-1",
+          agentBuildId: "agent-build-1",
+          reasoningEffort: "low"
+        }
+      })
+    );
+    assert.strictEqual(run.execution.status, "timed-out");
+    assert.strictEqual(run.execution.elapsedSeconds, 7200);
+  });
+});
+
 test("importRun rejects executed model, order, timeout, and tool-cap drift", () => {
   withTempDir((runDir) => {
     writePlan(runDir, {
@@ -548,7 +584,7 @@ test("importRun rejects executed model, order, timeout, and tool-cap drift", () 
       [{ modelId: "wrong-model" }, /executed model id/],
       [{ modelBuildId: "wrong-build" }, /executed model build/],
       [{ order: 2 }, /execution order/],
-      [{ elapsedSeconds: 5401 }, /timeoutSeconds/],
+      [{ elapsedSeconds: 7201 }, /timeoutSeconds/],
       [{ toolCalls: 201 }, /toolCallCap/]
     ];
 

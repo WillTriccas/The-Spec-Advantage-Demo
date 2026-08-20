@@ -1,0 +1,87 @@
+{
+  "schemaVersion": "2.0.0",
+  "benchmarkVersion": "specforge-fsi-v1.0.0",
+  "evidenceQualification": {
+    "level": "bounded-measured",
+    "limitation": "GitHub Copilot exposes the selected model IDs but not immutable provider model build IDs. Results are measured and reproducible at the disclosed Copilot model-selection and agent-version boundary, not at an underlying provider-build boundary."
+  },
+  "repetitionsPerLane": 3,
+  "models": {
+    "efficient": {
+      "id": "mai-code-1.1-flash",
+      "displayName": "MAI Code 1.1 Flash",
+      "buildId": "not-exposed-by-copilot",
+      "agentVersion": "1.0.79-9",
+      "agentBuildId": "not-separately-exposed-by-copilot",
+      "effortParams": {
+        "reasoningEffort": "high"
+      },
+      "notes": "The exact Copilot model ID, agent version, and reasoning effort are pinned. Copilot does not expose an immutable provider model build ID or a separate agent build ID; the bounded-evidence limitation records that constraint."
+    },
+    "frontier": {
+      "id": "claude-opus-5",
+      "displayName": "Claude Opus 5",
+      "buildId": "not-exposed-by-copilot",
+      "agentVersion": "1.0.79-9",
+      "agentBuildId": "not-separately-exposed-by-copilot",
+      "effortParams": {
+        "reasoningEffort": "high"
+      },
+      "notes": "The exact Copilot model ID, agent version, and reasoning effort are pinned. Copilot does not expose an immutable provider model build ID or a separate agent build ID; the bounded-evidence limitation records that constraint."
+    }
+  },
+  "episodes": [
+    {
+      "id": "modernization",
+      "name": "Platform modernization",
+      "baselineRef": "refs/tags/benchmark-legacy-v1",
+      "baselinePath": "src/legacy-trade-reconciliation",
+      "taskBrief": "benchmark/prompts/modernization-raw.md",
+      "specBundle": "spec-factory/examples/modernization/approved"
+    },
+    {
+      "id": "audit-feature",
+      "name": "Explainable audit feature",
+      "baselineRef": "refs/tags/benchmark-modernized-v1",
+      "baselinePath": "src/canonical-modernized",
+      "taskBrief": "benchmark/prompts/audit-feature-raw.md",
+      "specBundle": "spec-factory/examples/audit-feature/approved"
+    }
+  ],
+  "lanes": [
+    {
+      "id": "efficient-raw",
+      "modelTier": "efficient",
+      "inputMode": "raw"
+    },
+    {
+      "id": "efficient-spec",
+      "modelTier": "efficient",
+      "inputMode": "spec"
+    },
+    {
+      "id": "frontier-raw",
+      "modelTier": "frontier",
+      "inputMode": "raw"
+    },
+    {
+      "id": "frontier-spec",
+      "modelTier": "frontier",
+      "inputMode": "spec"
+    }
+  ],
+  "executionPolicy": {
+    "freshWorkspacePerRun": true,
+    "crossRunMemory": false,
+    "humanRemediation": false,
+    "preserveFailedRuns": true,
+    "failedRunTreatment": "score-zero-and-fail-applicable-gates",
+    "timeoutSeconds": 5400,
+    "toolCallCap": 200,
+    "toolPermissionProfile": "standard-coding",
+    "runOrder": "randomized-interleaved",
+    "runOrderNotes": "Execute the seeded order across lanes rather than grouping by model or treatment.",
+    "captureQueueAndThrottleTime": true,
+    "queueAndThrottleNotes": "Record queue and throttle time separately from productive execution time."
+  }
+}

@@ -1,0 +1,1732 @@
+{
+  "schemaVersion": "1.1.0",
+  "metadata": {
+    "benchmarkVersion": "specforge-fsi-v1.0.0",
+    "generatedAt": "2026-08-18T15:09:47.419Z",
+    "dataKind": "measured",
+    "evidenceQualification": {
+      "level": "bounded-measured",
+      "limitation": "GitHub Copilot exposes the selected model IDs but not immutable provider model build IDs. Results are measured and reproducible at the disclosed Copilot model-selection and agent-version boundary, not at an underlying provider-build boundary."
+    },
+    "repetitionsPerLane": 3,
+    "executionPolicy": {
+      "timeoutSeconds": 5400,
+      "toolCallCap": 200
+    },
+    "pricingAsOf": null,
+    "rateType": "unavailable",
+    "frozenInputs": {
+      "freezeRecordSha256": "edd523966c35daa42a6ad2306670157c90336232bac20b3c6f3e88c27a66ef30",
+      "evaluatorSha256": "1540f263481cae49fa84bc8d187c5e1b503cc5775f41f24da1e54339870c8946",
+      "scoringConfigSha256": "c9e7c3bebd575b3b56f0409d69cdb5d952c175a73ec11ada7599d73a9648bac6",
+      "costsConfigSha256": "3b2c5ed227eef9cb46c8686dca1bd76af97e2f50e36729358ebc7c9d00dc5ea5",
+      "benchmarkEngineSha256": "848140d8340397b49926e4b1a05cca6a873850ee2822eb8ad8d654e3078dab9a",
+      "promptSha256s": [
+        "f22d3d71127ff9f1e7c3e35706442e5d4a79443ef273fa28e43468c0dc789957",
+        "518d8bb000fd36bb982c37042636adf1f54c0d1a484ba5319578ec858452db23",
+        "f47aa4cd40324a29be02f62a6f7fb8c900a72017ad565ca3b3e7756e343d648d",
+        "b4a29ff8f3be258bdb86f51d78760adf86cd8319cd1a1051c7dd7216b10724f4"
+      ],
+      "experimentConfigSha256": "b7f2dd0b8a5990a4264412829ede8e05fcb0a20fd7814cba902a01ac54f3276f",
+      "runSchemaSha256": "b4cc4103ec2613d7f6ce46aef274a32b4e58a63cebeaccefc609f645606ccf11",
+      "reportSchemaSha256": "b1b050eba32e96cb059d542ea21114e7d91d8e88cc22f74bc9b867be45187204",
+      "claimRule": {
+        "comparisonLane": "efficient-spec",
+        "controlLane": "frontier-raw",
+        "equivalentWithinPoints": 3,
+        "betterByMoreThanPoints": 3,
+        "aggregation": "marginal-medians",
+        "requireAllHardGates": true,
+        "comparisonLaneGatesDetermineEligibility": true,
+        "controlLaneGateFailuresAreReportedSeparately": true,
+        "inconclusiveWhenDeltaWithinObservedLaneSpread": true,
+        "overallRollup": "weaker-episode",
+        "qualityAndEfficiencyVerdictsAreSeparate": true,
+        "notes": "Quality is worse only when comparison median minus control median is below negative equivalentWithinPoints."
+      }
+    },
+    "frozenVersions": [
+      "baseline:modernization:refs/tags/benchmark-legacy-v1@b020630048cd90a039fb4f13e437c900b6cd4eac",
+      "baseline:audit-feature:refs/tags/benchmark-modernized-v1@806344ba17e194b54d0e645455829ab05c58fb6c",
+      "model:mai-code-1.1-flash:not-exposed-by-copilot;agent:1.0.79-9/not-separately-exposed-by-copilot;reasoning:high",
+      "model:claude-opus-5:not-exposed-by-copilot;agent:1.0.79-9/not-separately-exposed-by-copilot;reasoning:high"
+    ]
+  },
+  "overallClaim": {
+    "status": "not-supported",
+    "qualityVerdict": "indeterminate",
+    "efficiencyVerdict": "unavailable",
+    "drivingMetric": "unavailable",
+    "qualityDelta": -85,
+    "costSavingPercent": null,
+    "message": "Overall claim status is \"not-supported\", the weaker of 2 per-episode claims (never an average). [modernization: not-supported, quality=indeterminate, efficiency=unavailable] [audit-feature: not-supported, quality=indeterminate, efficiency=unavailable] Driving episode for the headline numbers below: \"modernization\" (Episode \"modernization\": claim not supported -- not every run in the comparison lane \"efficient-spec\" passed all applicable hard gates. Comparison lane hard gates: 0/3 runs passed all applicable gates. Control lane hard gates (visible, non-blocking): 3/3 runs passed.) Monetary cost and token evidence are unavailable, so no efficiency advantage is claimed."
+  },
+  "episodes": [
+    {
+      "id": "modernization",
+      "name": "Platform modernization",
+      "claim": {
+        "status": "not-supported",
+        "qualityVerdict": "indeterminate",
+        "efficiencyVerdict": "unavailable",
+        "drivingMetric": "unavailable",
+        "qualityDelta": -85,
+        "costSavingPercent": null,
+        "message": "Episode \"modernization\": claim not supported -- not every run in the comparison lane \"efficient-spec\" passed all applicable hard gates. Comparison lane hard gates: 0/3 runs passed all applicable gates. Control lane hard gates (visible, non-blocking): 3/3 runs passed."
+      },
+      "laneSummaries": [
+        {
+          "laneId": "efficient-raw",
+          "modelDisplayName": "MAI Code 1.1 Flash",
+          "inputMode": "raw",
+          "qualityMedian": 0,
+          "qualityMin": 0,
+          "qualityMax": 0,
+          "hardGatePassCount": 0,
+          "hardGateFailCount": 3,
+          "runCount": 3,
+          "elapsedMedianSeconds": 5400,
+          "productiveMedianSeconds": 1032.394,
+          "tokenMedian": 9749862,
+          "costMedianUsd": null
+        },
+        {
+          "laneId": "efficient-spec",
+          "modelDisplayName": "MAI Code 1.1 Flash",
+          "inputMode": "spec",
+          "qualityMedian": 15,
+          "qualityMin": 0,
+          "qualityMax": 15,
+          "hardGatePassCount": 0,
+          "hardGateFailCount": 3,
+          "runCount": 3,
+          "elapsedMedianSeconds": 5198.503,
+          "productiveMedianSeconds": 1196.877,
+          "tokenMedian": 10591063,
+          "costMedianUsd": null
+        },
+        {
+          "laneId": "frontier-raw",
+          "modelDisplayName": "Claude Opus 5",
+          "inputMode": "raw",
+          "qualityMedian": 100,
+          "qualityMin": 100,
+          "qualityMax": 100,
+          "hardGatePassCount": 3,
+          "hardGateFailCount": 0,
+          "runCount": 3,
+          "elapsedMedianSeconds": 5350.903,
+          "productiveMedianSeconds": 1659.694,
+          "tokenMedian": 11618120,
+          "costMedianUsd": null
+        },
+        {
+          "laneId": "frontier-spec",
+          "modelDisplayName": "Claude Opus 5",
+          "inputMode": "spec",
+          "qualityMedian": 100,
+          "qualityMin": 100,
+          "qualityMax": 100,
+          "hardGatePassCount": 3,
+          "hardGateFailCount": 0,
+          "runCount": 3,
+          "elapsedMedianSeconds": 4514.63,
+          "productiveMedianSeconds": 1403.603,
+          "tokenMedian": 9400538,
+          "costMedianUsd": null
+        }
+      ],
+      "runs": [
+        {
+          "runId": "modernization-efficient-raw-r1",
+          "dataKind": "measured",
+          "laneId": "efficient-raw",
+          "modelDisplayName": "MAI Code 1.1 Flash",
+          "inputMode": "raw",
+          "repetition": 1,
+          "status": "timed-out",
+          "qualityScore": 0,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            }
+          ],
+          "hardGatesPassed": false,
+          "scores": {
+            "behaviorPreservation": 0,
+            "functionalCorrectness": 0,
+            "maintainability": 100,
+            "operability": 0,
+            "scopeTraceability": 0,
+            "securityControls": 0
+          },
+          "elapsedSeconds": 5400,
+          "productiveSeconds": 1000.246,
+          "queueSeconds": 13.409,
+          "toolCalls": 128,
+          "inputTokens": 615576,
+          "cachedInputTokens": 7106816,
+          "outputTokens": 71312,
+          "reasoningTokens": 44480,
+          "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 0,
+          "evidencePath": "evidence/measured/runs/modernization-efficient-raw-r1/evidence"
+        },
+        {
+          "runId": "modernization-efficient-raw-r2",
+          "dataKind": "measured",
+          "laneId": "efficient-raw",
+          "modelDisplayName": "MAI Code 1.1 Flash",
+          "inputMode": "raw",
+          "repetition": 2,
+          "status": "timed-out",
+          "qualityScore": 0,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            }
+          ],
+          "hardGatesPassed": false,
+          "scores": {
+            "behaviorPreservation": 0,
+            "functionalCorrectness": 0,
+            "maintainability": 100,
+            "operability": 0,
+            "scopeTraceability": 0,
+            "securityControls": 0
+          },
+          "elapsedSeconds": 5400,
+          "productiveSeconds": 1302.725,
+          "queueSeconds": 7.853,
+          "toolCalls": 164,
+          "inputTokens": 586758,
+          "cachedInputTokens": 9504128,
+          "outputTokens": 69993,
+          "reasoningTokens": 42560,
+          "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 0,
+          "evidencePath": "evidence/measured/runs/modernization-efficient-raw-r2/evidence"
+        },
+        {
+          "runId": "modernization-efficient-raw-r3",
+          "dataKind": "measured",
+          "laneId": "efficient-raw",
+          "modelDisplayName": "MAI Code 1.1 Flash",
+          "inputMode": "raw",
+          "repetition": 3,
+          "status": "timed-out",
+          "qualityScore": 0,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            }
+          ],
+          "hardGatesPassed": false,
+          "scores": {
+            "behaviorPreservation": 0,
+            "functionalCorrectness": 0,
+            "maintainability": 100,
+            "operability": 0,
+            "scopeTraceability": 0,
+            "securityControls": 0
+          },
+          "elapsedSeconds": 5400,
+          "productiveSeconds": 1032.394,
+          "queueSeconds": 12.399,
+          "toolCalls": 147,
+          "inputTokens": 628535,
+          "cachedInputTokens": 8996224,
+          "outputTokens": 80111,
+          "reasoningTokens": 44992,
+          "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 0,
+          "evidencePath": "evidence/measured/runs/modernization-efficient-raw-r3/evidence"
+        },
+        {
+          "runId": "modernization-efficient-spec-r1",
+          "dataKind": "measured",
+          "laneId": "efficient-spec",
+          "modelDisplayName": "MAI Code 1.1 Flash",
+          "inputMode": "spec",
+          "repetition": 1,
+          "status": "completed",
+          "qualityScore": 15,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            }
+          ],
+          "hardGatesPassed": false,
+          "scores": {
+            "behaviorPreservation": 0,
+            "functionalCorrectness": 0,
+            "maintainability": 100,
+            "operability": 0,
+            "scopeTraceability": 0,
+            "securityControls": 0
+          },
+          "elapsedSeconds": 5198.503,
+          "productiveSeconds": 1196.877,
+          "queueSeconds": 29.384,
+          "toolCalls": 163,
+          "inputTokens": 561979,
+          "cachedInputTokens": 9866496,
+          "outputTokens": 90030,
+          "reasoningTokens": 52608,
+          "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 19950,
+          "evidencePath": "evidence/measured/runs/modernization-efficient-spec-r1/evidence"
+        },
+        {
+          "runId": "modernization-efficient-spec-r2",
+          "dataKind": "measured",
+          "laneId": "efficient-spec",
+          "modelDisplayName": "MAI Code 1.1 Flash",
+          "inputMode": "spec",
+          "repetition": 2,
+          "status": "completed",
+          "qualityScore": 15,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            }
+          ],
+          "hardGatesPassed": false,
+          "scores": {
+            "behaviorPreservation": 0,
+            "functionalCorrectness": 0,
+            "maintainability": 100,
+            "operability": 0,
+            "scopeTraceability": 0,
+            "securityControls": 0
+          },
+          "elapsedSeconds": 1505.303,
+          "productiveSeconds": 640.252,
+          "queueSeconds": 13.543,
+          "toolCalls": 93,
+          "inputTokens": 275599,
+          "cachedInputTokens": 5851008,
+          "outputTokens": 50304,
+          "reasoningTokens": 31872,
+          "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 19950,
+          "evidencePath": "evidence/measured/runs/modernization-efficient-spec-r2/evidence"
+        },
+        {
+          "runId": "modernization-efficient-spec-r3",
+          "dataKind": "measured",
+          "laneId": "efficient-spec",
+          "modelDisplayName": "MAI Code 1.1 Flash",
+          "inputMode": "spec",
+          "repetition": 3,
+          "status": "timed-out",
+          "qualityScore": 0,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            }
+          ],
+          "hardGatesPassed": false,
+          "scores": {
+            "behaviorPreservation": 0,
+            "functionalCorrectness": 0,
+            "maintainability": 100,
+            "operability": 0,
+            "scopeTraceability": 0,
+            "securityControls": 0
+          },
+          "elapsedSeconds": 5400,
+          "productiveSeconds": 1257.828,
+          "queueSeconds": 33.738,
+          "toolCalls": 182,
+          "inputTokens": 562372,
+          "cachedInputTokens": 11955584,
+          "outputTokens": 91743,
+          "reasoningTokens": 48448,
+          "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 19950,
+          "evidencePath": "evidence/measured/runs/modernization-efficient-spec-r3/evidence"
+        },
+        {
+          "runId": "modernization-frontier-raw-r1",
+          "dataKind": "measured",
+          "laneId": "frontier-raw",
+          "modelDisplayName": "Claude Opus 5",
+          "inputMode": "raw",
+          "repetition": 1,
+          "status": "completed",
+          "qualityScore": 100,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            }
+          ],
+          "hardGatesPassed": true,
+          "scores": {
+            "behaviorPreservation": 100,
+            "functionalCorrectness": 100,
+            "maintainability": 100,
+            "operability": 100,
+            "scopeTraceability": 100,
+            "securityControls": 100
+          },
+          "elapsedSeconds": 5382.283,
+          "productiveSeconds": 1849.76,
+          "queueSeconds": 30.709,
+          "toolCalls": 145,
+          "inputTokens": 503979,
+          "cachedInputTokens": 10914853,
+          "outputTokens": 149248,
+          "reasoningTokens": 50040,
+          "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 0,
+          "evidencePath": "evidence/measured/runs/modernization-frontier-raw-r1/evidence"
+        },
+        {
+          "runId": "modernization-frontier-raw-r2",
+          "dataKind": "measured",
+          "laneId": "frontier-raw",
+          "modelDisplayName": "Claude Opus 5",
+          "inputMode": "raw",
+          "repetition": 2,
+          "status": "completed",
+          "qualityScore": 100,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            }
+          ],
+          "hardGatesPassed": true,
+          "scores": {
+            "behaviorPreservation": 100,
+            "functionalCorrectness": 100,
+            "maintainability": 100,
+            "operability": 100,
+            "scopeTraceability": 100,
+            "securityControls": 100
+          },
+          "elapsedSeconds": 5044.754,
+          "productiveSeconds": 1659.694,
+          "queueSeconds": 58.834,
+          "toolCalls": 163,
+          "inputTokens": 721429,
+          "cachedInputTokens": 12351843,
+          "outputTokens": 127879,
+          "reasoningTokens": 37219,
+          "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 0,
+          "evidencePath": "evidence/measured/runs/modernization-frontier-raw-r2/evidence"
+        },
+        {
+          "runId": "modernization-frontier-raw-r3",
+          "dataKind": "measured",
+          "laneId": "frontier-raw",
+          "modelDisplayName": "Claude Opus 5",
+          "inputMode": "raw",
+          "repetition": 3,
+          "status": "completed",
+          "qualityScore": 100,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            }
+          ],
+          "hardGatesPassed": true,
+          "scores": {
+            "behaviorPreservation": 100,
+            "functionalCorrectness": 100,
+            "maintainability": 100,
+            "operability": 100,
+            "scopeTraceability": 100,
+            "securityControls": 100
+          },
+          "elapsedSeconds": 5350.903,
+          "productiveSeconds": 1486.284,
+          "queueSeconds": 6.058,
+          "toolCalls": 140,
+          "inputTokens": 617026,
+          "cachedInputTokens": 8370579,
+          "outputTokens": 127954,
+          "reasoningTokens": 33017,
+          "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 0,
+          "evidencePath": "evidence/measured/runs/modernization-frontier-raw-r3/evidence"
+        },
+        {
+          "runId": "modernization-frontier-spec-r1",
+          "dataKind": "measured",
+          "laneId": "frontier-spec",
+          "modelDisplayName": "Claude Opus 5",
+          "inputMode": "spec",
+          "repetition": 1,
+          "status": "completed",
+          "qualityScore": 100,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            }
+          ],
+          "hardGatesPassed": true,
+          "scores": {
+            "behaviorPreservation": 100,
+            "functionalCorrectness": 100,
+            "maintainability": 100,
+            "operability": 100,
+            "scopeTraceability": 100,
+            "securityControls": 100
+          },
+          "elapsedSeconds": 4537.655,
+          "productiveSeconds": 1428.18,
+          "queueSeconds": 35.514,
+          "toolCalls": 117,
+          "inputTokens": 631054,
+          "cachedInputTokens": 8596843,
+          "outputTokens": 122856,
+          "reasoningTokens": 30718,
+          "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 19950,
+          "evidencePath": "evidence/measured/runs/modernization-frontier-spec-r1/evidence"
+        },
+        {
+          "runId": "modernization-frontier-spec-r2",
+          "dataKind": "measured",
+          "laneId": "frontier-spec",
+          "modelDisplayName": "Claude Opus 5",
+          "inputMode": "spec",
+          "repetition": 2,
+          "status": "completed",
+          "qualityScore": 100,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            }
+          ],
+          "hardGatesPassed": true,
+          "scores": {
+            "behaviorPreservation": 100,
+            "functionalCorrectness": 100,
+            "maintainability": 100,
+            "operability": 100,
+            "scopeTraceability": 100,
+            "securityControls": 100
+          },
+          "elapsedSeconds": 4224.749,
+          "productiveSeconds": 1403.603,
+          "queueSeconds": 25.335,
+          "toolCalls": 139,
+          "inputTokens": 467437,
+          "cachedInputTokens": 8762548,
+          "outputTokens": 118902,
+          "reasoningTokens": 31701,
+          "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 19950,
+          "evidencePath": "evidence/measured/runs/modernization-frontier-spec-r2/evidence"
+        },
+        {
+          "runId": "modernization-frontier-spec-r3",
+          "dataKind": "measured",
+          "laneId": "frontier-spec",
+          "modelDisplayName": "Claude Opus 5",
+          "inputMode": "spec",
+          "repetition": 3,
+          "status": "completed",
+          "qualityScore": 100,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": false,
+              "status": "not-applicable",
+              "reason": null
+            }
+          ],
+          "hardGatesPassed": true,
+          "scores": {
+            "behaviorPreservation": 100,
+            "functionalCorrectness": 100,
+            "maintainability": 100,
+            "operability": 100,
+            "scopeTraceability": 100,
+            "securityControls": 100
+          },
+          "elapsedSeconds": 4514.63,
+          "productiveSeconds": 1304,
+          "queueSeconds": 51.887,
+          "toolCalls": 99,
+          "inputTokens": 380672,
+          "cachedInputTokens": 7125885,
+          "outputTokens": 108072,
+          "reasoningTokens": 28110,
+          "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 19950,
+          "evidencePath": "evidence/measured/runs/modernization-frontier-spec-r3/evidence"
+        }
+      ]
+    },
+    {
+      "id": "audit-feature",
+      "name": "Explainable audit feature",
+      "claim": {
+        "status": "not-supported",
+        "qualityVerdict": "indeterminate",
+        "efficiencyVerdict": "unavailable",
+        "drivingMetric": "unavailable",
+        "qualityDelta": 0,
+        "costSavingPercent": null,
+        "message": "Episode \"audit-feature\": claim not supported -- not every run in the comparison lane \"efficient-spec\" passed all applicable hard gates. Comparison lane hard gates: 0/3 runs passed all applicable gates. Control lane hard gates (visible, non-blocking): 0/3 runs passed."
+      },
+      "laneSummaries": [
+        {
+          "laneId": "efficient-raw",
+          "modelDisplayName": "MAI Code 1.1 Flash",
+          "inputMode": "raw",
+          "qualityMedian": 0,
+          "qualityMin": 0,
+          "qualityMax": 0,
+          "hardGatePassCount": 0,
+          "hardGateFailCount": 3,
+          "runCount": 3,
+          "elapsedMedianSeconds": 5261.569,
+          "productiveMedianSeconds": 960.312,
+          "tokenMedian": 8634759,
+          "costMedianUsd": null
+        },
+        {
+          "laneId": "efficient-spec",
+          "modelDisplayName": "MAI Code 1.1 Flash",
+          "inputMode": "spec",
+          "qualityMedian": 0,
+          "qualityMin": 0,
+          "qualityMax": 0,
+          "hardGatePassCount": 0,
+          "hardGateFailCount": 3,
+          "runCount": 3,
+          "elapsedMedianSeconds": 4522.159,
+          "productiveMedianSeconds": 898.196,
+          "tokenMedian": 7695041,
+          "costMedianUsd": null
+        },
+        {
+          "laneId": "frontier-raw",
+          "modelDisplayName": "Claude Opus 5",
+          "inputMode": "raw",
+          "qualityMedian": 0,
+          "qualityMin": 0,
+          "qualityMax": 0,
+          "hardGatePassCount": 0,
+          "hardGateFailCount": 3,
+          "runCount": 3,
+          "elapsedMedianSeconds": 5086.909,
+          "productiveMedianSeconds": 1424.184,
+          "tokenMedian": 9056258,
+          "costMedianUsd": null
+        },
+        {
+          "laneId": "frontier-spec",
+          "modelDisplayName": "Claude Opus 5",
+          "inputMode": "spec",
+          "qualityMedian": 0,
+          "qualityMin": 0,
+          "qualityMax": 0,
+          "hardGatePassCount": 0,
+          "hardGateFailCount": 3,
+          "runCount": 3,
+          "elapsedMedianSeconds": 4894.703,
+          "productiveMedianSeconds": 1275.484,
+          "tokenMedian": 9610608,
+          "costMedianUsd": null
+        }
+      ],
+      "runs": [
+        {
+          "runId": "audit-feature-efficient-raw-r1",
+          "dataKind": "measured",
+          "laneId": "efficient-raw",
+          "modelDisplayName": "MAI Code 1.1 Flash",
+          "inputMode": "raw",
+          "repetition": 1,
+          "status": "failed",
+          "qualityScore": 0,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            }
+          ],
+          "hardGatesPassed": false,
+          "scores": {
+            "behaviorPreservation": 0,
+            "functionalCorrectness": 0,
+            "maintainability": 0,
+            "operability": 0,
+            "scopeTraceability": 0,
+            "securityControls": 0
+          },
+          "elapsedSeconds": 3320.723,
+          "productiveSeconds": 15.293,
+          "queueSeconds": 30.576,
+          "toolCalls": 4,
+          "inputTokens": 30758,
+          "cachedInputTokens": 64000,
+          "outputTokens": 1086,
+          "reasoningTokens": 704,
+          "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 0,
+          "evidencePath": "evidence/measured/runs/audit-feature-efficient-raw-r1/evidence"
+        },
+        {
+          "runId": "audit-feature-efficient-raw-r2",
+          "dataKind": "measured",
+          "laneId": "efficient-raw",
+          "modelDisplayName": "MAI Code 1.1 Flash",
+          "inputMode": "raw",
+          "repetition": 2,
+          "status": "completed",
+          "qualityScore": 0,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            }
+          ],
+          "hardGatesPassed": false,
+          "scores": {
+            "behaviorPreservation": 0,
+            "functionalCorrectness": 0,
+            "maintainability": 0,
+            "operability": 0,
+            "scopeTraceability": 0,
+            "securityControls": 0
+          },
+          "elapsedSeconds": 5261.569,
+          "productiveSeconds": 960.312,
+          "queueSeconds": 16.955,
+          "toolCalls": 128,
+          "inputTokens": 474492,
+          "cachedInputTokens": 8236288,
+          "outputTokens": 74229,
+          "reasoningTokens": 43008,
+          "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 0,
+          "evidencePath": "evidence/measured/runs/audit-feature-efficient-raw-r2/evidence"
+        },
+        {
+          "runId": "audit-feature-efficient-raw-r3",
+          "dataKind": "measured",
+          "laneId": "efficient-raw",
+          "modelDisplayName": "MAI Code 1.1 Flash",
+          "inputMode": "raw",
+          "repetition": 3,
+          "status": "completed",
+          "qualityScore": 0,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            }
+          ],
+          "hardGatesPassed": false,
+          "scores": {
+            "behaviorPreservation": 0,
+            "functionalCorrectness": 0,
+            "maintainability": 0,
+            "operability": 0,
+            "scopeTraceability": 0,
+            "securityControls": 0
+          },
+          "elapsedSeconds": 5318.632,
+          "productiveSeconds": 1076.531,
+          "queueSeconds": 33.094,
+          "toolCalls": 131,
+          "inputTokens": 637811,
+          "cachedInputTokens": 7861760,
+          "outputTokens": 85140,
+          "reasoningTokens": 50048,
+          "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 0,
+          "evidencePath": "evidence/measured/runs/audit-feature-efficient-raw-r3/evidence"
+        },
+        {
+          "runId": "audit-feature-efficient-spec-r1",
+          "dataKind": "measured",
+          "laneId": "efficient-spec",
+          "modelDisplayName": "MAI Code 1.1 Flash",
+          "inputMode": "spec",
+          "repetition": 1,
+          "status": "completed",
+          "qualityScore": 0,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            }
+          ],
+          "hardGatesPassed": false,
+          "scores": {
+            "behaviorPreservation": 0,
+            "functionalCorrectness": 0,
+            "maintainability": 0,
+            "operability": 0,
+            "scopeTraceability": 0,
+            "securityControls": 0
+          },
+          "elapsedSeconds": 4522.159,
+          "productiveSeconds": 898.196,
+          "queueSeconds": 7.059,
+          "toolCalls": 101,
+          "inputTokens": 487650,
+          "cachedInputTokens": 7112064,
+          "outputTokens": 79158,
+          "reasoningTokens": 45696,
+          "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 25634,
+          "evidencePath": "evidence/measured/runs/audit-feature-efficient-spec-r1/evidence"
+        },
+        {
+          "runId": "audit-feature-efficient-spec-r2",
+          "dataKind": "measured",
+          "laneId": "efficient-spec",
+          "modelDisplayName": "MAI Code 1.1 Flash",
+          "inputMode": "spec",
+          "repetition": 2,
+          "status": "completed",
+          "qualityScore": 0,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            }
+          ],
+          "hardGatesPassed": false,
+          "scores": {
+            "behaviorPreservation": 0,
+            "functionalCorrectness": 0,
+            "maintainability": 0,
+            "operability": 0,
+            "scopeTraceability": 0,
+            "securityControls": 0
+          },
+          "elapsedSeconds": 3300.089,
+          "productiveSeconds": 793.336,
+          "queueSeconds": 18.868,
+          "toolCalls": 89,
+          "inputTokens": 393826,
+          "cachedInputTokens": 5990784,
+          "outputTokens": 61103,
+          "reasoningTokens": 35456,
+          "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 25633,
+          "evidencePath": "evidence/measured/runs/audit-feature-efficient-spec-r2/evidence"
+        },
+        {
+          "runId": "audit-feature-efficient-spec-r3",
+          "dataKind": "measured",
+          "laneId": "efficient-spec",
+          "modelDisplayName": "MAI Code 1.1 Flash",
+          "inputMode": "spec",
+          "repetition": 3,
+          "status": "completed",
+          "qualityScore": 0,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            }
+          ],
+          "hardGatesPassed": false,
+          "scores": {
+            "behaviorPreservation": 0,
+            "functionalCorrectness": 0,
+            "maintainability": 0,
+            "operability": 0,
+            "scopeTraceability": 0,
+            "securityControls": 0
+          },
+          "elapsedSeconds": 4849.243,
+          "productiveSeconds": 920.445,
+          "queueSeconds": 18.097,
+          "toolCalls": 106,
+          "inputTokens": 469451,
+          "cachedInputTokens": 7080832,
+          "outputTokens": 71957,
+          "reasoningTokens": 47168,
+          "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 25633,
+          "evidencePath": "evidence/measured/runs/audit-feature-efficient-spec-r3/evidence"
+        },
+        {
+          "runId": "audit-feature-frontier-raw-r1",
+          "dataKind": "measured",
+          "laneId": "frontier-raw",
+          "modelDisplayName": "Claude Opus 5",
+          "inputMode": "raw",
+          "repetition": 1,
+          "status": "completed",
+          "qualityScore": 0,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            }
+          ],
+          "hardGatesPassed": false,
+          "scores": {
+            "behaviorPreservation": 0,
+            "functionalCorrectness": 0,
+            "maintainability": 0,
+            "operability": 0,
+            "scopeTraceability": 0,
+            "securityControls": 0
+          },
+          "elapsedSeconds": 5086.909,
+          "productiveSeconds": 1424.184,
+          "queueSeconds": 8.981,
+          "toolCalls": 103,
+          "inputTokens": 488004,
+          "cachedInputTokens": 8146267,
+          "outputTokens": 116842,
+          "reasoningTokens": 35663,
+          "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 0,
+          "evidencePath": "evidence/measured/runs/audit-feature-frontier-raw-r1/evidence"
+        },
+        {
+          "runId": "audit-feature-frontier-raw-r2",
+          "dataKind": "measured",
+          "laneId": "frontier-raw",
+          "modelDisplayName": "Claude Opus 5",
+          "inputMode": "raw",
+          "repetition": 2,
+          "status": "completed",
+          "qualityScore": 0,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            }
+          ],
+          "hardGatesPassed": false,
+          "scores": {
+            "behaviorPreservation": 0,
+            "functionalCorrectness": 0,
+            "maintainability": 0,
+            "operability": 0,
+            "scopeTraceability": 0,
+            "securityControls": 0
+          },
+          "elapsedSeconds": 5370.063,
+          "productiveSeconds": 1350.092,
+          "queueSeconds": 16.736,
+          "toolCalls": 107,
+          "inputTokens": 585229,
+          "cachedInputTokens": 8327277,
+          "outputTokens": 110340,
+          "reasoningTokens": 33412,
+          "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 0,
+          "evidencePath": "evidence/measured/runs/audit-feature-frontier-raw-r2/evidence"
+        },
+        {
+          "runId": "audit-feature-frontier-raw-r3",
+          "dataKind": "measured",
+          "laneId": "frontier-raw",
+          "modelDisplayName": "Claude Opus 5",
+          "inputMode": "raw",
+          "repetition": 3,
+          "status": "completed",
+          "qualityScore": 0,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            }
+          ],
+          "hardGatesPassed": false,
+          "scores": {
+            "behaviorPreservation": 0,
+            "functionalCorrectness": 0,
+            "maintainability": 0,
+            "operability": 0,
+            "scopeTraceability": 0,
+            "securityControls": 0
+          },
+          "elapsedSeconds": 4966.536,
+          "productiveSeconds": 1629.546,
+          "queueSeconds": 35.225,
+          "toolCalls": 116,
+          "inputTokens": 533722,
+          "cachedInputTokens": 11186070,
+          "outputTokens": 130958,
+          "reasoningTokens": 41673,
+          "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 0,
+          "evidencePath": "evidence/measured/runs/audit-feature-frontier-raw-r3/evidence"
+        },
+        {
+          "runId": "audit-feature-frontier-spec-r1",
+          "dataKind": "measured",
+          "laneId": "frontier-spec",
+          "modelDisplayName": "Claude Opus 5",
+          "inputMode": "spec",
+          "repetition": 1,
+          "status": "completed",
+          "qualityScore": 0,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            }
+          ],
+          "hardGatesPassed": false,
+          "scores": {
+            "behaviorPreservation": 0,
+            "functionalCorrectness": 0,
+            "maintainability": 0,
+            "operability": 0,
+            "scopeTraceability": 0,
+            "securityControls": 0
+          },
+          "elapsedSeconds": 5260.338,
+          "productiveSeconds": 1257.203,
+          "queueSeconds": 5.943,
+          "toolCalls": 88,
+          "inputTokens": 573577,
+          "cachedInputTokens": 8876558,
+          "outputTokens": 97079,
+          "reasoningTokens": 37760,
+          "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 25634,
+          "evidencePath": "evidence/measured/runs/audit-feature-frontier-spec-r1/evidence"
+        },
+        {
+          "runId": "audit-feature-frontier-spec-r2",
+          "dataKind": "measured",
+          "laneId": "frontier-spec",
+          "modelDisplayName": "Claude Opus 5",
+          "inputMode": "spec",
+          "repetition": 2,
+          "status": "completed",
+          "qualityScore": 0,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            }
+          ],
+          "hardGatesPassed": false,
+          "scores": {
+            "behaviorPreservation": 0,
+            "functionalCorrectness": 0,
+            "maintainability": 0,
+            "operability": 0,
+            "scopeTraceability": 0,
+            "securityControls": 0
+          },
+          "elapsedSeconds": 4894.703,
+          "productiveSeconds": 1275.484,
+          "queueSeconds": 77.924,
+          "toolCalls": 93,
+          "inputTokens": 453493,
+          "cachedInputTokens": 8163283,
+          "outputTokens": 101129,
+          "reasoningTokens": 34770,
+          "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 25633,
+          "evidencePath": "evidence/measured/runs/audit-feature-frontier-spec-r2/evidence"
+        },
+        {
+          "runId": "audit-feature-frontier-spec-r3",
+          "dataKind": "measured",
+          "laneId": "frontier-spec",
+          "modelDisplayName": "Claude Opus 5",
+          "inputMode": "spec",
+          "repetition": 3,
+          "status": "completed",
+          "qualityScore": 0,
+          "hardGates": [
+            {
+              "id": "build",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "essential-business-invariants",
+              "applicable": true,
+              "status": "failed",
+              "reason": null
+            },
+            {
+              "id": "no-critical-security-findings",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "maker-checker-separation",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            },
+            {
+              "id": "audit-integrity",
+              "applicable": true,
+              "status": "passed",
+              "reason": null
+            }
+          ],
+          "hardGatesPassed": false,
+          "scores": {
+            "behaviorPreservation": 0,
+            "functionalCorrectness": 0,
+            "maintainability": 0,
+            "operability": 0,
+            "scopeTraceability": 0,
+            "securityControls": 0
+          },
+          "elapsedSeconds": 4847.604,
+          "productiveSeconds": 1433.679,
+          "queueSeconds": 33.356,
+          "toolCalls": 103,
+          "inputTokens": 427515,
+          "cachedInputTokens": 9190475,
+          "outputTokens": 114270,
+          "reasoningTokens": 37130,
+          "estimatedCostUsd": null,
+          "specAuthoringAmortizedCostUsd": null,
+          "specAuthoringAmortizedTokens": 25633,
+          "evidencePath": "evidence/measured/runs/audit-feature-frontier-spec-r3/evidence"
+        }
+      ]
+    }
+  ]
+}

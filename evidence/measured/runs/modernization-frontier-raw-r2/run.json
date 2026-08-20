@@ -1,0 +1,76 @@
+{
+  "schemaVersion": "1.1.0",
+  "dataKind": "measured",
+  "runId": "modernization-frontier-raw-r2",
+  "benchmarkVersion": "specforge-fsi-v1.0.0",
+  "episodeId": "modernization",
+  "laneId": "frontier-raw",
+  "model": {
+    "id": "claude-opus-5",
+    "displayName": "Claude Opus 5",
+    "tier": "frontier",
+    "buildId": "not-exposed-by-copilot"
+  },
+  "inputMode": "raw",
+  "repetition": 2,
+  "baseline": {
+    "ref": "refs/tags/benchmark-legacy-v1",
+    "commit": "b020630048cd90a039fb4f13e437c900b6cd4eac",
+    "sha256": "209c028929088c1695b9f00b4d10f3dd8c0e3217f9d41122301358f5927158a2"
+  },
+  "brief": {
+    "path": "benchmark/prompts/modernization-raw.md",
+    "sha256": "f22d3d71127ff9f1e7c3e35706442e5d4a79443ef273fa28e43468c0dc789957"
+  },
+  "spec": null,
+  "frozenInputs": {
+    "freezeRecordSha256": "edd523966c35daa42a6ad2306670157c90336232bac20b3c6f3e88c27a66ef30",
+    "evaluatorSha256": "1540f263481cae49fa84bc8d187c5e1b503cc5775f41f24da1e54339870c8946",
+    "scoringConfigSha256": "c9e7c3bebd575b3b56f0409d69cdb5d952c175a73ec11ada7599d73a9648bac6",
+    "costsConfigSha256": "3b2c5ed227eef9cb46c8686dca1bd76af97e2f50e36729358ebc7c9d00dc5ea5",
+    "benchmarkEngineSha256": "848140d8340397b49926e4b1a05cca6a873850ee2822eb8ad8d654e3078dab9a",
+    "promptSha256": "f22d3d71127ff9f1e7c3e35706442e5d4a79443ef273fa28e43468c0dc789957",
+    "experimentConfigSha256": "b7f2dd0b8a5990a4264412829ede8e05fcb0a20fd7814cba902a01ac54f3276f",
+    "runSchemaSha256": "b4cc4103ec2613d7f6ce46aef274a32b4e58a63cebeaccefc609f645606ccf11",
+    "reportSchemaSha256": "b1b050eba32e96cb059d542ea21114e7d91d8e88cc22f74bc9b867be45187204"
+  },
+  "execution": {
+    "status": "completed",
+    "order": 18,
+    "startedAt": "2026-08-18T12:30:37.620Z",
+    "endedAt": "2026-08-18T13:54:42.374Z",
+    "elapsedSeconds": 5044.754,
+    "productiveSeconds": 1659.694,
+    "queueSeconds": 58.834,
+    "modelId": "claude-opus-5",
+    "modelBuildId": "not-exposed-by-copilot",
+    "agentVersion": "1.0.79-9",
+    "agentBuildId": "not-separately-exposed-by-copilot",
+    "reasoningEffort": "high",
+    "toolCalls": 163,
+    "inputTokens": 721429,
+    "cachedInputTokens": 12351843,
+    "outputTokens": 127879,
+    "reasoningTokens": 37219,
+    "estimatedCostUsd": null,
+    "specAuthoringCostUsd": null,
+    "firstGreenBuildSeconds": null,
+    "firstPassingSuiteSeconds": null,
+    "reworkCount": 0,
+    "scopeChurnFiles": 80
+  },
+  "source": {
+    "commit": "1ca52bd2a5394fd0852cd65b6e2a65892284e518",
+    "diffPath": "evidence/measured/runs/modernization-frontier-raw-r2/candidate.patch",
+    "diffSha256": "04e2533c893c8ac29b25d7b268f75cfb5b34f7e6cd805e7e43afb90917605ad3",
+    "bundlePath": "evidence/measured/runs/modernization-frontier-raw-r2/source.bundle",
+    "bundleSha256": "3b94ccc938bf7c8f5b420175d7fc2c2dcbf697117c286576bb2c3f22078c7e6e"
+  },
+  "evidence": {
+    "directory": "evidence/measured/runs/modernization-frontier-raw-r2/evidence",
+    "transcriptPath": "evidence/measured/runs/modernization-frontier-raw-r2/evidence/transcript.jsonl",
+    "transcriptSha256": "38d8401c9a88f480bae40359c901b56e4592ecf24c166119db69c48eabb543a6",
+    "evaluatorPath": "evidence/measured/runs/modernization-frontier-raw-r2/evidence/evaluator.json",
+    "evaluatorSha256": "0f4b5e3e0a1fc54c14cf4453b1c499e11e1fc7ba630ec40ea2a81cbd1f4b9df8"
+  }
+}

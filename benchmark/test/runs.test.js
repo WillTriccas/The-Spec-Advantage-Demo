@@ -57,7 +57,7 @@ test("model tier assignment matches configured lanes", () => {
   }
 });
 
-test("each planned run carries the configured model and agent pins (null until frozen)", () => {
+test("each planned run carries the configured model and agent pins", () => {
   const config = loadExperimentConfig();
   const runs = buildPlannedRuns(config);
   for (const run of runs) {

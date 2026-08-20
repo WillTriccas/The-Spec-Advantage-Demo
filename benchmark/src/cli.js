@@ -21,7 +21,7 @@ Commands:
   score --evaluator <file> --episode-id <id> [--execution-status <status>] [--input-mode <raw|spec>]
                                                Score one run's evaluator JSON against scoring.json
   aggregate --runs <file>                     Aggregate scored runs (JSON array) into lane summaries
-  report --runs <file> --data-kind <illustrative|measured> --out <file>
+  report --runs <file> --data-kind <illustrative|measured> --out <file> [--benchmark-version <v>]
                                                Build and write a full evidence report plus claim-detail.json
   freeze --out <file>                           Write machine-readable freeze readiness; exits 2 while blocked
 `);
@@ -148,23 +148,39 @@ export function cmdAggregate(options) {
 }
 
 export function cmdReport(options) {
-  const { runs: runsPath, "data-kind": dataKind, out, "pricing-as-of": pricingAsOf, "freeze-record": freezeRecordPath } = options;
+  const { runs: runsPath, "data-kind": dataKind, out, "pricing-as-of": pricingAsOf, "freeze-record": freezeRecordPath, "benchmark-version": benchmarkVersionOption } = options;
   if (!runsPath || !dataKind || !out) {
     console.error("Usage: benchmark report --runs <file> --data-kind <illustrative|measured> --out <file> [--freeze-record <file>]");
     return 1;
   }
 
   const runs = JSON.parse(readFileSync(runsPath, "utf8"));
-  const experimentConfig = loadExperimentConfig();
+  const measuredVersions =
+    dataKind === "measured"
+      ? [...new Set(runs.map((run) => run.benchmarkVersion))]
+      : [];
+  if (measuredVersions.length > 1) {
+    throw new Error("Measured report input contains mixed benchmark versions");
+  }
+  const reportBenchmarkVersion =
+    dataKind === "measured"
+      ? benchmarkVersionOption ?? measuredVersions[0]
+      : "unfrozen";
+  const experimentConfig =
+    dataKind === "measured"
+      ? loadExperimentConfig(reportBenchmarkVersion)
+      : loadExperimentConfig();
   if (dataKind === "measured") {
-    assertFrozenForMeasuredData(experimentConfig.benchmarkVersion);
+    assertFrozenForMeasuredData(reportBenchmarkVersion);
   }
   const { report, claimDetail } = buildReport({
     runs,
-    benchmarkVersion: experimentConfig.benchmarkVersion,
+    benchmarkVersion:
+      reportBenchmarkVersion,
     repetitionsPerLane: experimentConfig.repetitionsPerLane,
     dataKind,
     pricingAsOf: pricingAsOf ?? null,
+    experimentConfig,
     freezeRecordPath: freezeRecordPath ?? null
   });
   writeReport(report, out);

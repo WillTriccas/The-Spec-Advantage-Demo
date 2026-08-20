@@ -29,7 +29,7 @@ Measured agent runs must not begin until each area below has an identified revie
 - Sessions start without cross-run memory.
 - Permissions, tools, and stop rules are equal across lanes.
 - Execution order is randomized and interleaved across lanes.
-- Time limit, tool-call cap, reasoning-effort policy, agent build, model build IDs, and queue-time handling are pinned.
+- Time limit, tool-call cap, reasoning-effort policy, agent version/build disclosure, model ID/build disclosure, and queue-time handling are pinned.
 - Prepared repositories expose no excluded content through Git history or refs.
 
 ## Evaluator and scoring
@@ -69,11 +69,25 @@ The freeze command must produce:
 - Task-brief, exact rendered raw/spec prompt, and spec-bundle hashes.
 - Evaluator, scoring, and benchmark-adjudication-engine hashes.
 - Model IDs, repetitions, and execution policy.
+- Evidence qualification, including any provider-build disclosure limitation.
 - Pricing source date or an explicit unavailable state.
 - Independent scenario, spec, evaluator, and claim-adjudicator approvals.
 - Every earlier frozen version that has produced a measured run.
 
 Any post-freeze change invalidates the record and requires a new benchmark version before measured runs continue.
+
+Execution-policy changes are versioned rather than applied retroactively.
+`specforge-fsi-v1.0.0` retains its 5,400-second limit. The pending
+`specforge-fsi-v1.1.0` policy uses 7,200 seconds and requires fresh approvals
+before the full randomized matrix can run. Results from the two versions must
+be reported separately.
+
+If the execution platform does not expose immutable provider model build IDs, the
+freeze may proceed only when `evidenceQualification.level` is `bounded-measured`,
+the unavailable build fields use the explicit `not-exposed-by-copilot` disclosure,
+and every measured presentation displays the limitation. This supports controlled
+evidence at the disclosed Copilot model-selection boundary, not provider-build-level
+reproducibility.
 
 Each measured import must reference the committed freeze record by path and by
 its `recordSha256`. Import fails unless the record is ready, clean, and
@@ -88,12 +102,13 @@ than trusting supplied outcome fields.
 Run a readiness check with:
 
 ```powershell
-node benchmark\bin\benchmark.js freeze --out evidence\freeze-readiness.json
+node benchmark\bin\benchmark.js freeze --out evidence\freeze-readiness-v1.1.0.json
 ```
 
-The command fails closed with exit code `2` while any blocker remains. Independent
-approvals are read from `benchmark\config\approvals.json`; the checked-in values are
-intentionally unapproved until named human reviewers complete the corresponding
-reviews. Synthetic personas in the worked spec bundles do not satisfy this gate.
+The command fails closed with exit code `2` while any blocker remains. The active
+version resolves its approval file from `experiment.json`; v1.1.0 uses
+`benchmark\config\approvals-v1.1.0.json`. Those values are intentionally unapproved
+until named human reviewers complete the corresponding reviews. Synthetic personas
+in the worked spec bundles do not satisfy this gate.
 
 If an evaluator defect is discovered after runs begin, all affected runs are rescored under a new evaluator hash. Partial correction of only selected runs is prohibited.

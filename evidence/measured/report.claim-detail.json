@@ -1,0 +1,74 @@
+{
+  "schemaVersion": "1.1.0",
+  "generatedAt": "2026-08-18T15:09:47.419Z",
+  "dataKind": "measured",
+  "overall": {
+    "status": "not-supported",
+    "qualityVerdict": "indeterminate",
+    "efficiencyVerdict": "unavailable",
+    "drivingMetric": "unavailable",
+    "qualityDelta": -85,
+    "costSavingPercent": null,
+    "message": "Overall claim status is \"not-supported\", the weaker of 2 per-episode claims (never an average). [modernization: not-supported, quality=indeterminate, efficiency=unavailable] [audit-feature: not-supported, quality=indeterminate, efficiency=unavailable] Driving episode for the headline numbers below: \"modernization\" (Episode \"modernization\": claim not supported -- not every run in the comparison lane \"efficient-spec\" passed all applicable hard gates. Comparison lane hard gates: 0/3 runs passed all applicable gates. Control lane hard gates (visible, non-blocking): 3/3 runs passed.) Monetary cost and token evidence are unavailable, so no efficiency advantage is claimed."
+  },
+  "episodeClaims": [
+    {
+      "episodeId": "modernization",
+      "status": "not-supported",
+      "qualityVerdict": "indeterminate",
+      "efficiencyVerdict": "unavailable",
+      "drivingMetric": "unavailable",
+      "qualityDelta": -85,
+      "costSavingPercent": null,
+      "comparisonGatesPassed": false,
+      "controlGatesPassed": true,
+      "message": "Episode \"modernization\": claim not supported -- not every run in the comparison lane \"efficient-spec\" passed all applicable hard gates. Comparison lane hard gates: 0/3 runs passed all applicable gates. Control lane hard gates (visible, non-blocking): 3/3 runs passed."
+    },
+    {
+      "episodeId": "audit-feature",
+      "status": "not-supported",
+      "qualityVerdict": "indeterminate",
+      "efficiencyVerdict": "unavailable",
+      "drivingMetric": "unavailable",
+      "qualityDelta": 0,
+      "costSavingPercent": null,
+      "comparisonGatesPassed": false,
+      "controlGatesPassed": false,
+      "message": "Episode \"audit-feature\": claim not supported -- not every run in the comparison lane \"efficient-spec\" passed all applicable hard gates. Comparison lane hard gates: 0/3 runs passed all applicable gates. Control lane hard gates (visible, non-blocking): 0/3 runs passed."
+    }
+  ],
+  "secondaryClaims": [
+    {
+      "id": "efficient-within-model-spec-effect",
+      "description": "Pre-registered secondary comparison of the spec effect within the efficient model.",
+      "comparisonLane": "efficient-spec",
+      "controlLane": "efficient-raw",
+      "results": [
+        {
+          "episodeId": "audit-feature",
+          "qualityDelta": 0
+        },
+        {
+          "episodeId": "modernization",
+          "qualityDelta": 15
+        }
+      ]
+    },
+    {
+      "id": "frontier-within-model-spec-effect",
+      "description": "Pre-registered secondary comparison of the spec effect within the frontier model.",
+      "comparisonLane": "frontier-spec",
+      "controlLane": "frontier-raw",
+      "results": [
+        {
+          "episodeId": "audit-feature",
+          "qualityDelta": 0
+        },
+        {
+          "episodeId": "modernization",
+          "qualityDelta": 0
+        }
+      ]
+    }
+  ]
+}

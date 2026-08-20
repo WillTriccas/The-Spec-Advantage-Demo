@@ -1,0 +1,166 @@
+{
+  "attestation": {
+    "independentFromSpecAuthors": true,
+    "evaluatorNames": [
+      "sealed-ai-sdlc-benchmark-evaluator"
+    ],
+    "statement": "Evaluator used only allowed public contracts, prompts, scoring config, and source baselines; it remained blind to spec-factory/, evidence/, approved spec content, and expected measured benchmark output."
+  },
+  "scores": {
+    "behaviorPreservation": 0,
+    "functionalCorrectness": 0,
+    "maintainability": 0,
+    "operability": 0,
+    "scopeTraceability": 0,
+    "securityControls": 0
+  },
+  "hardGates": {
+    "audit-integrity": false,
+    "build": false,
+    "essential-business-invariants": false,
+    "maker-checker-separation": false,
+    "no-critical-security-findings": false
+  },
+  "sealedEvidence": {
+    "adapterValidation": {
+      "errors": [
+        "audit-adapter: adapter.initialize is required",
+        "audit-adapter: adapter.propose is required",
+        "audit-adapter: adapter.decide is required",
+        "audit-adapter: adapter.export is required",
+        "audit-adapter: adapter.commands is not allowed",
+        "audit-adapter: initialize must be an object",
+        "audit-adapter: propose must be an object",
+        "audit-adapter: decide must be an object",
+        "audit-adapter: export must be an object"
+      ],
+      "passed": false
+    },
+    "commands": [],
+    "dimensions": {
+      "behaviorPreservation": {
+        "findings": [],
+        "passed": false,
+        "score": 0,
+        "weight": 20
+      },
+      "functionalCorrectness": {
+        "findings": [],
+        "passed": false,
+        "score": 0,
+        "weight": 35
+      },
+      "maintainability": {
+        "findings": [],
+        "passed": false,
+        "score": 0,
+        "weight": 15
+      },
+      "operability": {
+        "findings": [],
+        "passed": false,
+        "score": 0,
+        "weight": 10
+      },
+      "scopeTraceability": {
+        "findings": [],
+        "passed": false,
+        "score": 0,
+        "weight": 5
+      },
+      "securityControls": {
+        "findings": [],
+        "passed": false,
+        "score": 0,
+        "weight": 15
+      }
+    },
+    "episodeId": "audit-feature",
+    "evaluator": {
+      "blindnessAttestation": "Evaluator used only allowed public contracts, prompts, scoring config, and source baselines; it remained blind to spec-factory/, evidence/, approved spec content, and expected measured benchmark output.",
+      "commandTimeoutsMs": {
+        "auditCommand": 15000,
+        "build": 120000,
+        "run": 60000,
+        "scanner": 30000,
+        "test": 120000
+      },
+      "fixtureHashes": {
+        "auditFeature": {
+          "fixtureSetHash": "89d6c189cb3ce8e0ef025a67bdbfe0299de45e94dab8edd507c5c0ff834b8e93",
+          "format": "adapter-placeholder-command-contract",
+          "id": "audit-hidden-synthetic-2026-08-12"
+        },
+        "modernization": {
+          "businessDate": "2026-02-17",
+          "files": {
+            "overrides.csv": "ddece0d4b5268f64aec7d3b29abe59a0cf9a65d2512243fc505e23f3229b6c1a",
+            "positions.csv": "f0a2740e433862ddaae573ea7d94d3de563fab0a7ab1de93fe40e20c24427205",
+            "settlements.csv": "bf8d8cbd64faa67de0daddb3be7506db5fb5e56db9b0ae31283e47a2f7f1c348",
+            "trades.csv": "e68a5a8e0f754d0d5ef996c1e8f0afc91488e56a258a6d8b67a53225adbc175f"
+          },
+          "fixtureSetHash": "0c0f59af9fef130de5fd3cf715cf7aaec3856b774e8ff3feb92c30bddfe46ebf",
+          "format": "legacy-observable-csv-contract",
+          "id": "modernization-hidden-synthetic-2026-08-12"
+        }
+      },
+      "name": "sealed-ai-sdlc-benchmark-evaluator",
+      "scannerRulesets": [
+        {
+          "id": "static-secret-patterns",
+          "version": "2026.08.12"
+        },
+        {
+          "id": "static-unsafe-execution-deserialization",
+          "version": "2026.08.12"
+        },
+        {
+          "id": "dependency-vulnerability-command-output",
+          "version": "2026.08.12"
+        }
+      ],
+      "version": "1.0.0"
+    },
+    "gates": {
+      "audit-integrity": {
+        "applicable": true,
+        "findings": [],
+        "passed": false
+      },
+      "build": {
+        "applicable": true,
+        "findings": [],
+        "passed": false
+      },
+      "essential-business-invariants": {
+        "applicable": true,
+        "findings": [],
+        "passed": false
+      },
+      "maker-checker-separation": {
+        "applicable": true,
+        "findings": [],
+        "passed": false
+      },
+      "no-critical-security-findings": {
+        "applicable": true,
+        "findings": [],
+        "passed": false
+      }
+    },
+    "outcome": "failed",
+    "schemaVersion": "sealed-evaluator-evidence/1.0.0",
+    "score": 0,
+    "staticChecks": {
+      "blockingFindings": 0,
+      "criticalFindings": 0,
+      "dependencyAuditCommands": [],
+      "findings": []
+    }
+  },
+  "compatibilityMapping": {
+    "dimensionRule": "passed => 100; failed => 0",
+    "gateRule": "gates.<id>.passed copied without reinterpretation",
+    "sourcePath": "evidence/measured/runs/audit-feature-efficient-raw-r2/evidence/sealed-evaluator.json"
+  }
+}

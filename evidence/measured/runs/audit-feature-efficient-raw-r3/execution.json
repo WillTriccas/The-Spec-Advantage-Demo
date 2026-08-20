@@ -1,0 +1,40 @@
+{
+  "baselineCommit": "806344ba17e194b54d0e645455829ab05c58fb6c",
+  "dataKind": "measured",
+  "freezeRecordSha256": "edd523966c35daa42a6ad2306670157c90336232bac20b3c6f3e88c27a66ef30",
+  "freezeRecordPath": "C:\\Users\\willtriccas\\.copilot\\repos\\copilot-worktrees\\Work-Demos\\willtriccas-ideal-chainsaw\\evidence\\freeze-readiness.json",
+  "execution": {
+    "status": "completed",
+    "order": 1,
+    "startedAt": "2026-08-18T12:21:00.542Z",
+    "endedAt": "2026-08-18T13:50:12.268Z",
+    "elapsedSeconds": 5351.726,
+    "productiveSeconds": 477.625,
+    "queueSeconds": null,
+    "modelId": "mai-code-1.1-flash",
+    "modelBuildId": "not-exposed-by-copilot",
+    "agentVersion": "1.0.79-9",
+    "agentBuildId": "not-separately-exposed-by-copilot",
+    "reasoningEffort": "high",
+    "toolCalls": 131,
+    "inputTokens": 322481,
+    "cachedInputTokens": 3399808,
+    "outputTokens": 25967,
+    "reasoningTokens": 18176,
+    "estimatedCostUsd": null,
+    "firstGreenBuildSeconds": null,
+    "firstPassingSuiteSeconds": null,
+    "reworkCount": 0,
+    "scopeChurnFiles": 1
+  },
+  "source": {
+    "commit": "06505f8036c4ce3bbb810d46c967e244c03d1d5a",
+    "diffPath": "C:\\Users\\willtriccas\\.copilot\\repos\\copilot-worktrees\\Work-Demos\\willtriccas-ideal-chainsaw\\evidence\\measured\\runs\\audit-feature-efficient-raw-r3\\candidate.patch",
+    "bundlePath": "C:\\Users\\willtriccas\\.copilot\\repos\\copilot-worktrees\\Work-Demos\\willtriccas-ideal-chainsaw\\evidence\\measured\\runs\\audit-feature-efficient-raw-r3\\source.bundle"
+  },
+  "evidence": {
+    "directory": "C:\\Users\\willtriccas\\.copilot\\repos\\copilot-worktrees\\Work-Demos\\willtriccas-ideal-chainsaw\\evidence\\measured\\runs\\audit-feature-efficient-raw-r3\\evidence",
+    "transcriptPath": "C:\\Users\\willtriccas\\.copilot\\repos\\copilot-worktrees\\Work-Demos\\willtriccas-ideal-chainsaw\\evidence\\measured\\runs\\audit-feature-efficient-raw-r3\\evidence\\transcript.jsonl",
+    "evaluatorPath": "C:\\Users\\willtriccas\\.copilot\\repos\\copilot-worktrees\\Work-Demos\\willtriccas-ideal-chainsaw\\evidence\\measured\\runs\\audit-feature-efficient-raw-r3\\evidence\\evaluator.json"
+  }
+}

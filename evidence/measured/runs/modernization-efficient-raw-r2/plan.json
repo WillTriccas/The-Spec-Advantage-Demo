@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.1.0",
+  "runId": "modernization-efficient-raw-r2",
+  "episodeId": "modernization",
+  "laneId": "efficient-raw",
+  "model": {
+    "id": "mai-code-1.1-flash",
+    "displayName": "MAI Code 1.1 Flash",
+    "tier": "efficient",
+    "buildId": "not-exposed-by-copilot",
+    "agentVersion": "1.0.79-9",
+    "agentBuildId": "not-separately-exposed-by-copilot",
+    "effortParams": {
+      "reasoningEffort": "high"
+    }
+  },
+  "inputMode": "raw",
+  "repetition": 2,
+  "baseline": {
+    "ref": "refs/tags/benchmark-legacy-v1",
+    "sha256": "209c028929088c1695b9f00b4d10f3dd8c0e3217f9d41122301358f5927158a2"
+  },
+  "brief": {
+    "path": "benchmark/prompts/modernization-raw.md",
+    "sha256": "f22d3d71127ff9f1e7c3e35706442e5d4a79443ef273fa28e43468c0dc789957"
+  },
+  "promptSha256": "f22d3d71127ff9f1e7c3e35706442e5d4a79443ef273fa28e43468c0dc789957",
+  "spec": null,
+  "executionOrder": 7,
+  "executionPolicySnapshot": {
+    "freshWorkspacePerRun": true,
+    "crossRunMemory": false,
+    "humanRemediation": false,
+    "preserveFailedRuns": true,
+    "failedRunTreatment": "score-zero-and-fail-applicable-gates",
+    "timeoutSeconds": 5400,
+    "toolCallCap": 200,
+    "toolPermissionProfile": "standard-coding",
+    "runOrder": "randomized-interleaved",
+    "runOrderNotes": "Execute the seeded order across lanes rather than grouping by model or treatment.",
+    "captureQueueAndThrottleTime": true,
+    "queueAndThrottleNotes": "Record queue and throttle time separately from productive execution time."
+  },
+  "workspaceDir": "C:\\Users\\willtriccas\\.copilot\\repos\\copilot-worktrees\\Work-Demos\\willtriccas-ideal-chainsaw\\evidence\\measured\\runs\\modernization-efficient-raw-r2\\workspace",
+  "workspaceBaselineCommit": "8202ece09e1291834c5b505d4bbf967337147b30",
+  "promptPath": "C:\\Users\\willtriccas\\.copilot\\repos\\copilot-worktrees\\Work-Demos\\willtriccas-ideal-chainsaw\\evidence\\measured\\runs\\modernization-efficient-raw-r2\\PROMPT.md"
+}

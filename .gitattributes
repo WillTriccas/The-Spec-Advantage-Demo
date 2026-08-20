@@ -1,0 +1,6 @@
+evidence/measured/**/*.json text eol=lf
+evidence/measured/**/*.jsonl text eol=lf
+evidence/measured/**/*.md text eol=lf
+evidence/measured/**/*.patch text eol=lf
+evidence/measured/**/PROMPT.md text eol=lf
+evidence/measured/**/*.bundle binary

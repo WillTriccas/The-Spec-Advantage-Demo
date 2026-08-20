@@ -3,13 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Benchmark Evidence Dashboard</title>
+    <title>SpecForge FSI Measured Evidence</title>
     <script>
-      (function() {
-        var urlParams = new URLSearchParams(window.location.search);
-        var theme = urlParams.get('clawpilotTheme') || 
-                   (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-        document.documentElement.setAttribute('data-theme', theme);
+      (() => {
+        const param = new URLSearchParams(window.location.search).get("clawpilotTheme");
+        const theme =
+          param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
       })();
     </script>
   </head>

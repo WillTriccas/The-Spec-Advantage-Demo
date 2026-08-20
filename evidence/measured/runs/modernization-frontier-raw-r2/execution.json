@@ -1,0 +1,40 @@
+{
+  "baselineCommit": "b020630048cd90a039fb4f13e437c900b6cd4eac",
+  "dataKind": "measured",
+  "freezeRecordSha256": "edd523966c35daa42a6ad2306670157c90336232bac20b3c6f3e88c27a66ef30",
+  "freezeRecordPath": "C:\\Users\\willtriccas\\.copilot\\repos\\copilot-worktrees\\Work-Demos\\willtriccas-ideal-chainsaw\\evidence\\freeze-readiness.json",
+  "execution": {
+    "status": "completed",
+    "order": 18,
+    "startedAt": "2026-08-18T12:30:37.620Z",
+    "endedAt": "2026-08-18T13:54:42.374Z",
+    "elapsedSeconds": 5044.754,
+    "productiveSeconds": 1659.694,
+    "queueSeconds": 58.834,
+    "modelId": "claude-opus-5",
+    "modelBuildId": "not-exposed-by-copilot",
+    "agentVersion": "1.0.79-9",
+    "agentBuildId": "not-separately-exposed-by-copilot",
+    "reasoningEffort": "high",
+    "toolCalls": 163,
+    "inputTokens": 721429,
+    "cachedInputTokens": 12351843,
+    "outputTokens": 127879,
+    "reasoningTokens": 37219,
+    "estimatedCostUsd": null,
+    "firstGreenBuildSeconds": null,
+    "firstPassingSuiteSeconds": null,
+    "reworkCount": 0,
+    "scopeChurnFiles": 80
+  },
+  "source": {
+    "commit": "1ca52bd2a5394fd0852cd65b6e2a65892284e518",
+    "diffPath": "C:\\Users\\willtriccas\\.copilot\\repos\\copilot-worktrees\\Work-Demos\\willtriccas-ideal-chainsaw\\evidence\\measured\\runs\\modernization-frontier-raw-r2\\candidate.patch",
+    "bundlePath": "C:\\Users\\willtriccas\\.copilot\\repos\\copilot-worktrees\\Work-Demos\\willtriccas-ideal-chainsaw\\evidence\\measured\\runs\\modernization-frontier-raw-r2\\source.bundle"
+  },
+  "evidence": {
+    "directory": "C:\\Users\\willtriccas\\.copilot\\repos\\copilot-worktrees\\Work-Demos\\willtriccas-ideal-chainsaw\\evidence\\measured\\runs\\modernization-frontier-raw-r2\\evidence",
+    "transcriptPath": "C:\\Users\\willtriccas\\.copilot\\repos\\copilot-worktrees\\Work-Demos\\willtriccas-ideal-chainsaw\\evidence\\measured\\runs\\modernization-frontier-raw-r2\\evidence\\transcript.jsonl",
+    "evaluatorPath": "C:\\Users\\willtriccas\\.copilot\\repos\\copilot-worktrees\\Work-Demos\\willtriccas-ideal-chainsaw\\evidence\\measured\\runs\\modernization-frontier-raw-r2\\evidence\\evaluator.json"
+  }
+}

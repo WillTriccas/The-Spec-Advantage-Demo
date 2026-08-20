@@ -14,6 +14,7 @@
         "benchmarkVersion",
         "generatedAt",
         "dataKind",
+        "evidenceQualification",
         "repetitionsPerLane",
         "pricingAsOf",
         "rateType",
@@ -24,7 +25,27 @@
         "benchmarkVersion": { "type": "string", "minLength": 1 },
         "generatedAt": { "type": "string", "format": "date-time" },
         "dataKind": { "enum": ["illustrative", "measured"] },
+        "evidenceQualification": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["level", "limitation"],
+          "properties": {
+            "level": {
+              "enum": ["illustrative", "bounded-measured", "strict-measured"]
+            },
+            "limitation": { "type": "string", "minLength": 1 }
+          }
+        },
         "repetitionsPerLane": { "type": "integer", "minimum": 1 },
+        "executionPolicy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["timeoutSeconds", "toolCallCap"],
+          "properties": {
+            "timeoutSeconds": { "type": "integer", "minimum": 1 },
+            "toolCallCap": { "type": "integer", "minimum": 1 }
+          }
+        },
         "pricingAsOf": { "type": ["string", "null"] },
         "rateType": {
           "enum": ["list", "negotiated", "internal-chargeback", "unavailable"]

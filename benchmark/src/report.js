@@ -6,6 +6,7 @@ import {
   CONFIG_DIR,
   CONTRACTS_DIR,
   REPO_ROOT,
+  getExperimentConfigPath,
   loadCostsConfig,
   loadExperimentConfig,
   loadRunSchema,
@@ -540,7 +541,7 @@ export function buildReport({
   scoringConfigSha256 = hashFile(path.join(CONFIG_DIR, "scoring.json")),
   costsConfigSha256 = hashFile(path.join(CONFIG_DIR, "costs.json")),
   benchmarkEngineSha256 = hashDirectory(path.join(REPO_ROOT, "benchmark", "src")),
-  experimentConfigSha256 = hashFile(path.join(CONFIG_DIR, "experiment.json")),
+  experimentConfigSha256 = null,
   runSchemaSha256 = hashFile(path.join(CONTRACTS_DIR, "run.schema.json")),
   reportSchemaSha256 = hashFile(path.join(CONTRACTS_DIR, "report.schema.json")),
   expectedPromptHashes = null,
@@ -551,6 +552,9 @@ export function buildReport({
   if (runs.length === 0) {
     throw new Error("Cannot build a report from an empty run list");
   }
+  const effectiveExperimentConfigSha256 =
+    experimentConfigSha256 ??
+    hashFile(getExperimentConfigPath(experimentConfig.benchmarkVersion));
 
   const metadata = validateRunSetMetadata(runs, dataKind, benchmarkVersion);
   if (metadata.dataKind === "measured") {
@@ -701,7 +705,7 @@ export function buildReport({
     frozenHash(
       runs.map((run) => run.frozenInputs?.experimentConfigSha256),
       "experiment config hash"
-    ) ?? experimentConfigSha256;
+    ) ?? effectiveExperimentConfigSha256;
   const benchmarkEngineHash =
     frozenHash(
       runs.map((run) => run.frozenInputs?.benchmarkEngineSha256),
@@ -766,7 +770,10 @@ export function buildReport({
   if (metadata.dataKind === "measured" && costsHash !== costsConfigSha256) {
     throw new Error("Cannot build measured report: current costs configuration does not match frozen runs");
   }
-  if (metadata.dataKind === "measured" && experimentHash !== experimentConfigSha256) {
+  if (
+    metadata.dataKind === "measured" &&
+    experimentHash !== effectiveExperimentConfigSha256
+  ) {
     throw new Error("Cannot build measured report: current experiment configuration does not match frozen runs");
   }
   if (metadata.dataKind === "measured" && benchmarkEngineHash !== benchmarkEngineSha256) {
@@ -809,7 +816,25 @@ export function buildReport({
       benchmarkVersion: metadata.benchmarkVersion,
       generatedAt,
       dataKind: metadata.dataKind,
+      evidenceQualification:
+        metadata.dataKind === "measured"
+          ? trustedFreezeRecord.evidenceQualification
+          : {
+              level: "illustrative",
+              limitation:
+                "Synthetic playback data has not been produced by controlled coding-agent runs and cannot support a benchmark claim."
+            },
       repetitionsPerLane,
+      executionPolicy:
+        metadata.dataKind === "measured"
+          ? {
+              timeoutSeconds: trustedFreezeRecord.executionPolicy.timeoutSeconds,
+              toolCallCap: trustedFreezeRecord.executionPolicy.toolCallCap
+            }
+          : {
+              timeoutSeconds: experimentConfig.executionPolicy.timeoutSeconds,
+              toolCallCap: experimentConfig.executionPolicy.toolCallCap
+            },
       pricingAsOf:
         metadata.dataKind === "measured"
           ? trustedFreezeRecord.pricing?.pricingAsOf ?? null

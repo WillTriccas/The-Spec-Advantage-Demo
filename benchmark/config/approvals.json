@@ -1,27 +1,27 @@
 {
   "schemaVersion": "1.0.0",
   "scenario": {
-    "approved": false,
-    "reviewer": null,
-    "approvedAt": null,
-    "evidenceRef": null
+    "approved": true,
+    "reviewer": "Will Triccas",
+    "approvedAt": "2026-08-18T11:04:03.945Z",
+    "evidenceRef": "docs/reviews/specforge-fsi-v1.0.0-freeze-approvals.md#scenario"
   },
   "specifications": {
-    "approved": false,
-    "reviewer": null,
-    "approvedAt": null,
-    "evidenceRef": null
+    "approved": true,
+    "reviewer": "Will Triccas",
+    "approvedAt": "2026-08-18T11:04:03.945Z",
+    "evidenceRef": "docs/reviews/specforge-fsi-v1.0.0-freeze-approvals.md#specifications"
   },
   "evaluator": {
-    "approved": false,
-    "reviewer": null,
-    "approvedAt": null,
-    "evidenceRef": null
+    "approved": true,
+    "reviewer": "Will Triccas",
+    "approvedAt": "2026-08-18T11:04:03.945Z",
+    "evidenceRef": "docs/reviews/specforge-fsi-v1.0.0-freeze-approvals.md#evaluator-and-scoring"
   },
   "claimAdjudication": {
-    "approved": false,
-    "reviewer": null,
-    "approvedAt": null,
-    "evidenceRef": null
+    "approved": true,
+    "reviewer": "Will Triccas",
+    "approvedAt": "2026-08-18T11:04:03.945Z",
+    "evidenceRef": "docs/reviews/specforge-fsi-v1.0.0-freeze-approvals.md#claim-adjudication"
   }
 }

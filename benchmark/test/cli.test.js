@@ -258,7 +258,12 @@ test("cmdPrepare + cmdImport round-trip a real planned run through the CLI, with
       );
 
       const imported = withSilencedConsole(() =>
-        cmdImport({ "run-dir": runDir, execution: executionPath, "skip-frozen-check": true })
+        cmdImport({
+          "run-dir": runDir,
+          execution: executionPath,
+          "benchmark-version": "unfrozen",
+          "skip-frozen-check": true
+        })
       );
       assert.strictEqual(imported.result, 0);
       const { run: importedRun, provenancePath } = JSON.parse(imported.logs[0]);

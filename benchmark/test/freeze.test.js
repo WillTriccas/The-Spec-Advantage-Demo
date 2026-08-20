@@ -6,14 +6,48 @@ import {
   computeFreezeRecordSha256,
   createFreezeReadiness
 } from "../src/freeze.js";
+import { loadExperimentConfig } from "../src/config.js";
+
+test("active and archived benchmark versions retain their own timeout policies", () => {
+  assert.strictEqual(loadExperimentConfig().benchmarkVersion, "specforge-fsi-v1.1.0");
+  assert.strictEqual(loadExperimentConfig().executionPolicy.timeoutSeconds, 7200);
+  assert.strictEqual(
+    loadExperimentConfig("specforge-fsi-v1.0.0").executionPolicy.timeoutSeconds,
+    5400
+  );
+});
+
+test("v1.1.0 cannot freeze until the timeout policy receives fresh approvals", () => {
+  const readiness = createFreezeReadiness({
+    generatedAt: "2026-08-20T09:00:00Z"
+  });
+  assert.strictEqual(readiness.ready, false);
+  assert.strictEqual(readiness.benchmarkVersion, "specforge-fsi-v1.1.0");
+  assert.strictEqual(readiness.executionPolicy.timeoutSeconds, 7200);
+  assert.ok(
+    readiness.blockers.some((blocker) =>
+      blocker.includes("Independent scenario approval")
+    )
+  );
+});
 
 test("freeze readiness fails closed while the benchmark is unfrozen and model versions are unpinned", () => {
-  const readiness = createFreezeReadiness({ generatedAt: "2026-08-12T14:00:00Z" });
+  const experimentConfig = structuredClone(loadExperimentConfig());
+  experimentConfig.benchmarkVersion = "unfrozen";
+  for (const model of Object.values(experimentConfig.models)) {
+    model.buildId = null;
+    model.agentVersion = null;
+    model.agentBuildId = null;
+    model.effortParams.reasoningEffort = null;
+  }
+  const readiness = createFreezeReadiness({
+    generatedAt: "2026-08-12T14:00:00Z",
+    experimentConfig
+  });
   assert.strictEqual(readiness.ready, false);
   assert.ok(readiness.blockers.some((blocker) => blocker.includes("benchmarkVersion")));
   assert.ok(readiness.blockers.some((blocker) => blocker.includes("buildId")));
   assert.ok(readiness.blockers.some((blocker) => blocker.includes("agentBuildId")));
-  assert.ok(readiness.blockers.some((blocker) => blocker.includes("approval")));
   assert.match(readiness.recordSha256, /^[a-f0-9]{64}$/);
 });
 

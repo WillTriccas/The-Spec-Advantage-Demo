@@ -1,29 +1,41 @@
 {
   "schemaVersion": "2.0.0",
-  "benchmarkVersion": "unfrozen",
+  "benchmarkVersion": "specforge-fsi-v1.1.0",
+  "supersedesBenchmarkVersion": "specforge-fsi-v1.0.0",
+  "approvalsPath": "benchmark/config/approvals-v1.1.0.json",
+  "policyChange": {
+    "id": "execution-timeout",
+    "previousTimeoutSeconds": 5400,
+    "timeoutSeconds": 7200,
+    "rationale": "The 90-minute boundary truncated MAI Code 1.1 Flash runs before task completion. Version 1.1.0 applies a symmetric 120-minute limit to the full experiment matrix."
+  },
+  "evidenceQualification": {
+    "level": "bounded-measured",
+    "limitation": "GitHub Copilot exposes the selected model IDs but not immutable provider model build IDs. Results are measured and reproducible at the disclosed Copilot model-selection and agent-version boundary, not at an underlying provider-build boundary."
+  },
   "repetitionsPerLane": 3,
   "models": {
     "efficient": {
       "id": "mai-code-1.1-flash",
       "displayName": "MAI Code 1.1 Flash",
-      "buildId": null,
-      "agentVersion": null,
-      "agentBuildId": null,
+      "buildId": "not-exposed-by-copilot",
+      "agentVersion": "1.0.79-9",
+      "agentBuildId": "not-separately-exposed-by-copilot",
       "effortParams": {
-        "reasoningEffort": null
+        "reasoningEffort": "high"
       },
-      "notes": "Pin buildId, agentVersion, and effortParams to exact dated values before measured runs."
+      "notes": "The exact Copilot model ID, agent version, and reasoning effort are pinned. Copilot does not expose an immutable provider model build ID or a separate agent build ID; the bounded-evidence limitation records that constraint."
     },
     "frontier": {
       "id": "claude-opus-5",
       "displayName": "Claude Opus 5",
-      "buildId": null,
-      "agentVersion": null,
-      "agentBuildId": null,
+      "buildId": "not-exposed-by-copilot",
+      "agentVersion": "1.0.79-9",
+      "agentBuildId": "not-separately-exposed-by-copilot",
       "effortParams": {
-        "reasoningEffort": null
+        "reasoningEffort": "high"
       },
-      "notes": "Pin buildId, agentVersion, and effortParams to exact dated values before measured runs."
+      "notes": "The exact Copilot model ID, agent version, and reasoning effort are pinned. Copilot does not expose an immutable provider model build ID or a separate agent build ID; the bounded-evidence limitation records that constraint."
     }
   },
   "episodes": [
@@ -72,7 +84,7 @@
     "humanRemediation": false,
     "preserveFailedRuns": true,
     "failedRunTreatment": "score-zero-and-fail-applicable-gates",
-    "timeoutSeconds": 5400,
+    "timeoutSeconds": 7200,
     "toolCallCap": 200,
     "toolPermissionProfile": "standard-coding",
     "runOrder": "randomized-interleaved",
