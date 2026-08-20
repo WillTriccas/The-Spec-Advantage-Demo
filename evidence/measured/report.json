@@ -9,6 +9,10 @@
       "limitation": "GitHub Copilot exposes the selected model IDs but not immutable provider model build IDs. Results are measured and reproducible at the disclosed Copilot model-selection and agent-version boundary, not at an underlying provider-build boundary."
     },
     "repetitionsPerLane": 3,
+    "executionPolicy": {
+      "timeoutSeconds": 5400,
+      "toolCallCap": 200
+    },
     "pricingAsOf": null,
     "rateType": "unavailable",
     "frozenInputs": {

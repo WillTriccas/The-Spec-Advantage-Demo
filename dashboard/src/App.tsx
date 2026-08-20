@@ -279,7 +279,7 @@ export default function App() {
 
         <footer className="evidence-footer">
           <strong>Evidence boundary.</strong> {report.metadata.evidenceQualification.limitation}
-          <span>Benchmark {report.metadata.benchmarkVersion} · Evaluator {report.metadata.frozenInputs.evaluatorSha256.slice(0, 12)} · Generated {new Date(report.metadata.generatedAt).toLocaleString()}</span>
+          <span>Benchmark {report.metadata.benchmarkVersion} · Timeout {formatMinutes(report.metadata.executionPolicy.timeoutSeconds)} · Evaluator {report.metadata.frozenInputs.evaluatorSha256.slice(0, 12)} · Generated {new Date(report.metadata.generatedAt).toLocaleString()}</span>
         </footer>
       </main>
     </div>

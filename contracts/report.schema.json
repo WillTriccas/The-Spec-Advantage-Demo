@@ -37,6 +37,15 @@
           }
         },
         "repetitionsPerLane": { "type": "integer", "minimum": 1 },
+        "executionPolicy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["timeoutSeconds", "toolCallCap"],
+          "properties": {
+            "timeoutSeconds": { "type": "integer", "minimum": 1 },
+            "toolCallCap": { "type": "integer", "minimum": 1 }
+          }
+        },
         "pricingAsOf": { "type": ["string", "null"] },
         "rateType": {
           "enum": ["list", "negotiated", "internal-chargeback", "unavailable"]

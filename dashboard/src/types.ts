@@ -90,6 +90,10 @@ export type Report = {
       limitation: string;
     };
     repetitionsPerLane: number;
+    executionPolicy: {
+      timeoutSeconds: number;
+      toolCallCap: number;
+    };
     pricingAsOf: string | null;
     rateType: "list" | "negotiated" | "internal-chargeback" | "unavailable";
     frozenInputs: {

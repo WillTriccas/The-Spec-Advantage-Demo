@@ -184,6 +184,10 @@ function validReport(overrides = {}) {
         limitation: "Synthetic fixture data."
       },
       repetitionsPerLane: 3,
+      executionPolicy: {
+        timeoutSeconds: 7200,
+        toolCallCap: 200
+      },
       pricingAsOf: null,
       rateType: "unavailable",
       frozenInputs: {

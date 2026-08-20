@@ -34,9 +34,13 @@ The showcase implementation is complete and locally validated. You can demonstra
 legacy application, specification workflow, controlled experiment design, sealed
 evaluation, and executive dashboard today.
 
-The benchmark is frozen as `specforge-fsi-v1.0.0`, with baseline tags, observable
-Copilot runtime pins, high reasoning effort, and four explicit human approvals. The
-freeze record is ready with zero blockers.
+The published measured evidence remains frozen as `specforge-fsi-v1.0.0`, with
+baseline tags, observable Copilot runtime pins, high reasoning effort, and four
+explicit human approvals. Its 90-minute policy and results remain immutable.
+
+`specforge-fsi-v1.1.0` is the next benchmark version. It applies a symmetric
+120-minute limit to the complete 24-run matrix and is intentionally blocked from
+execution until fresh freeze approvals are recorded.
 
 All 24 coding-agent runs have completed and were independently evaluated. The
 pre-registered headline claim is **not supported**: the efficient model with the
@@ -218,17 +222,22 @@ roll-up are `not-supported`.
 Dated, sourced pricing can still be added in a future benchmark version. This frozen
 version reports monetary efficiency as unavailable rather than zero.
 
+The next version changes the execution limit to 7,200 seconds. Results from v1.1.0
+must be reported separately from v1.0.0; the four previously timed-out MAI runs
+cannot be selectively rerun.
+
 ## Freeze readiness
 
-The committed freeze record can be reproduced with:
+Generate the pending v1.1.0 readiness record with:
 
 ```powershell
-node benchmark\bin\benchmark.js freeze --out evidence\freeze-readiness.json
+node benchmark\bin\benchmark.js freeze --out evidence\freeze-readiness-v1.1.0.json
 ```
 
-The current record is ready and has zero blockers. The command exits `2` if any future
-change invalidates a gate. It does not launch a model run or silently treat synthetic
-sign-off personas as real benchmark approvals.
+The published `evidence\freeze-readiness.json` remains the immutable, ready v1.0.0
+record. The v1.1.0 command exits `2` until fresh independent approvals are recorded.
+It does not launch a model run or silently treat synthetic sign-off personas as real
+benchmark approvals.
 
 ## Evidence integrity
 

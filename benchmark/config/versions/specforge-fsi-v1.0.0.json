@@ -1,14 +1,6 @@
 {
   "schemaVersion": "2.0.0",
-  "benchmarkVersion": "specforge-fsi-v1.1.0",
-  "supersedesBenchmarkVersion": "specforge-fsi-v1.0.0",
-  "approvalsPath": "benchmark/config/approvals-v1.1.0.json",
-  "policyChange": {
-    "id": "execution-timeout",
-    "previousTimeoutSeconds": 5400,
-    "timeoutSeconds": 7200,
-    "rationale": "The 90-minute boundary truncated MAI Code 1.1 Flash runs before task completion. Version 1.1.0 applies a symmetric 120-minute limit to the full experiment matrix."
-  },
+  "benchmarkVersion": "specforge-fsi-v1.0.0",
   "evidenceQualification": {
     "level": "bounded-measured",
     "limitation": "GitHub Copilot exposes the selected model IDs but not immutable provider model build IDs. Results are measured and reproducible at the disclosed Copilot model-selection and agent-version boundary, not at an underlying provider-build boundary."
@@ -84,7 +76,7 @@
     "humanRemediation": false,
     "preserveFailedRuns": true,
     "failedRunTreatment": "score-zero-and-fail-applicable-gates",
-    "timeoutSeconds": 7200,
+    "timeoutSeconds": 5400,
     "toolCallCap": 200,
     "toolPermissionProfile": "standard-coding",
     "runOrder": "randomized-interleaved",

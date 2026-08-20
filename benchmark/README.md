@@ -92,7 +92,7 @@ node bin/benchmark.js aggregate --runs <runs.json>
 # whenever any run in the lane has a null cost — currently always, since
 # no dated pricing exists yet).
 
-node bin/benchmark.js report --runs <runs.json> --data-kind <illustrative|measured> --out <report.json> [--freeze-record <freeze.json>]
+node bin/benchmark.js report --runs <runs.json> --data-kind <illustrative|measured> --out <report.json> [--freeze-record <freeze.json>] [--benchmark-version <v>]
 # Builds and validates a full contracts/report.schema.json report, writes
 # it to <report.json>, and writes a supplementary, non-contract
 # <report-basename>.claim-detail.json alongside it. A measured report is
@@ -107,6 +107,14 @@ node bin/benchmark.js report --runs <runs.json> --data-kind <illustrative|measur
 # to overallClaim.status "not-evaluated", with an explicit not-evaluated claim
 # for each episode, regardless of the numbers.
 ```
+
+The active `specforge-fsi-v1.1.0` policy uses a 7,200-second (120-minute)
+per-run limit. The exact v1.0.0 configuration remains archived under
+`benchmark/config/versions/` with its original 5,400-second limit. Measured
+report generation selects the configuration matching the runs' benchmark
+version, and report metadata records the applicable timeout and tool-call cap.
+Changing the timeout requires a new freeze and a complete symmetric matrix;
+selectively rerunning only previously timed-out cells is prohibited.
 
 `<execution.json>` shape for `import`:
 

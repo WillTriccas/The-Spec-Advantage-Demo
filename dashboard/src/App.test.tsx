@@ -8,6 +8,7 @@ describe('measured dashboard', () => {
     expect(screen.getByText(/bounded-measured evidence/i)).toBeTruthy();
     expect(screen.getByText('not supported')).toBeTruthy();
     expect(screen.getByText('24')).toBeTruthy();
+    expect(screen.getByText(/Timeout 90.0 min/)).toBeTruthy();
   });
 
   it('shows the headline lane comparison for both episodes', () => {

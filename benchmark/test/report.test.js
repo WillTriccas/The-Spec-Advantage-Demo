@@ -80,7 +80,7 @@ const measuredExperimentConfig = {
     }
   },
   executionPolicy: {
-    timeoutSeconds: 5400,
+    timeoutSeconds: 7200,
     toolCallCap: 200
   }
 };
@@ -612,6 +612,31 @@ test("buildReport rejects executed model, order, timeout, and tool-cap drift", (
       /planned order or executed model pin|exceeded the frozen execution policy/
     );
   }
+});
+
+test("buildReport accepts a timed-out run retained at the 120-minute boundary", () => {
+  const runs = makeMeasuredRuns((run) =>
+    run.runId === "modernization-efficient-raw-r1"
+      ? {
+          ...run,
+          execution: {
+            ...run.execution,
+            status: "timed-out",
+            elapsedSeconds: 7200
+          }
+        }
+      : run
+  );
+  const { report } = buildMeasured(runs);
+  assert.deepStrictEqual(report.metadata.executionPolicy, {
+    timeoutSeconds: 7200,
+    toolCallCap: 200
+  });
+  const retained = report.episodes
+    .flatMap((episode) => episode.runs)
+    .find((run) => run.runId === "modernization-efficient-raw-r1");
+  assert.strictEqual(retained.status, "timed-out");
+  assert.strictEqual(retained.qualityScore, 0);
 });
 
 test("buildReport rejects a changed report contract for measured evidence", () => {

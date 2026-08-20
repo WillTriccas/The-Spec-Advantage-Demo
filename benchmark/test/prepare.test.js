@@ -95,7 +95,7 @@ test("prepareRunWorkspace for a raw lane copies only the baseline and the raw br
         humanRemediation: false,
         preserveFailedRuns: true,
         failedRunTreatment: "score-zero-and-fail-applicable-gates",
-        timeoutSeconds: 5400,
+        timeoutSeconds: 7200,
         toolCallCap: 200,
         toolPermissionProfile: "standard-coding",
         runOrder: "randomized-interleaved",
