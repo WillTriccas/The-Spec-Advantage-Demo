@@ -1,5 +1,9 @@
 # Measured evidence
 
+For a client-friendly explanation, start with the
+[dated test-run summary](../test-runs/2026-08-18-specforge-fsi-v1.0.0/README.md).
+This directory remains the canonical machine-readable evidence location.
+
 This directory contains the 24 bounded-measured runs for
 `specforge-fsi-v1.0.0`: imported run contracts, original transcripts,
 canonical source patches and Git bundles, and independent sealed-evaluator
