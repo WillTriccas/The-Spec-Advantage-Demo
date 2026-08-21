@@ -50,6 +50,8 @@ agent version, but not immutable provider model build IDs.
 
 See:
 
+- [Evidence catalog](evidence/README.md)
+- [Plain-English measured results](evidence/test-runs/2026-08-18-specforge-fsi-v1.0.0/README.md)
 - [Architecture](docs/architecture.md)
 - [Experiment protocol](docs/experiment-protocol.md)
 - [Facilitator guide](docs/facilitator-guide.md)

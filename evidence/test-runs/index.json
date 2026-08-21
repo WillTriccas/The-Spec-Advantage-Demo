@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "evidence-test-run-index/1.0.0",
+  "testRuns": [
+    {
+      "id": "2026-08-18-specforge-fsi-v1.0.0",
+      "date": "2026-08-18",
+      "benchmarkVersion": "specforge-fsi-v1.0.0",
+      "dataKind": "measured",
+      "status": "complete",
+      "headlineOutcome": "not-supported",
+      "entryPoint": "2026-08-18-specforge-fsi-v1.0.0/README.md",
+      "manifest": "2026-08-18-specforge-fsi-v1.0.0/manifest.json",
+      "canonicalEvidenceRoot": "../measured"
+    }
+  ]
+}

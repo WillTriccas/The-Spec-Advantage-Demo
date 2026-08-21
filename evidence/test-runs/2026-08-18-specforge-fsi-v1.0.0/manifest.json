@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "evidence-test-run-manifest/1.0.0",
+  "id": "2026-08-18-specforge-fsi-v1.0.0",
+  "date": "2026-08-18",
+  "benchmarkVersion": "specforge-fsi-v1.0.0",
+  "dataKind": "measured",
+  "evidenceQualification": "bounded-measured",
+  "status": "complete",
+  "headlineOutcome": "not-supported",
+  "executionPolicy": {
+    "timeoutSeconds": 5400,
+    "toolCallCap": 200,
+    "repetitionsPerLane": 3
+  },
+  "executionOutcomes": {
+    "total": 24,
+    "completed": 19,
+    "timedOut": 4,
+    "failed": 1,
+    "cancelled": 0
+  },
+  "evaluationOutcomes": {
+    "passedAllApplicableHardGates": 6,
+    "failedOneOrMoreApplicableHardGates": 18
+  },
+  "canonicalArtifacts": {
+    "evidenceRoot": "../../measured",
+    "report": "../../measured/report.json",
+    "claimDetail": "../../measured/report.claim-detail.json",
+    "runs": "../../measured/runs.json",
+    "runDirectories": "../../measured/runs",
+    "freezeRecord": "../../freeze-readiness.json",
+    "dashboard": "../../../dashboard/dist-single/index.html"
+  },
+  "plainEnglish": {
+    "overview": "results/plain-english-overview.md",
+    "episodes": [
+      "episodes/modernization.md",
+      "episodes/audit-feature.md"
+    ],
+    "rounds": [
+      "rounds/round-1.md",
+      "rounds/round-2.md",
+      "rounds/round-3.md"
+    ]
+  }
+}
