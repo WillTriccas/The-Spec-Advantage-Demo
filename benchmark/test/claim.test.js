@@ -83,29 +83,61 @@ test("supported (non-inferior to) when quality is within margin and token use is
   const claim = determineClaim(runs, { claimRule, dataKind: "measured" });
   assert.strictEqual(claim.status, "supported");
   assert.match(claim.message, /non-inferior to/);
-  assert.match(claim.message, /median total token consumption/);
+  assert.match(claim.message, /token consumption \(the non-monetary cost proxy\)/);
   assert.doesNotMatch(claim.message, /elapsed-time-only/);
 });
 
-test("supported (better than) when comparison quality clearly exceeds control and cost is lower", () => {
+test("supported (better than) when comparison quality clearly exceeds control and token cost proxy is lower", () => {
   const runs = [
-    run("efficient-spec", { qualityScore: 95, elapsedSeconds: 800, estimatedCostUsd: 1.0 }),
-    run("frontier-raw", { qualityScore: 85, elapsedSeconds: 1000, estimatedCostUsd: 5.0 })
+    run("efficient-spec", { qualityScore: 95, elapsedSeconds: 800, estimatedCostUsd: 1.0, inputTokens: 50 }),
+    run("frontier-raw", { qualityScore: 85, elapsedSeconds: 1000, estimatedCostUsd: 5.0, inputTokens: 500 })
   ];
   const claim = determineClaim(runs, { claimRule, dataKind: "measured" });
   assert.strictEqual(claim.status, "supported");
   assert.match(claim.message, /better than/);
   assert.strictEqual(claim.qualityDelta, 10);
   assert.ok(claim.costSavingPercent > 0);
+  assert.strictEqual(claim.drivingMetric, "tokens");
 });
 
-test("costSavingPercent is null unless both lanes have non-null median costs", () => {
+test("dated monetary cost is a fallback when token cost-proxy evidence is unavailable", () => {
+  const runs = [
+    run("efficient-spec", { qualityScore: 95, estimatedCostUsd: 1, inputTokens: null }),
+    run("frontier-raw", { qualityScore: 85, estimatedCostUsd: 5, inputTokens: null })
+  ];
+  const claim = determineClaim(runs, { claimRule, dataKind: "measured" });
+  assert.strictEqual(claim.status, "supported");
+  assert.strictEqual(claim.drivingMetric, "cost");
+  assert.strictEqual(claim.costSavingPercent, 80);
+});
+
+test("saving percentage follows the token cost proxy when token and monetary signals conflict", () => {
+  const runs = [
+    run("efficient-spec", {
+      qualityScore: 95,
+      inputTokens: 50,
+      estimatedCostUsd: 10
+    }),
+    run("frontier-raw", {
+      qualityScore: 85,
+      inputTokens: 500,
+      estimatedCostUsd: 1
+    })
+  ];
+  const claim = determineClaim(runs, { claimRule, dataKind: "measured" });
+  assert.strictEqual(claim.drivingMetric, "tokens");
+  assert.strictEqual(claim.costSavingPercent, 81.82);
+  assert.ok(claim.costSavingPercent > 0);
+});
+
+test("costSavingPercent uses the token cost proxy when monetary evidence is incomplete", () => {
   const runs = [
     run("efficient-spec", { qualityScore: 92, elapsedSeconds: 800, estimatedCostUsd: null }),
     run("frontier-raw", { qualityScore: 90, elapsedSeconds: 1000, estimatedCostUsd: 5.0 })
   ];
   const claim = determineClaim(runs, { claimRule, dataKind: "measured" });
-  assert.strictEqual(claim.costSavingPercent, null);
+  assert.strictEqual(claim.drivingMetric, "tokens");
+  assert.strictEqual(claim.costSavingPercent, 0);
 });
 
 test("a quality delta within the observed within-lane spread is indeterminate, not better/worse", () => {
@@ -136,8 +168,8 @@ test("a quality delta clearly larger than the observed spread is not marked inde
 test("overall status across two episodes is the weaker of the two, never an average", () => {
   const runs = [
     // modernization: clearly supported
-    run("efficient-spec", { episodeId: "modernization", qualityScore: 95, estimatedCostUsd: 1 }),
-    run("frontier-raw", { episodeId: "modernization", qualityScore: 85, estimatedCostUsd: 5 }),
+    run("efficient-spec", { episodeId: "modernization", qualityScore: 95, estimatedCostUsd: 1, inputTokens: 50 }),
+    run("frontier-raw", { episodeId: "modernization", qualityScore: 85, estimatedCostUsd: 5, inputTokens: 500 }),
     // audit-feature: clearly not-supported (quality far worse)
     run("efficient-spec", { episodeId: "audit-feature", qualityScore: 50 }),
     run("frontier-raw", { episodeId: "audit-feature", qualityScore: 90 })
@@ -151,10 +183,10 @@ test("overall status across two episodes is the weaker of the two, never an aver
 
 test("headline episode tie-breaking follows the registered episode order, not run order", () => {
   const runs = [
-    run("efficient-spec", { episodeId: "audit-feature", qualityScore: 94, estimatedCostUsd: 1 }),
-    run("frontier-raw", { episodeId: "audit-feature", qualityScore: 90, estimatedCostUsd: 3 }),
-    run("efficient-spec", { episodeId: "modernization", qualityScore: 100, estimatedCostUsd: 1 }),
-    run("frontier-raw", { episodeId: "modernization", qualityScore: 90, estimatedCostUsd: 5 })
+    run("efficient-spec", { episodeId: "audit-feature", qualityScore: 94, estimatedCostUsd: 1, inputTokens: 50 }),
+    run("frontier-raw", { episodeId: "audit-feature", qualityScore: 90, estimatedCostUsd: 3, inputTokens: 500 }),
+    run("efficient-spec", { episodeId: "modernization", qualityScore: 100, estimatedCostUsd: 1, inputTokens: 50 }),
+    run("frontier-raw", { episodeId: "modernization", qualityScore: 90, estimatedCostUsd: 5, inputTokens: 500 })
   ];
   const options = {
     claimRule,
@@ -204,8 +236,8 @@ test("elapsed time alone cannot support the lower-cost efficiency claim", () => 
 
 test("a control-lane hard gate failure is visible but does not block a supported (better) quality result", () => {
   const runs = [
-    run("efficient-spec", { episodeId: "modernization", qualityScore: 95, estimatedCostUsd: 1, hardGatesPassed: true }),
-    run("frontier-raw", { episodeId: "modernization", qualityScore: 60, estimatedCostUsd: 5, hardGatesPassed: false })
+    run("efficient-spec", { episodeId: "modernization", qualityScore: 95, estimatedCostUsd: 1, inputTokens: 50, hardGatesPassed: true }),
+    run("frontier-raw", { episodeId: "modernization", qualityScore: 60, estimatedCostUsd: 5, inputTokens: 500, hardGatesPassed: false })
   ];
   const claim = determineClaim(runs, { claimRule, dataKind: "measured" });
   const episodeClaim = claim.episodeClaims[0];
@@ -216,8 +248,8 @@ test("a control-lane hard gate failure is visible but does not block a supported
 
 test("secondary claim rules are evaluated but never affect the overall status", () => {
   const runs = [
-    run("efficient-spec", { episodeId: "modernization", qualityScore: 95, estimatedCostUsd: 1 }),
-    run("frontier-raw", { episodeId: "modernization", qualityScore: 85, estimatedCostUsd: 5 }),
+    run("efficient-spec", { episodeId: "modernization", qualityScore: 95, estimatedCostUsd: 1, inputTokens: 50 }),
+    run("frontier-raw", { episodeId: "modernization", qualityScore: 85, estimatedCostUsd: 5, inputTokens: 500 }),
     run("efficient-raw", { episodeId: "modernization", qualityScore: 40 })
   ];
   const secondaryClaimRules = [

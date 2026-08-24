@@ -72,7 +72,10 @@ The Quality Index is a weighted score:
 | Operability and resilience | 10 |
 | Scope discipline and traceability | 5 |
 
-Quality is reported separately from elapsed time, token use, tool calls, estimated cost, time to first green build, and rework.
+Quality is reported separately from cost and delivery efficiency. Categorized token
+consumption is the non-monetary cost proxy. Productive execution time and elapsed
+time are separate delivery-efficiency measures; tool calls, time to first green
+build, and rework remain supporting engineering evidence.
 
 The following hard gates apply to modernization:
 
@@ -99,9 +102,14 @@ The pre-registered comparison uses marginal lane medians for efficient/spec and 
 - **Better quality:** efficient/spec is more than three points higher and its applicable hard gates pass.
 - **Worse quality:** efficient/spec is more than three points lower or fails an applicable hard gate.
 - **Inconclusive quality:** evidence is missing or the observed delta is not distinguishable from within-lane spread.
-- **Better efficiency:** equivalent-or-better quality plus lower median token or monetary cost after including amortized spec-authoring effort.
+- **Lower cost proxy:** equivalent-or-better quality plus lower median categorized
+  token consumption after including amortized spec-authoring effort. Dated,
+  sourced monetary cost may be shown as supplemental evidence.
 
-Quality and efficiency verdicts are reported separately. Elapsed time is contextual and cannot alone establish the headline efficiency claim. A control-lane gate failure remains prominent but does not penalize the comparison lane. Each episode gets its own claim; the overall status is the weaker episode, never an average.
+Quality, token cost proxy, and delivery-time efficiency are reported separately.
+Elapsed and productive time do not get converted into cost. A control-lane gate
+failure remains prominent but does not penalize the comparison lane. Each episode
+gets its own claim; the overall status is the weaker episode, never an average.
 
 Secondary, pre-registered analyses measure the spec effect within MAI Code 1.1 Flash and within Claude Opus 5. Scope and traceability are scored against expected requirement coverage in all lanes, not against the presence of spec-only identifiers.
 
@@ -109,14 +117,31 @@ Three repetitions demonstrate spread but do not justify claims of statistical ge
 
 ## Cost handling
 
-Token counts and elapsed time may be reported as observed. Monetary cost is calculated only when:
+The primary cost measure is observed token consumption:
+
+- Uncached input.
+- Cached input.
+- Output.
+- Reasoning.
+- The amortized share of specification-authoring tokens for spec lanes.
+
+The report shows category values, a clearly defined total, median, and range.
+Cached and uncached tokens are never presented as if they necessarily have the
+same monetary rate. “Token cost proxy” means resource consumption, not a currency
+estimate. Any reported cost-saving percentage is calculated from the cost measure
+that drove the verdict: token totals for a token-proxy verdict, or currency only
+when monetary cost is the fallback measure.
+
+Productive execution time and elapsed time are shown separately as delivery
+efficiency measures. Monetary cost is calculated only when:
 
 - Both model prices come from an approved source.
 - The source date is recorded.
 - Input and output token units are compatible with that source.
 - Any platform multipliers or flat charges are explicitly represented.
 
-Unknown cost is displayed as unavailable, never as zero.
+Unknown monetary cost is displayed as unavailable, never as zero. Its absence does
+not suppress the observed token cost proxy or delivery-time evidence.
 
 Pricing captures standard, cached, reasoning, and output token classes plus flat charges where applicable. The rate source, effective date, and rate type are required before any monetary comparison. A spec lane is not assigned an execution-only monetary cost when specification-authoring cost is unavailable. Priced authoring effort must be positive when tokens were consumed and must reference independently reviewable cost evidence and its calculation method.
 

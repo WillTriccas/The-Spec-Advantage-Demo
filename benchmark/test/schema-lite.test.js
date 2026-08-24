@@ -171,10 +171,11 @@ function validReport(overrides = {}) {
     estimatedCostUsd: null,
     specAuthoringAmortizedCostUsd: null,
     specAuthoringAmortizedTokens: 0,
+    tokenCostProxyTotal: 150,
     evidencePath: "evidence/x"
   };
   return {
-    schemaVersion: "1.1.0",
+    schemaVersion: "1.2.0",
     metadata: {
       benchmarkVersion: "unfrozen",
       generatedAt: "2024-06-01T00:00:00Z",
@@ -190,6 +191,21 @@ function validReport(overrides = {}) {
       },
       pricingAsOf: null,
       rateType: "unavailable",
+      costMeasure: {
+        primary: "token-consumption-proxy",
+        unit: "tokens",
+        tokenCostProxyAvailable: true,
+        monetaryCostAvailable: false,
+        includesAmortizedSpecAuthoring: true,
+        categories: [
+          "uncached-input",
+          "cached-input",
+          "output",
+          "reasoning",
+          "amortized-spec-authoring"
+        ],
+        note: "Tokens are a non-monetary cost proxy; time remains separate."
+      },
       frozenInputs: {
         freezeRecordSha256: null,
         evaluatorSha256: "d".repeat(64),
@@ -224,6 +240,18 @@ function validReport(overrides = {}) {
             elapsedMedianSeconds: 1200,
             productiveMedianSeconds: 1100,
             tokenMedian: 150,
+            tokenCostProxy: {
+              median: 150,
+              min: 140,
+              max: 160,
+              categoryMedians: {
+                uncachedInput: 100,
+                cachedInput: 0,
+                output: 50,
+                reasoning: 0,
+                specAuthoringAmortized: 0
+              }
+            },
             costMedianUsd: null
           }
         ],

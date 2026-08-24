@@ -52,7 +52,21 @@ export type Run = {
   estimatedCostUsd: number | null;
   specAuthoringAmortizedCostUsd: number | null;
   specAuthoringAmortizedTokens: number;
+  tokenCostProxyTotal?: number | null;
   evidencePath: string;
+};
+
+export type TokenCostProxy = {
+  median: number | null;
+  min: number | null;
+  max: number | null;
+  categoryMedians: {
+    uncachedInput: number | null;
+    cachedInput: number | null;
+    output: number | null;
+    reasoning: number | null;
+    specAuthoringAmortized: number | null;
+  };
 };
 
 export type LaneSummary = {
@@ -68,6 +82,7 @@ export type LaneSummary = {
   elapsedMedianSeconds: number;
   productiveMedianSeconds: number | null;
   tokenMedian: number | null;
+  tokenCostProxy?: TokenCostProxy;
   costMedianUsd: number | null;
 };
 
@@ -96,6 +111,15 @@ export type Report = {
     };
     pricingAsOf: string | null;
     rateType: "list" | "negotiated" | "internal-chargeback" | "unavailable";
+    costMeasure?: {
+      primary: "token-consumption-proxy";
+      unit: "tokens";
+      tokenCostProxyAvailable: boolean;
+      monetaryCostAvailable: boolean;
+      includesAmortizedSpecAuthoring: true;
+      categories: string[];
+      note: string;
+    };
     frozenInputs: {
       freezeRecordSha256: string | null;
       evaluatorSha256: string;

@@ -72,7 +72,7 @@ test("aggregateLane computes a real costMedianUsd only when every run in the lan
   assert.strictEqual(summary.costMedianUsd, 2.0);
 });
 
-test("aggregateLane includes amortized spec-authoring tokens in token efficiency", () => {
+test("aggregateLane includes amortized spec-authoring tokens in the cost proxy", () => {
   const runs = [
     makeRun({
       inputTokens: 100,
@@ -82,7 +82,58 @@ test("aggregateLane includes amortized spec-authoring tokens in token efficiency
       specAuthoringAmortizedTokens: 30
     })
   ];
-  assert.strictEqual(aggregateLane(runs).tokenMedian, 180);
+  const summary = aggregateLane(runs);
+  assert.strictEqual(summary.tokenMedian, 180);
+  assert.deepStrictEqual(summary.tokenCostProxy, {
+    median: 180,
+    min: 180,
+    max: 180,
+    categoryMedians: {
+      uncachedInput: 100,
+      cachedInput: 0,
+      output: 50,
+      reasoning: 0,
+      specAuthoringAmortized: 30
+    }
+  });
+});
+
+test("aggregateLane reports token cost-proxy median, range, and category medians", () => {
+  const runs = [
+    makeRun({
+      inputTokens: 100,
+      cachedInputTokens: 200,
+      outputTokens: 30,
+      reasoningTokens: 10,
+      specAuthoringAmortizedTokens: 20
+    }),
+    makeRun({
+      inputTokens: 150,
+      cachedInputTokens: 250,
+      outputTokens: 40,
+      reasoningTokens: 20,
+      specAuthoringAmortizedTokens: 20
+    }),
+    makeRun({
+      inputTokens: 200,
+      cachedInputTokens: 300,
+      outputTokens: 50,
+      reasoningTokens: 30,
+      specAuthoringAmortizedTokens: 20
+    })
+  ];
+  assert.deepStrictEqual(aggregateLane(runs).tokenCostProxy, {
+    median: 480,
+    min: 360,
+    max: 600,
+    categoryMedians: {
+      uncachedInput: 150,
+      cachedInput: 250,
+      output: 40,
+      reasoning: 20,
+      specAuthoringAmortized: 20
+    }
+  });
 });
 
 test("aggregateLane throws on an empty run list", () => {

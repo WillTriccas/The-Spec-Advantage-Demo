@@ -20,6 +20,31 @@ const formatMinutes = (seconds: number | null | undefined) =>
 const formatTokens = (value: number | null | undefined) =>
   value == null ? 'Unavailable' : `${(value / 1_000_000).toFixed(2)}M`;
 
+const runTokenCostProxy = (run: Run) => {
+  if (typeof run.tokenCostProxyTotal === 'number') return run.tokenCostProxyTotal;
+  const categories = [
+    run.inputTokens,
+    run.cachedInputTokens,
+    run.outputTokens,
+    run.reasoningTokens,
+    run.specAuthoringAmortizedTokens,
+  ];
+  return categories.every((value) => typeof value === 'number')
+    ? categories.reduce<number>((total, value) => total + (value ?? 0), 0)
+    : null;
+};
+
+const formatTokenRange = (lane: LaneSummary, runs: Run[]) => {
+  const observedTotals = runs
+    .map(runTokenCostProxy)
+    .filter((value): value is number => typeof value === 'number');
+  const minimum = lane.tokenCostProxy?.min ?? (observedTotals.length > 0 ? Math.min(...observedTotals) : null);
+  const maximum = lane.tokenCostProxy?.max ?? (observedTotals.length > 0 ? Math.max(...observedTotals) : null);
+  return minimum == null || maximum == null
+    ? 'Unavailable'
+    : `${formatTokens(minimum)}–${formatTokens(maximum)}`;
+};
+
 function StatusIcon({ status }: { status: ClaimDetail['status'] }) {
   if (status === 'supported') return <CheckCircle2 className="status-supported" size={24} />;
   if (status === 'not-supported') return <AlertTriangle className="status-not-supported" size={24} />;
@@ -78,6 +103,7 @@ function GateSummary({ gates }: { gates: HardGate[] }) {
 
 function RunRow({ run }: { run: Run }) {
   const [expanded, setExpanded] = useState(false);
+  const tokenCostProxy = runTokenCostProxy(run);
   return (
     <React.Fragment>
       <tr className={run.status === 'completed' ? '' : 'run-non-completed'}>
@@ -96,15 +122,21 @@ function RunRow({ run }: { run: Run }) {
         <td><ScoreBar score={run.qualityScore} /></td>
         <td><Badge tone={run.status === 'completed' ? 'neutral' : 'warning'}>{run.status}</Badge></td>
         <td>{formatMinutes(run.elapsedSeconds)}</td>
+        <td>{formatTokens(tokenCostProxy)}</td>
         <td>{run.hardGatesPassed ? 'Passed' : 'Failed'}</td>
       </tr>
       {expanded && (
         <tr>
-          <td colSpan={7} className="expanded-cell">
+          <td colSpan={8} className="expanded-cell">
             <div className="run-details">
               <div><strong>Run ID</strong><code>{run.runId}</code></div>
               <div><strong>Tool calls</strong><span>{run.toolCalls}</span></div>
-              <div><strong>Tokens</strong><span>{formatTokens((run.inputTokens ?? 0) + (run.cachedInputTokens ?? 0) + (run.outputTokens ?? 0) + (run.reasoningTokens ?? 0))}</span></div>
+              <div><strong>Cost proxy total</strong><span>{formatTokens(tokenCostProxy)}</span></div>
+              <div><strong>Uncached input</strong><span>{formatTokens(run.inputTokens)}</span></div>
+              <div><strong>Cached input</strong><span>{formatTokens(run.cachedInputTokens)}</span></div>
+              <div><strong>Output</strong><span>{formatTokens(run.outputTokens)}</span></div>
+              <div><strong>Reasoning</strong><span>{formatTokens(run.reasoningTokens)}</span></div>
+              <div><strong>Amortized spec authoring</strong><span>{formatTokens(run.specAuthoringAmortizedTokens)}</span></div>
               <div><strong>Evidence</strong><code>{run.evidencePath}</code></div>
             </div>
             <GateSummary gates={run.hardGates} />
@@ -115,7 +147,7 @@ function RunRow({ run }: { run: Run }) {
   );
 }
 
-function LaneCard({ lane, featured }: { lane: LaneSummary; featured: boolean }) {
+function LaneCard({ lane, featured, runs }: { lane: LaneSummary; featured: boolean; runs: Run[] }) {
   return (
     <article className={`lane-card ${featured ? 'lane-featured' : ''}`}>
       <div className="lane-heading">
@@ -129,8 +161,10 @@ function LaneCard({ lane, featured }: { lane: LaneSummary; featured: boolean }) 
       <div className="lane-stats">
         <span>Range<strong>{formatScore(lane.qualityMin)}–{formatScore(lane.qualityMax)}</strong></span>
         <span>Gate passes<strong>{lane.hardGatePassCount}/{lane.runCount}</strong></span>
+        <span>Median productive<strong>{formatMinutes(lane.productiveMedianSeconds)}</strong></span>
         <span>Median elapsed<strong>{formatMinutes(lane.elapsedMedianSeconds)}</strong></span>
-        <span>Median tokens<strong>{formatTokens(lane.tokenMedian)}</strong></span>
+        <span>Median cost proxy<strong>{formatTokens(lane.tokenCostProxy?.median ?? lane.tokenMedian)}</strong></span>
+        <span>Cost proxy range<strong>{formatTokenRange(lane, runs)}</strong></span>
       </div>
     </article>
   );
@@ -146,6 +180,10 @@ export default function App() {
   const timedOut = allRuns.filter((run) => run.status === 'timed-out').length;
   const failed = allRuns.filter((run) => run.status === 'failed').length;
   const sealedPasses = allRuns.filter((run) => run.hardGatesPassed).length;
+  const tokenCostProxyValues = allRuns.map(runTokenCostProxy);
+  const totalTokenCostProxy = tokenCostProxyValues.every((value) => typeof value === 'number')
+    ? tokenCostProxyValues.reduce<number>((total, value) => total + (value ?? 0), 0)
+    : null;
 
   const comparisons = report.episodes.map((episode) => {
     const comparison = episode.laneSummaries.find((lane) => lane.laneId === 'efficient-spec')!;
@@ -189,7 +227,7 @@ export default function App() {
           <p>{report.overallClaim.message}</p>
           <div className="claim-badges">
             <Badge tone="danger">Quality: {report.overallClaim.qualityVerdict}</Badge>
-            <Badge>Efficiency: {report.overallClaim.efficiencyVerdict}</Badge>
+            <Badge>Cost proxy: {report.overallClaim.efficiencyVerdict}</Badge>
             <Badge>{report.metadata.evidenceQualification.level}</Badge>
           </div>
         </section>
@@ -198,7 +236,26 @@ export default function App() {
           <MetricCard label="Measured runs" value={String(allRuns.length)} detail={`${completed} completed within policy`} icon={<Gauge size={22} />} />
           <MetricCard label="Sealed passes" value={`${sealedPasses}/${allRuns.length}`} detail="All applicable hard gates passed" icon={<ShieldCheck size={22} />} />
           <MetricCard label="Policy outcomes" value={`${timedOut} timed out`} detail={`${failed} incomplete/failed run`} icon={<Clock3 size={22} />} />
-          <MetricCard label="Pricing evidence" value="Unavailable" detail="No monetary saving is claimed" icon={<Info size={22} />} />
+          <MetricCard
+            label="Observed cost proxy"
+            value={formatTokens(totalTokenCostProxy)}
+            detail={report.metadata.pricingAsOf ? `USD pricing dated ${report.metadata.pricingAsOf}` : 'Categorized tokens; USD pricing unavailable'}
+            icon={<Info size={22} />}
+          />
+        </section>
+
+        <section className="card cost-proxy-callout" aria-label="Cost and efficiency interpretation">
+          <div>
+            <div className="eyebrow">How to read cost and efficiency</div>
+            <h2>Tokens measure consumption cost, not all efficiency</h2>
+          </div>
+          <p>
+            Token consumption is the non-monetary cost proxy. Uncached input, cached input,
+            output, reasoning, and amortized spec-authoring tokens remain visible separately;
+            the total does not imply that every token category has the same monetary price.
+            Productive execution time, elapsed time, quality, and hard-gate completion remain
+            separate delivery-efficiency evidence.
+          </p>
         </section>
 
         <section className="card comparison-card">
@@ -217,8 +274,8 @@ export default function App() {
                   <p>{episode.claim.message}</p>
                 </div>
                 <div className="comparison-scores">
-                  <div><span>Efficient + spec</span><strong>{formatScore(comparison.qualityMedian)}</strong><small>{comparison.hardGatePassCount}/{comparison.runCount} gate-complete</small></div>
-                  <div><span>Frontier + raw</span><strong>{formatScore(control.qualityMedian)}</strong><small>{control.hardGatePassCount}/{control.runCount} gate-complete</small></div>
+                  <div><span>Efficient + spec</span><strong>{formatScore(comparison.qualityMedian)}</strong><small>{comparison.hardGatePassCount}/{comparison.runCount} gate-complete · {formatTokens(comparison.tokenMedian)} cost proxy · {formatMinutes(comparison.productiveMedianSeconds)} productive</small></div>
+                  <div><span>Frontier + raw</span><strong>{formatScore(control.qualityMedian)}</strong><small>{control.hardGatePassCount}/{control.runCount} gate-complete · {formatTokens(control.tokenMedian)} cost proxy · {formatMinutes(control.productiveMedianSeconds)} productive</small></div>
                   <div className={delta >= 0 ? 'delta-positive' : 'delta-negative'}><span>Delta</span><strong>{delta > 0 ? '+' : ''}{delta.toFixed(1)} pts</strong><small>efficient-spec minus frontier-raw</small></div>
                 </div>
               </article>
@@ -260,14 +317,21 @@ export default function App() {
                 <Badge tone={episode.claim.status === 'not-supported' ? 'danger' : 'neutral'}>{episode.claim.status}</Badge>
               </div>
               <div className="lanes-grid">
-                {lanes.map((lane) => <LaneCard key={lane.laneId} lane={lane} featured={lane.laneId === 'efficient-spec' || lane.laneId === 'frontier-raw'} />)}
+                {lanes.map((lane) => (
+                  <LaneCard
+                    key={lane.laneId}
+                    lane={lane}
+                    featured={lane.laneId === 'efficient-spec' || lane.laneId === 'frontier-raw'}
+                    runs={episode.runs.filter((run) => run.laneId === lane.laneId)}
+                  />
+                ))}
               </div>
               {view === 'engineering' && (
                 <div className="card run-table-card">
                   <h3>Run-level evidence</h3>
                   <div className="table-scroll">
                     <table className="runs-table">
-                      <thead><tr><th>Run</th><th>Lane</th><th>Model</th><th>Quality</th><th>Status</th><th>Elapsed</th><th>Hard gates</th></tr></thead>
+                      <thead><tr><th>Run</th><th>Lane</th><th>Model</th><th>Quality</th><th>Status</th><th>Elapsed</th><th>Cost proxy</th><th>Hard gates</th></tr></thead>
                       <tbody>{runs.map((run) => <RunRow key={run.runId} run={run} />)}</tbody>
                     </table>
                   </div>

@@ -9,6 +9,9 @@ describe('measured dashboard', () => {
     expect(screen.getByText('not supported')).toBeTruthy();
     expect(screen.getByText('24')).toBeTruthy();
     expect(screen.getByText(/Timeout 90.0 min/)).toBeTruthy();
+    expect(screen.getByText('Observed cost proxy')).toBeTruthy();
+    expect(screen.getByText(/Tokens measure consumption cost, not all efficiency/i)).toBeTruthy();
+    expect(screen.getByText(/categorized tokens; USD pricing unavailable/i)).toBeTruthy();
   });
 
   it('shows the headline lane comparison for both episodes', () => {
@@ -27,5 +30,15 @@ describe('measured dashboard', () => {
     fireEvent.change(screen.getByLabelText('Lane'), { target: { value: 'efficient-spec' } });
     expect(screen.getAllByText('frontier-raw')).toHaveLength(1);
     expect(screen.getAllByText('efficient-spec').length).toBeGreaterThan(0);
+  });
+
+  it('keeps token categories separate in run-level cost evidence', () => {
+    render(<App />);
+    fireEvent.click(screen.getByText('Engineering'));
+    fireEvent.click(screen.getByLabelText('Expand modernization-efficient-raw-r1'));
+    expect(screen.getByText('Uncached input')).toBeTruthy();
+    expect(screen.getByText('Cached input')).toBeTruthy();
+    expect(screen.getByText('Reasoning')).toBeTruthy();
+    expect(screen.getByText('Amortized spec authoring')).toBeTruthy();
   });
 });
