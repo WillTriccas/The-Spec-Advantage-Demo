@@ -1,7 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { aggregateEpisode } from "./aggregate.js";
+import { aggregateEpisode, totalTokenConsumption } from "./aggregate.js";
 import {
   CONFIG_DIR,
   CONTRACTS_DIR,
@@ -214,7 +214,7 @@ function normalizeReportRun(run) {
   if (!evidencePath && run.dataKind === "measured") {
     throw new Error(`Cannot build measured report: run ${run.runId} has no evidence path`);
   }
-  return {
+  const normalized = {
     runId: run.runId,
     dataKind: run.dataKind,
     laneId: run.laneId,
@@ -259,6 +259,10 @@ function normalizeReportRun(run) {
       run.specAuthoringAmortizedTokens ??
       amortizedTokenShare(run.spec?.authoringEffort, run.repetition),
     evidencePath: evidencePath ?? "evidence/illustrative"
+  };
+  return {
+    ...normalized,
+    tokenCostProxyTotal: totalTokenConsumption(normalized)
   };
 }
 
@@ -451,6 +455,7 @@ function exactLaneSummary(summary) {
     elapsedMedianSeconds: summary.elapsedMedianSeconds,
     productiveMedianSeconds: summary.productiveMedianSeconds,
     tokenMedian: summary.tokenMedian,
+    tokenCostProxy: summary.tokenCostProxy,
     costMedianUsd: summary.costMedianUsd
   };
 }
@@ -810,8 +815,14 @@ export function buildReport({
     throw new Error("Cannot build measured report: pricingAsOf override does not match the frozen costs configuration");
   }
 
+  const monetaryCostAvailable = reportRuns.every(
+    (run) => typeof run.estimatedCostUsd === "number"
+  );
+  const tokenCostProxyAvailable = reportRuns.every(
+    (run) => typeof run.tokenCostProxyTotal === "number"
+  );
   const report = {
-    schemaVersion: "1.1.0",
+    schemaVersion: "1.2.0",
     metadata: {
       benchmarkVersion: metadata.benchmarkVersion,
       generatedAt,
@@ -843,6 +854,22 @@ export function buildReport({
         metadata.dataKind === "measured"
           ? trustedFreezeRecord.pricing?.rateType ?? "unavailable"
           : costsConfig.rateType ?? "unavailable",
+      costMeasure: {
+        primary: "token-consumption-proxy",
+        unit: "tokens",
+        tokenCostProxyAvailable,
+        monetaryCostAvailable,
+        includesAmortizedSpecAuthoring: true,
+        categories: [
+          "uncached-input",
+          "cached-input",
+          "output",
+          "reasoning",
+          "amortized-spec-authoring"
+        ],
+        note:
+          "Token consumption is the benchmark's non-monetary cost proxy. Cached and uncached input remain separate categories; totals do not imply equal monetary prices. Productive and elapsed time are reported separately as delivery-efficiency measures."
+      },
       frozenInputs: {
         freezeRecordSha256: freezeRecordHash,
         evaluatorSha256: evaluatorHash,
@@ -873,7 +900,7 @@ export function buildReport({
   return {
     report,
     claimDetail: {
-      schemaVersion: "1.1.0",
+      schemaVersion: "1.2.0",
       generatedAt,
       dataKind: metadata.dataKind,
       overall: exactClaim(fullClaim),

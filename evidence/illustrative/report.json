@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "1.1.0",
+  "schemaVersion": "1.2.0",
   "metadata": {
     "benchmarkVersion": "unfrozen",
     "generatedAt": "2026-08-12T13:00:00.000Z",
@@ -9,23 +9,42 @@
       "limitation": "Synthetic playback data has not been produced by controlled coding-agent runs and cannot support a benchmark claim."
     },
     "repetitionsPerLane": 3,
+    "executionPolicy": {
+      "timeoutSeconds": 7200,
+      "toolCallCap": 200
+    },
     "pricingAsOf": null,
     "rateType": "unavailable",
+    "costMeasure": {
+      "primary": "token-consumption-proxy",
+      "unit": "tokens",
+      "tokenCostProxyAvailable": true,
+      "monetaryCostAvailable": false,
+      "includesAmortizedSpecAuthoring": true,
+      "categories": [
+        "uncached-input",
+        "cached-input",
+        "output",
+        "reasoning",
+        "amortized-spec-authoring"
+      ],
+      "note": "Token consumption is the benchmark's non-monetary cost proxy. Cached and uncached input remain separate categories; totals do not imply equal monetary prices. Productive and elapsed time are reported separately as delivery-efficiency measures."
+    },
     "frozenInputs": {
       "freezeRecordSha256": null,
       "evaluatorSha256": "1540f263481cae49fa84bc8d187c5e1b503cc5775f41f24da1e54339870c8946",
-      "scoringConfigSha256": "c9e7c3bebd575b3b56f0409d69cdb5d952c175a73ec11ada7599d73a9648bac6",
+      "scoringConfigSha256": "7ea193337c43ed5be17b3698168fe4d6c5cd5aaddb313d1188caeb984bcf1418",
       "costsConfigSha256": "3b2c5ed227eef9cb46c8686dca1bd76af97e2f50e36729358ebc7c9d00dc5ea5",
-      "benchmarkEngineSha256": "edff62eeea07709d7a2a4785d791c8701d986f3f8f127046048052fd6a1cc8c5",
+      "benchmarkEngineSha256": "09599af0c46140e9e0c94bd700359fbd90301e89856af52ef1a2e7020a7e05b6",
       "promptSha256s": [
         "f22d3d71127ff9f1e7c3e35706442e5d4a79443ef273fa28e43468c0dc789957",
         "518d8bb000fd36bb982c37042636adf1f54c0d1a484ba5319578ec858452db23",
         "f47aa4cd40324a29be02f62a6f7fb8c900a72017ad565ca3b3e7756e343d648d",
         "b4a29ff8f3be258bdb86f51d78760adf86cd8319cd1a1051c7dd7216b10724f4"
       ],
-      "experimentConfigSha256": "b7f2dd0b8a5990a4264412829ede8e05fcb0a20fd7814cba902a01ac54f3276f",
+      "experimentConfigSha256": "03260c6d0994ad62d667998cc782cabf8db200f31f5df7f9843083cfa542ffec",
       "runSchemaSha256": "b4cc4103ec2613d7f6ce46aef274a32b4e58a63cebeaccefc609f645606ccf11",
-      "reportSchemaSha256": "b1b050eba32e96cb059d542ea21114e7d91d8e88cc22f74bc9b867be45187204",
+      "reportSchemaSha256": "4a1bc4b0f3d7f8866d198e71dcbecf476d31f965a5fd1ece799c22d4aa62ec8d",
       "claimRule": {
         "comparisonLane": "efficient-spec",
         "controlLane": "frontier-raw",
@@ -82,6 +101,18 @@
           "elapsedMedianSeconds": 1286,
           "productiveMedianSeconds": 1157,
           "tokenMedian": 65654,
+          "tokenCostProxy": {
+            "median": 65654,
+            "min": 44094,
+            "max": 69611,
+            "categoryMedians": {
+              "uncachedInput": 46705,
+              "cachedInput": 0,
+              "output": 15234,
+              "reasoning": 0,
+              "specAuthoringAmortized": 0
+            }
+          },
           "costMedianUsd": null
         },
         {
@@ -97,6 +128,18 @@
           "elapsedMedianSeconds": 1514,
           "productiveMedianSeconds": 1363,
           "tokenMedian": 89936,
+          "tokenCostProxy": {
+            "median": 89936,
+            "min": 75075,
+            "max": 90749,
+            "categoryMedians": {
+              "uncachedInput": 48639,
+              "cachedInput": 0,
+              "output": 18212,
+              "reasoning": 0,
+              "specAuthoringAmortized": 19950
+            }
+          },
           "costMedianUsd": null
         },
         {
@@ -112,6 +155,18 @@
           "elapsedMedianSeconds": 2240,
           "productiveMedianSeconds": 2016,
           "tokenMedian": 55554,
+          "tokenCostProxy": {
+            "median": 55554,
+            "min": 53242,
+            "max": 69222,
+            "categoryMedians": {
+              "uncachedInput": 44529,
+              "cachedInput": 0,
+              "output": 18136,
+              "reasoning": 0,
+              "specAuthoringAmortized": 0
+            }
+          },
           "costMedianUsd": null
         },
         {
@@ -127,6 +182,18 @@
           "elapsedMedianSeconds": 2163,
           "productiveMedianSeconds": 1947,
           "tokenMedian": 58892,
+          "tokenCostProxy": {
+            "median": 58892,
+            "min": 50706,
+            "max": 69863,
+            "categoryMedians": {
+              "uncachedInput": 28399,
+              "cachedInput": 0,
+              "output": 10588,
+              "reasoning": 0,
+              "specAuthoringAmortized": 19950
+            }
+          },
           "costMedianUsd": null
         }
       ],
@@ -192,7 +259,8 @@
           "estimatedCostUsd": null,
           "specAuthoringAmortizedCostUsd": null,
           "specAuthoringAmortizedTokens": 0,
-          "evidencePath": "evidence/illustrative/fixtures/modernization-efficient-raw-r1"
+          "evidencePath": "evidence/illustrative/fixtures/modernization-efficient-raw-r1",
+          "tokenCostProxyTotal": 65654
         },
         {
           "runId": "modernization-efficient-raw-r2",
@@ -255,7 +323,8 @@
           "estimatedCostUsd": null,
           "specAuthoringAmortizedCostUsd": null,
           "specAuthoringAmortizedTokens": 0,
-          "evidencePath": "evidence/illustrative/fixtures/modernization-efficient-raw-r2"
+          "evidencePath": "evidence/illustrative/fixtures/modernization-efficient-raw-r2",
+          "tokenCostProxyTotal": 69611
         },
         {
           "runId": "modernization-efficient-raw-r3",
@@ -318,7 +387,8 @@
           "estimatedCostUsd": null,
           "specAuthoringAmortizedCostUsd": null,
           "specAuthoringAmortizedTokens": 0,
-          "evidencePath": "evidence/illustrative/fixtures/modernization-efficient-raw-r3"
+          "evidencePath": "evidence/illustrative/fixtures/modernization-efficient-raw-r3",
+          "tokenCostProxyTotal": 44094
         },
         {
           "runId": "modernization-efficient-spec-r1",
@@ -381,7 +451,8 @@
           "estimatedCostUsd": null,
           "specAuthoringAmortizedCostUsd": null,
           "specAuthoringAmortizedTokens": 19950,
-          "evidencePath": "evidence/illustrative/fixtures/modernization-efficient-spec-r1"
+          "evidencePath": "evidence/illustrative/fixtures/modernization-efficient-spec-r1",
+          "tokenCostProxyTotal": 90749
         },
         {
           "runId": "modernization-efficient-spec-r2",
@@ -444,7 +515,8 @@
           "estimatedCostUsd": null,
           "specAuthoringAmortizedCostUsd": null,
           "specAuthoringAmortizedTokens": 19950,
-          "evidencePath": "evidence/illustrative/fixtures/modernization-efficient-spec-r2"
+          "evidencePath": "evidence/illustrative/fixtures/modernization-efficient-spec-r2",
+          "tokenCostProxyTotal": 89936
         },
         {
           "runId": "modernization-efficient-spec-r3",
@@ -507,7 +579,8 @@
           "estimatedCostUsd": null,
           "specAuthoringAmortizedCostUsd": null,
           "specAuthoringAmortizedTokens": 19950,
-          "evidencePath": "evidence/illustrative/fixtures/modernization-efficient-spec-r3"
+          "evidencePath": "evidence/illustrative/fixtures/modernization-efficient-spec-r3",
+          "tokenCostProxyTotal": 75075
         },
         {
           "runId": "modernization-frontier-raw-r1",
@@ -570,7 +643,8 @@
           "estimatedCostUsd": null,
           "specAuthoringAmortizedCostUsd": null,
           "specAuthoringAmortizedTokens": 0,
-          "evidencePath": "evidence/illustrative/fixtures/modernization-frontier-raw-r1"
+          "evidencePath": "evidence/illustrative/fixtures/modernization-frontier-raw-r1",
+          "tokenCostProxyTotal": 69222
         },
         {
           "runId": "modernization-frontier-raw-r2",
@@ -633,7 +707,8 @@
           "estimatedCostUsd": null,
           "specAuthoringAmortizedCostUsd": null,
           "specAuthoringAmortizedTokens": 0,
-          "evidencePath": "evidence/illustrative/fixtures/modernization-frontier-raw-r2"
+          "evidencePath": "evidence/illustrative/fixtures/modernization-frontier-raw-r2",
+          "tokenCostProxyTotal": 53242
         },
         {
           "runId": "modernization-frontier-raw-r3",
@@ -696,7 +771,8 @@
           "estimatedCostUsd": null,
           "specAuthoringAmortizedCostUsd": null,
           "specAuthoringAmortizedTokens": 0,
-          "evidencePath": "evidence/illustrative/fixtures/modernization-frontier-raw-r3"
+          "evidencePath": "evidence/illustrative/fixtures/modernization-frontier-raw-r3",
+          "tokenCostProxyTotal": 55554
         },
         {
           "runId": "modernization-frontier-spec-r1",
@@ -759,7 +835,8 @@
           "estimatedCostUsd": null,
           "specAuthoringAmortizedCostUsd": null,
           "specAuthoringAmortizedTokens": 19950,
-          "evidencePath": "evidence/illustrative/fixtures/modernization-frontier-spec-r1"
+          "evidencePath": "evidence/illustrative/fixtures/modernization-frontier-spec-r1",
+          "tokenCostProxyTotal": 50706
         },
         {
           "runId": "modernization-frontier-spec-r2",
@@ -822,7 +899,8 @@
           "estimatedCostUsd": null,
           "specAuthoringAmortizedCostUsd": null,
           "specAuthoringAmortizedTokens": 19950,
-          "evidencePath": "evidence/illustrative/fixtures/modernization-frontier-spec-r2"
+          "evidencePath": "evidence/illustrative/fixtures/modernization-frontier-spec-r2",
+          "tokenCostProxyTotal": 58892
         },
         {
           "runId": "modernization-frontier-spec-r3",
@@ -885,7 +963,8 @@
           "estimatedCostUsd": null,
           "specAuthoringAmortizedCostUsd": null,
           "specAuthoringAmortizedTokens": 19950,
-          "evidencePath": "evidence/illustrative/fixtures/modernization-frontier-spec-r3"
+          "evidencePath": "evidence/illustrative/fixtures/modernization-frontier-spec-r3",
+          "tokenCostProxyTotal": 69863
         }
       ]
     },
@@ -915,6 +994,18 @@
           "elapsedMedianSeconds": 1199,
           "productiveMedianSeconds": 1079,
           "tokenMedian": 72486,
+          "tokenCostProxy": {
+            "median": 72486,
+            "min": 60769,
+            "max": 75725,
+            "categoryMedians": {
+              "uncachedInput": 45115,
+              "cachedInput": 0,
+              "output": 24247,
+              "reasoning": 0,
+              "specAuthoringAmortized": 0
+            }
+          },
           "costMedianUsd": null
         },
         {
@@ -930,6 +1021,18 @@
           "elapsedMedianSeconds": 1484,
           "productiveMedianSeconds": 1336,
           "tokenMedian": 92590,
+          "tokenCostProxy": {
+            "median": 92590,
+            "min": 90495,
+            "max": 108129,
+            "categoryMedians": {
+              "uncachedInput": 55352,
+              "cachedInput": 0,
+              "output": 27144,
+              "reasoning": 0,
+              "specAuthoringAmortized": 25633
+            }
+          },
           "costMedianUsd": null
         },
         {
@@ -945,6 +1048,18 @@
           "elapsedMedianSeconds": 2257,
           "productiveMedianSeconds": 2031,
           "tokenMedian": 51482,
+          "tokenCostProxy": {
+            "median": 51482,
+            "min": 50924,
+            "max": 68747,
+            "categoryMedians": {
+              "uncachedInput": 39050,
+              "cachedInput": 0,
+              "output": 19568,
+              "reasoning": 0,
+              "specAuthoringAmortized": 0
+            }
+          },
           "costMedianUsd": null
         },
         {
@@ -960,6 +1075,18 @@
           "elapsedMedianSeconds": 2097,
           "productiveMedianSeconds": 1887,
           "tokenMedian": 77579,
+          "tokenCostProxy": {
+            "median": 77579,
+            "min": 64237,
+            "max": 94510,
+            "categoryMedians": {
+              "uncachedInput": 34670,
+              "cachedInput": 0,
+              "output": 17276,
+              "reasoning": 0,
+              "specAuthoringAmortized": 25633
+            }
+          },
           "costMedianUsd": null
         }
       ],
@@ -1025,7 +1152,8 @@
           "estimatedCostUsd": null,
           "specAuthoringAmortizedCostUsd": null,
           "specAuthoringAmortizedTokens": 0,
-          "evidencePath": "evidence/illustrative/fixtures/audit-feature-efficient-raw-r1"
+          "evidencePath": "evidence/illustrative/fixtures/audit-feature-efficient-raw-r1",
+          "tokenCostProxyTotal": 72486
         },
         {
           "runId": "audit-feature-efficient-raw-r2",
@@ -1088,7 +1216,8 @@
           "estimatedCostUsd": null,
           "specAuthoringAmortizedCostUsd": null,
           "specAuthoringAmortizedTokens": 0,
-          "evidencePath": "evidence/illustrative/fixtures/audit-feature-efficient-raw-r2"
+          "evidencePath": "evidence/illustrative/fixtures/audit-feature-efficient-raw-r2",
+          "tokenCostProxyTotal": 60769
         },
         {
           "runId": "audit-feature-efficient-raw-r3",
@@ -1151,7 +1280,8 @@
           "estimatedCostUsd": null,
           "specAuthoringAmortizedCostUsd": null,
           "specAuthoringAmortizedTokens": 0,
-          "evidencePath": "evidence/illustrative/fixtures/audit-feature-efficient-raw-r3"
+          "evidencePath": "evidence/illustrative/fixtures/audit-feature-efficient-raw-r3",
+          "tokenCostProxyTotal": 75725
         },
         {
           "runId": "audit-feature-efficient-spec-r1",
@@ -1214,7 +1344,8 @@
           "estimatedCostUsd": null,
           "specAuthoringAmortizedCostUsd": null,
           "specAuthoringAmortizedTokens": 25634,
-          "evidencePath": "evidence/illustrative/fixtures/audit-feature-efficient-spec-r1"
+          "evidencePath": "evidence/illustrative/fixtures/audit-feature-efficient-spec-r1",
+          "tokenCostProxyTotal": 92590
         },
         {
           "runId": "audit-feature-efficient-spec-r2",
@@ -1277,7 +1408,8 @@
           "estimatedCostUsd": null,
           "specAuthoringAmortizedCostUsd": null,
           "specAuthoringAmortizedTokens": 25633,
-          "evidencePath": "evidence/illustrative/fixtures/audit-feature-efficient-spec-r2"
+          "evidencePath": "evidence/illustrative/fixtures/audit-feature-efficient-spec-r2",
+          "tokenCostProxyTotal": 108129
         },
         {
           "runId": "audit-feature-efficient-spec-r3",
@@ -1340,7 +1472,8 @@
           "estimatedCostUsd": null,
           "specAuthoringAmortizedCostUsd": null,
           "specAuthoringAmortizedTokens": 25633,
-          "evidencePath": "evidence/illustrative/fixtures/audit-feature-efficient-spec-r3"
+          "evidencePath": "evidence/illustrative/fixtures/audit-feature-efficient-spec-r3",
+          "tokenCostProxyTotal": 90495
         },
         {
           "runId": "audit-feature-frontier-raw-r1",
@@ -1403,7 +1536,8 @@
           "estimatedCostUsd": null,
           "specAuthoringAmortizedCostUsd": null,
           "specAuthoringAmortizedTokens": 0,
-          "evidencePath": "evidence/illustrative/fixtures/audit-feature-frontier-raw-r1"
+          "evidencePath": "evidence/illustrative/fixtures/audit-feature-frontier-raw-r1",
+          "tokenCostProxyTotal": 68747
         },
         {
           "runId": "audit-feature-frontier-raw-r2",
@@ -1466,7 +1600,8 @@
           "estimatedCostUsd": null,
           "specAuthoringAmortizedCostUsd": null,
           "specAuthoringAmortizedTokens": 0,
-          "evidencePath": "evidence/illustrative/fixtures/audit-feature-frontier-raw-r2"
+          "evidencePath": "evidence/illustrative/fixtures/audit-feature-frontier-raw-r2",
+          "tokenCostProxyTotal": 50924
         },
         {
           "runId": "audit-feature-frontier-raw-r3",
@@ -1529,7 +1664,8 @@
           "estimatedCostUsd": null,
           "specAuthoringAmortizedCostUsd": null,
           "specAuthoringAmortizedTokens": 0,
-          "evidencePath": "evidence/illustrative/fixtures/audit-feature-frontier-raw-r3"
+          "evidencePath": "evidence/illustrative/fixtures/audit-feature-frontier-raw-r3",
+          "tokenCostProxyTotal": 51482
         },
         {
           "runId": "audit-feature-frontier-spec-r1",
@@ -1592,7 +1728,8 @@
           "estimatedCostUsd": null,
           "specAuthoringAmortizedCostUsd": null,
           "specAuthoringAmortizedTokens": 25634,
-          "evidencePath": "evidence/illustrative/fixtures/audit-feature-frontier-spec-r1"
+          "evidencePath": "evidence/illustrative/fixtures/audit-feature-frontier-spec-r1",
+          "tokenCostProxyTotal": 64237
         },
         {
           "runId": "audit-feature-frontier-spec-r2",
@@ -1655,7 +1792,8 @@
           "estimatedCostUsd": null,
           "specAuthoringAmortizedCostUsd": null,
           "specAuthoringAmortizedTokens": 25633,
-          "evidencePath": "evidence/illustrative/fixtures/audit-feature-frontier-spec-r2"
+          "evidencePath": "evidence/illustrative/fixtures/audit-feature-frontier-spec-r2",
+          "tokenCostProxyTotal": 94510
         },
         {
           "runId": "audit-feature-frontier-spec-r3",
@@ -1718,7 +1856,8 @@
           "estimatedCostUsd": null,
           "specAuthoringAmortizedCostUsd": null,
           "specAuthoringAmortizedTokens": 25633,
-          "evidencePath": "evidence/illustrative/fixtures/audit-feature-frontier-spec-r3"
+          "evidencePath": "evidence/illustrative/fixtures/audit-feature-frontier-spec-r3",
+          "tokenCostProxyTotal": 77579
         }
       ]
     }

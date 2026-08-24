@@ -28,7 +28,10 @@ Show the four lanes and exact models. Explain why three repetitions and independ
 
 ### 4. Present the executive evidence
 
-Start with claim status, hard gates, median quality, range, and elapsed or cost comparison. Explain missing cost as unavailable rather than treating it as free.
+Start with claim status, hard gates, median quality, token cost-proxy median/range,
+and productive/elapsed time. Explain that token consumption is a non-monetary cost
+proxy, not a currency estimate; missing monetary pricing remains unavailable rather
+than being treated as free.
 
 If the result is inconclusive or not supported, treat that as useful governance evidence rather than a failed demo.
 
@@ -75,4 +78,3 @@ Ask the client to identify:
 - Model access, data-boundary, and audit requirements.
 
 The same four-lane design can then test the value of specification investment in that environment.
-

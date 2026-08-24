@@ -15,30 +15,30 @@ function laneQualitySpread(laneSummary) {
  * Decide the efficiency verdict (better/equivalent/worse/unavailable)
  * between a comparison and a control lane summary.
  *
- * Monetary cost is primary. Token use is the fallback when dated pricing is
- * unavailable. Elapsed time remains useful report context but cannot by
- * itself support the benchmark's lower-cost hypothesis.
+ * Categorized token consumption is the primary non-monetary cost proxy.
+ * Dated monetary cost remains an optional fallback. Productive and elapsed
+ * time are separate delivery-efficiency measures and are not converted into
+ * cost.
  */
 function determineEfficiencyVerdict(comparison, control) {
-  const costAvailable = comparison.costMedianUsd !== null && control.costMedianUsd !== null;
-
-  if (costAvailable) {
-    const drivingMetric = "cost";
-    if (comparison.costMedianUsd < control.costMedianUsd) {
-      return { efficiencyVerdict: "better", drivingMetric };
-    }
-    if (comparison.costMedianUsd > control.costMedianUsd) {
-      return { efficiencyVerdict: "worse", drivingMetric };
-    }
-    return { efficiencyVerdict: "equivalent", drivingMetric };
-  }
-
   if (comparison.tokenMedian !== null && control.tokenMedian !== null) {
     const drivingMetric = "tokens";
     if (comparison.tokenMedian < control.tokenMedian) {
       return { efficiencyVerdict: "better", drivingMetric };
     }
     if (comparison.tokenMedian > control.tokenMedian) {
+      return { efficiencyVerdict: "worse", drivingMetric };
+    }
+    return { efficiencyVerdict: "equivalent", drivingMetric };
+  }
+
+  const costAvailable = comparison.costMedianUsd !== null && control.costMedianUsd !== null;
+  if (costAvailable) {
+    const drivingMetric = "cost";
+    if (comparison.costMedianUsd < control.costMedianUsd) {
+      return { efficiencyVerdict: "better", drivingMetric };
+    }
+    if (comparison.costMedianUsd > control.costMedianUsd) {
       return { efficiencyVerdict: "worse", drivingMetric };
     }
     return { efficiencyVerdict: "equivalent", drivingMetric };
@@ -93,10 +93,6 @@ export function computeEpisodeClaim(episodeId, comparisonRuns, controlRuns, { cl
   const withinSpread = Math.abs(qualityDelta) <= spread;
 
   let costSavingPercent = null;
-  if (comparison.costMedianUsd !== null && control.costMedianUsd !== null && control.costMedianUsd > 0) {
-    costSavingPercent =
-      Math.round(((control.costMedianUsd - comparison.costMedianUsd) / control.costMedianUsd) * 100 * 100) / 100;
-  }
 
   const gateNote = `Comparison lane hard gates: ${comparison.hardGatePassCount}/${comparison.runCount} runs passed all applicable gates. Control lane hard gates (visible, non-blocking): ${control.hardGatePassCount}/${control.runCount} runs passed.`;
 
@@ -147,6 +143,20 @@ export function computeEpisodeClaim(episodeId, comparisonRuns, controlRuns, { cl
 
   const qualityVerdict = qualityDelta > claimRule.betterByMoreThanPoints ? "better" : "equivalent";
   const { efficiencyVerdict, drivingMetric } = determineEfficiencyVerdict(comparison, control);
+  const comparisonCostMeasure =
+    drivingMetric === "tokens" ? comparison.tokenMedian : comparison.costMedianUsd;
+  const controlCostMeasure =
+    drivingMetric === "tokens" ? control.tokenMedian : control.costMedianUsd;
+  if (
+    typeof comparisonCostMeasure === "number" &&
+    typeof controlCostMeasure === "number" &&
+    controlCostMeasure > 0
+  ) {
+    costSavingPercent =
+      Math.round(
+        ((controlCostMeasure - comparisonCostMeasure) / controlCostMeasure) * 100 * 100
+      ) / 100;
+  }
 
   if (efficiencyVerdict === "better") {
     return {
@@ -159,7 +169,7 @@ export function computeEpisodeClaim(episodeId, comparisonRuns, controlRuns, { cl
       costSavingPercent,
       comparisonGatesPassed,
       controlGatesPassed,
-      message: `Episode "${episodeId}": claim supported -- "${claimRule.comparisonLane}" is ${qualityVerdict === "better" ? "better than" : "non-inferior to"} "${claimRule.controlLane}" on quality (delta ${qualityDelta}) and uses fewer median ${drivingMetric === "cost" ? "cost dollars" : "tokens"}. ${gateNote}`
+      message: `Episode "${episodeId}": claim supported -- "${claimRule.comparisonLane}" is ${qualityVerdict === "better" ? "better than" : "non-inferior to"} "${claimRule.controlLane}" on quality (delta ${qualityDelta}) and uses less median ${drivingMetric === "cost" ? "monetary cost" : "token consumption (the non-monetary cost proxy)"}. ${gateNote}`
     };
   }
 
@@ -332,7 +342,7 @@ export function determineClaim(
   } else if (drivingMetrics.includes("cost")) {
     pricingNote = " No dated price card is configured; cost verdicts use costs recorded directly in the run artifacts.";
   } else if (drivingMetrics.includes("tokens")) {
-    pricingNote = " Monetary cost is unavailable, so efficiency verdicts use median total token consumption; elapsed time is context only.";
+    pricingNote = " Monetary cost is unavailable; categorized token consumption is the non-monetary cost proxy. Productive and elapsed time remain separate delivery-efficiency evidence.";
   } else {
     pricingNote = " Monetary cost and token evidence are unavailable, so no efficiency advantage is claimed.";
   }

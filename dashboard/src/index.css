@@ -73,7 +73,21 @@ h1, h2, h3, p { margin-top: 0; }
   letter-spacing: .08em;
 }
 .dashboard-container { max-width: 1440px; margin: 0 auto; padding: 40px 28px 64px; }
-.header { display: flex; justify-content: space-between; gap: 32px; align-items: flex-start; margin-bottom: 28px; }
+.header { display: flex; justify-content: space-between; gap: 32px; align-items: flex-start; margin-bottom: 28px;
+}
+
+.cost-proxy-callout {
+display: grid;
+grid-template-columns: minmax(220px, 0.8fr) minmax(320px, 1.6fr);
+gap: 24px;
+align-items: center;
+margin-bottom: 28px;
+border-left: 4px solid var(--accent);
+}
+
+.cost-proxy-callout h2,
+.cost-proxy-callout p {
+margin: 0; }
 .header h1 { max-width: 900px; margin-bottom: 10px; font-size: clamp(28px, 4vw, 48px); line-height: 1.08; letter-spacing: -.035em; }
 .eyebrow { color: var(--cp-accent); text-transform: uppercase; letter-spacing: .09em; font-size: 12px; font-weight: 800; margin-bottom: 8px; }
 .subtitle { color: var(--cp-text-muted); max-width: 760px; font-size: 17px; }

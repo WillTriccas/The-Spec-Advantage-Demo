@@ -40,7 +40,9 @@ explicit human approvals. Its 90-minute policy and results remain immutable.
 
 `specforge-fsi-v1.1.0` is the next benchmark version. It applies a symmetric
 120-minute limit to the complete 24-run matrix and is intentionally blocked from
-execution until fresh freeze approvals are recorded.
+execution until fresh freeze approvals are recorded. Its report contract uses
+categorized token consumption as the non-monetary cost proxy and keeps productive
+and elapsed time as separate delivery-efficiency measures.
 
 All 24 coding-agent runs have completed and were independently evaluated. The
 pre-registered headline claim is **not supported**: the efficient model with the
@@ -195,8 +197,9 @@ Open `evaluator\src\modernization.js` and `benchmark\config\scoring.json`. Expla
 Open `dashboard\dist-single\index.html`.
 
 1. Start with the **Executive** view: hypothesis, claim status, quality medians,
-   variability, hard gates, and efficiency.
-2. Explain the **bounded-measured** evidence boundary and unavailable monetary pricing.
+   variability, hard gates, token cost proxy, and delivery time.
+2. Explain the **bounded-measured** evidence boundary: token consumption is observed,
+   while monetary pricing remains unavailable.
 3. Compare `efficient-spec` with `frontier-raw` for each episode.
 4. Switch to the **Engineering** view and drill into retained timeouts, the incomplete
    run, gate outcomes, usage, and evidence provenance.
@@ -221,8 +224,9 @@ The execution matrix contains 19 in-policy completions, four runs stopped at the
 passed every applicable sealed-evaluator gate. Both episode claims and the overall
 roll-up are `not-supported`.
 
-Dated, sourced pricing can still be added in a future benchmark version. This frozen
-version reports monetary efficiency as unavailable rather than zero.
+Dated, sourced pricing can still be added in a future benchmark version. The dashboard
+uses observed token consumption as a non-monetary cost proxy and does not present it as
+a currency estimate. Productive and elapsed time remain separate efficiency evidence.
 
 The next version changes the execution limit to 7,200 seconds. Results from v1.1.0
 must be reported separately from v1.0.0; the four previously timed-out MAI runs

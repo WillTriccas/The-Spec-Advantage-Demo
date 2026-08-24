@@ -484,6 +484,26 @@ test("buildReport output validates against contracts/report.schema.json", () => 
   const { valid, errors } = validateAgainstSchema(loadReportSchema(), report);
   assert.deepStrictEqual(errors, []);
   assert.strictEqual(valid, true);
+  assert.strictEqual(report.schemaVersion, "1.2.0");
+  assert.strictEqual(report.metadata.costMeasure.primary, "token-consumption-proxy");
+  assert.strictEqual(report.metadata.costMeasure.monetaryCostAvailable, false);
+  const efficientSpecRun = report.episodes[0].runs.find(
+    (run) => run.laneId === "efficient-spec"
+  );
+  const efficientSpecSummary = report.episodes[0].laneSummaries.find(
+    (lane) => lane.laneId === "efficient-spec"
+  );
+  assert.strictEqual(efficientSpecRun.tokenCostProxyTotal, 160);
+  assert.deepStrictEqual(
+    efficientSpecSummary.tokenCostProxy.categoryMedians,
+    {
+      uncachedInput: 100,
+      cachedInput: 0,
+      output: 50,
+      reasoning: 0,
+      specAuthoringAmortized: 10
+    }
+  );
 });
 
 test("buildReport forces claim.status to not-evaluated for illustrative data even with favorable-looking numbers", () => {

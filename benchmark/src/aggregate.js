@@ -29,18 +29,14 @@ export function aggregateLane(runs) {
   const qualityScores = runs.map((r) => r.qualityScore);
   const elapsedSeconds = runs.map((r) => r.elapsedSeconds);
   const productiveSeconds = runs.map((r) => r.productiveSeconds ?? r.productiveDurationSeconds ?? null);
-  const tokenTotals = runs.map((r) => {
-    const categories = [
-      r.inputTokens,
-      r.cachedInputTokens,
-      r.outputTokens,
-      r.reasoningTokens ?? r.reasoningOutputTokens,
-      r.specAuthoringAmortizedTokens ?? 0
-    ];
-    return categories.every((value) => value !== null && value !== undefined)
-      ? categories.reduce((sum, value) => sum + value, 0)
-      : null;
-  });
+  const tokenCategories = runs.map((run) => ({
+    uncachedInput: run.inputTokens,
+    cachedInput: run.cachedInputTokens,
+    output: run.outputTokens,
+    reasoning: run.reasoningTokens ?? run.reasoningOutputTokens,
+    specAuthoringAmortized: run.specAuthoringAmortizedTokens ?? 0
+  }));
+  const tokenTotals = runs.map(totalTokenConsumption);
   const hardGatePassCount = runs.filter((r) => r.hardGatesPassed).length;
 
   const costs = runs.map((r) => r.estimatedCostUsd);
@@ -60,11 +56,44 @@ export function aggregateLane(runs) {
     productiveMedianSeconds: productiveSeconds.every((value) => typeof value === "number")
       ? median(productiveSeconds)
       : null,
-    tokenMedian: tokenTotals.every((value) => typeof value === "number")
-      ? median(tokenTotals)
-      : null,
+    tokenMedian: completeMedian(tokenTotals),
+    tokenCostProxy: {
+      median: completeMedian(tokenTotals),
+      min: completeRangeValue(tokenTotals, Math.min),
+      max: completeRangeValue(tokenTotals, Math.max),
+      categoryMedians: {
+        uncachedInput: completeMedian(tokenCategories.map((tokens) => tokens.uncachedInput)),
+        cachedInput: completeMedian(tokenCategories.map((tokens) => tokens.cachedInput)),
+        output: completeMedian(tokenCategories.map((tokens) => tokens.output)),
+        reasoning: completeMedian(tokenCategories.map((tokens) => tokens.reasoning)),
+        specAuthoringAmortized: completeMedian(
+          tokenCategories.map((tokens) => tokens.specAuthoringAmortized)
+        )
+      }
+    },
     costMedianUsd
   };
+}
+
+function completeMedian(values) {
+  return values.every((value) => typeof value === "number") ? median(values) : null;
+}
+
+function completeRangeValue(values, operation) {
+  return values.every((value) => typeof value === "number") ? operation(...values) : null;
+}
+
+export function totalTokenConsumption(run) {
+  const categories = [
+    run.inputTokens,
+    run.cachedInputTokens,
+    run.outputTokens,
+    run.reasoningTokens ?? run.reasoningOutputTokens,
+    run.specAuthoringAmortizedTokens ?? 0
+  ];
+  return categories.every((value) => typeof value === "number")
+    ? categories.reduce((sum, value) => sum + value, 0)
+    : null;
 }
 
 export function groupByLane(runs) {

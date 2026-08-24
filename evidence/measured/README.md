@@ -29,3 +29,8 @@ deterministic scoring compatibility view documented in
 The evidence qualification is `bounded-measured`: GitHub Copilot exposed the
 selected model IDs, agent version, and reasoning effort, but not immutable
 provider model build IDs.
+
+The v1.0.0 monetary pricing fields remain unavailable and immutable. The dashboard
+therefore presents recorded uncached input, cached input, output, reasoning, and
+amortized specification-authoring tokens as a non-monetary cost proxy. Productive
+and elapsed time remain separate delivery-efficiency evidence.

@@ -4,10 +4,25 @@
   "supersedesBenchmarkVersion": "specforge-fsi-v1.0.0",
   "approvalsPath": "benchmark/config/approvals-v1.1.0.json",
   "policyChange": {
-    "id": "execution-timeout",
+    "id": "execution-timeout-and-cost-presentation",
     "previousTimeoutSeconds": 5400,
     "timeoutSeconds": 7200,
-    "rationale": "The 90-minute boundary truncated MAI Code 1.1 Flash runs before task completion. Version 1.1.0 applies a symmetric 120-minute limit to the full experiment matrix."
+    "rationale": "The 90-minute boundary truncated MAI Code 1.1 Flash runs before task completion. Version 1.1.0 applies a symmetric 120-minute limit to the full experiment matrix and presents categorized token consumption as the non-monetary cost proxy while keeping time as separate delivery-efficiency evidence."
+  },
+  "costPresentation": {
+    "primary": "token-consumption-proxy",
+    "monetaryCost": "optional-when-dated-and-sourced",
+    "tokenCategories": [
+      "uncached-input",
+      "cached-input",
+      "output",
+      "reasoning",
+      "amortized-spec-authoring"
+    ],
+    "deliveryEfficiencyMeasures": [
+      "productive-seconds",
+      "elapsed-seconds"
+    ]
   },
   "evidenceQualification": {
     "level": "bounded-measured",

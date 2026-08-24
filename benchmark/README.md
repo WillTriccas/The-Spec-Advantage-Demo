@@ -16,9 +16,9 @@ model given only a raw brief (`frontier-raw`)? That only works if:
   identical raw brief followed by the approved spec;
 - run/report artifacts conform to the committed contracts
   (`contracts/run.schema.json`, `contracts/report.schema.json`);
-- costs stay `null` until real, dated pricing is configured
-  (`benchmark/config/costs.json`), so a claim is never quietly backed by
-  invented dollar figures;
+- categorized token consumption is always the non-monetary cost proxy when usage
+  evidence exists, while USD costs stay `null` until real, dated pricing is
+  configured (`benchmark/config/costs.json`);
 - the pre-registered claim rule (`benchmark/config/scoring.json`'s
   `claimRule`) is evaluated mechanically from scored runs, not asserted by
   hand — and illustrative data can **never** produce anything but
@@ -27,8 +27,8 @@ model given only a raw brief (`frontier-raw`)? That only works if:
 This engine also incorporates a set of independent design-review corrections
 (see "Design-review corrections" below) covering evaluator/author blindness,
 per-episode hard gates, non-completed-run handling, per-episode claims with
-quality/efficiency verdict separation, spread-aware inconclusiveness, cost as
-the primary efficiency metric (including amortized spec-authoring cost), an
+quality/cost/delivery-time separation, spread-aware inconclusiveness, categorized
+tokens as the non-monetary cost proxy (including amortized spec-authoring usage), an
 explicit execution policy, prepare/import consistency + hash provenance,
 pre-registered secondary comparisons, gradeable raw-lane traceability, and
 richer cost-config provenance.
@@ -88,9 +88,9 @@ node bin/benchmark.js score --evaluator <evaluator.json> --episode-id <id> [--ex
 
 node bin/benchmark.js aggregate --runs <runs.json>
 # Groups scored runs by laneId and computes median/min/max quality,
-# hard-gate pass count, median elapsed time, and costMedianUsd (null
-# whenever any run in the lane has a null cost — currently always, since
-# no dated pricing exists yet).
+# hard-gate pass count, median productive/elapsed time, and a categorized token
+# cost proxy with median and range. costMedianUsd remains null whenever any run
+# in the lane has a null monetary cost.
 
 node bin/benchmark.js report --runs <runs.json> --data-kind <illustrative|measured> --out <report.json> [--freeze-record <freeze.json>] [--benchmark-version <v>]
 # Builds and validates a full contracts/report.schema.json report, writes
@@ -115,6 +115,12 @@ report generation selects the configuration matching the runs' benchmark
 version, and report metadata records the applicable timeout and tool-call cap.
 Changing the timeout requires a new freeze and a complete symmetric matrix;
 selectively rerunning only previously timed-out cells is prohibited.
+
+The v1.1.0 report contract labels total token consumption as a non-monetary
+cost proxy and preserves uncached input, cached input, output, reasoning, and
+amortized specification-authoring usage separately. Productive and elapsed time
+remain separate delivery-efficiency measures. Dated monetary pricing is optional
+and never required to display observed usage.
 
 `<execution.json>` shape for `import`:
 
@@ -227,12 +233,12 @@ called out explicitly below.
    since the difference isn't distinguishable from ordinary run-to-run
    variation. Gate counts and both lanes' quality ranges are included in the
    claim message.
-6. **Cost (incl. amortized spec-authoring effort) as primary efficiency
-   metric; token use is the only fallback.** `determineEfficiencyVerdict` in
-   `claim.js` prefers `costMedianUsd` whenever available for both lanes and
-   falls back to total tokens when monetary cost is unavailable. Elapsed and
-   productive time remain delivery context and never support a lower-cost
-   claim. `cost.js`'s `computeCostUsd` accepts a
+6. **Token consumption as cost proxy; delivery time remains separate.**
+   `determineEfficiencyVerdict` in `claim.js` uses categorized total tokens,
+   including amortized specification authoring, as the primary non-monetary
+   cost proxy. Dated monetary cost is optional fallback evidence. Elapsed and
+   productive time are separate delivery-efficiency measures and never get
+   converted into cost. `cost.js`'s `computeCostUsd` accepts a
    `specAuthoringShareUsd` (via `amortizedSpecAuthoringShareUsd`, dividing
    the spec's one-time authoring cost across `repetitionsPerLane`), which
    `import.js` folds into a spec-lane run's auto-computed cost so the
